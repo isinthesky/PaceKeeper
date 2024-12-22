@@ -37,7 +37,7 @@ class ConfigController:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
         # 한 번만 초기화
         if not hasattr(self, 'initialized'):
@@ -45,11 +45,11 @@ class ConfigController:
             self.settings_model.load_settings()  # config.json 로드
             self.data_model = DataModel()
             self.data_model.init_db()
-            
+
             self._status = AppStatus.WAIT
             self.is_running = False
             self.current_cycle = 0
-            
+
             self.initialized = True
 
     # --- 설정 접근/수정 ---
@@ -77,6 +77,6 @@ class ConfigController:
 
     def increment_cycle(self):
         self.current_cycle += 1
-    
+
     def get_cycle(self):
         return self.current_cycle

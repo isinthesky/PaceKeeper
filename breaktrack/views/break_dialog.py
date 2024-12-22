@@ -11,7 +11,7 @@ class BreakDialog(wx.Dialog):
         config_controller: ConfigController 인스턴스
         """
         display_width, display_height = wx.GetDisplaySize()
-        padding_size = 70  
+        padding_size = 70
 
         self.config = config_controller
 
@@ -80,7 +80,8 @@ class BreakDialog(wx.Dialog):
             mins, secs = divmod(remaining, 60)
             try:
                 wx.CallAfter(self.break_label.SetLabel, f"{mins:02d}:{secs:02d}")
-            except:  # 라벨이 이미 파괴되었을 수 있음
+            except Exception as e:
+                self.config.log_break(f"오류 발생: {e}")
                 break
 
             time.sleep(1)

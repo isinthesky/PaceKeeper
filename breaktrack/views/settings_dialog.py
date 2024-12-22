@@ -3,7 +3,7 @@ import wx
 
 class SettingsDialog(wx.Dialog):
     def __init__(self, parent, config_controller):
-        super().__init__(parent, title="설정", size=(350, 300), 
+        super().__init__(parent, title="설정", size=(350, 300),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
         self.InitUI()
@@ -17,7 +17,7 @@ class SettingsDialog(wx.Dialog):
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
         hbox1.Add(wx.StaticText(panel, label="작업 시간(분):"), flag=wx.RIGHT, border=8)
         self.study_time = wx.SpinCtrl(
-            panel, value=str(self.config.get_setting("study_time", 25)), 
+            panel, value=str(self.config.get_setting("study_time", 25)),
             min=1, max=120
         )
         hbox1.Add(self.study_time, proportion=1)
@@ -27,7 +27,7 @@ class SettingsDialog(wx.Dialog):
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
         hbox2.Add(wx.StaticText(panel, label="짧은 휴식(분):"), flag=wx.RIGHT, border=8)
         self.short_break = wx.SpinCtrl(
-            panel, value=str(self.config.get_setting("short_break", 5)), 
+            panel, value=str(self.config.get_setting("short_break", 5)),
             min=1, max=60
         )
         hbox2.Add(self.short_break, proportion=1)
@@ -37,7 +37,7 @@ class SettingsDialog(wx.Dialog):
         hbox3 = wx.BoxSizer(wx.HORIZONTAL)
         hbox3.Add(wx.StaticText(panel, label="긴 휴식(분):"), flag=wx.RIGHT, border=8)
         self.long_break = wx.SpinCtrl(
-            panel, value=str(self.config.get_setting("long_break", 15)), 
+            panel, value=str(self.config.get_setting("long_break", 15)),
             min=1, max=120
         )
         hbox3.Add(self.long_break, proportion=1)
@@ -47,7 +47,7 @@ class SettingsDialog(wx.Dialog):
         hbox4 = wx.BoxSizer(wx.HORIZONTAL)
         hbox4.Add(wx.StaticText(panel, label="사이클 수:"), flag=wx.RIGHT, border=8)
         self.cycles = wx.SpinCtrl(
-            panel, value=str(self.config.get_setting("cycles", 4)), 
+            panel, value=str(self.config.get_setting("cycles", 4)),
             min=1, max=20
         )
         hbox4.Add(self.cycles, proportion=1)

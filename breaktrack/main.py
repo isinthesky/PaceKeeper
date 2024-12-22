@@ -7,7 +7,7 @@ from breaktrack.views.main_frame import MainFrame
 def main():
     """메인 함수."""
     app = wx.App()
-    
+
     # 설정/상태 관리 컨트롤러
     config_controller = ConfigController()
 

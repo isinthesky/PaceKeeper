@@ -57,7 +57,7 @@ class MainFrame(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             pass
         dialog.Destroy()
-    
+
     def on_show_track(self, event):
         dlg = TrackDialog(self, self.config_controller)
         dlg.ShowModal()

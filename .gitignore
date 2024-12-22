@@ -21,3 +21,9 @@
 # etc
 .DS_Store
 /.vscode
+
+# pyc
+__pycache__
+*.pyc
+*.pyo
+*.pyd

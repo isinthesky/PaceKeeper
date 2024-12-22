@@ -4,10 +4,10 @@ from datetime import date, datetime, timedelta
 
 class TrackDialog(wx.Dialog):
     def __init__(self, parent, config_controller):
-        super().__init__(parent, title="공부 기록", size=(800, 800), 
+        super().__init__(parent, title="공부 기록", size=(800, 800),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
-        
+
         # 종료일 기본값: 오늘
         end_dt = date.today()
         start_dt = end_dt - timedelta(days=90)
@@ -50,14 +50,14 @@ class TrackDialog(wx.Dialog):
             search_sizer.Add(btn, 0, wx.RIGHT, 5)
 
         # 종료일 (기본값: 오늘)
-        search_sizer.Add(wx.StaticText(search_panel, label="종료일(YYYY-MM-DD):"), 
+        search_sizer.Add(wx.StaticText(search_panel, label="종료일(YYYY-MM-DD):"),
                          0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
         today_str = date.today().strftime("%Y-%m-%d")
         self.end_date_tc = wx.TextCtrl(search_panel, value=today_str, size=(100, -1), style=wx.TE_CENTER)
         search_sizer.Add(self.end_date_tc, 0, wx.RIGHT, 10)
 
         # 태그
-        search_sizer.Add(wx.StaticText(search_panel, label="태그:"), 
+        search_sizer.Add(wx.StaticText(search_panel, label="태그:"),
                          0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
         self.tag_tc = wx.TextCtrl(search_panel, size=(100, -1))
         search_sizer.Add(self.tag_tc, 0, wx.RIGHT, 10)
@@ -82,7 +82,7 @@ class TrackDialog(wx.Dialog):
         panel.SetSizer(vbox)
 
         self.load_all_logs()
-        
+
     def load_all_logs(self):
         """
         DB에서 전체 로그를 가져와서 ListCtrl에 표시

@@ -40,7 +40,7 @@ class DataModel:
 
             # # 2) 혹시 기존 테이블 구조에 tags 컬럼이 없으면 추가 (이미 있으면 무시)
             # try:
-            #     c.execute("SELECT tags FROM break_logs LIMIT 1")  
+            #     c.execute("SELECT tags FROM break_logs LIMIT 1")
             # except sqlite3.OperationalError:
             #     # 'tags' 컬럼이 없는 경우
             #     c.execute("ALTER TABLE break_logs ADD COLUMN tags TEXT")
@@ -67,7 +67,7 @@ class DataModel:
         with sqlite3.connect(self.db_file) as conn:
             c = conn.cursor()
             c.execute('''
-                INSERT INTO break_logs (created_date, timestamp, message, tags) 
+                INSERT INTO break_logs (created_date, timestamp, message, tags)
                 VALUES (?, ?, ?, ?)
             ''', (created_date, full_timestamp, message, ', '.join(tags)))
             conn.commit()
@@ -79,9 +79,9 @@ class DataModel:
         """
         with sqlite3.connect(self.db_file) as conn:
             c = conn.cursor()
-            c.execute(""" 
-                SELECT id, created_date, timestamp, message, tags 
-                FROM break_logs 
+            c.execute("""
+                SELECT id, created_date, timestamp, message, tags
+                FROM break_logs
                 ORDER BY id DESC
             """)
             rows = c.fetchall()

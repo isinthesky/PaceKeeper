@@ -62,7 +62,7 @@ class MainController:
 
             if not self.config.is_running:
                 break
-            
+
             # 알람
             # 짧은 휴식 or 긴 휴식
             if self.config.get_cycle() % self.config.get_setting("cycles", 4) == 0:
@@ -90,13 +90,14 @@ class MainController:
             if self.main_frame:
                 try:
                     wx.CallAfter(self.main_frame.timer_label.SetLabel, f"{mins:02d}:{secs:02d}")
-                except:
+                except Exception as e:
+                    self.config.log_break(f"오류 발생: {e}")
                     break  # 오류 발생시 루프 종료
             time.sleep(1)
 
     def show_break_dialog(self, break_min):
         dlg = BreakDialog(
-            parent=self.main_frame, 
+            parent=self.main_frame,
             title="휴식시간",
             break_minutes=break_min,
             config_controller=self.config
