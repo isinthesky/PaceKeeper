@@ -19,8 +19,8 @@ BreakTrack는 휴식 시간을 추적·관리하기 위한 데스크톱 애플�
 ## 기술 스택
 
 - Python 3.11
-- wxPython (GUI)
-- SQLite3 (데이터베이스)
+- wxPython (GUI) : OS를 가리지 않는 자연스러운 GUI, PyInstaller와 호환성, 배포 용량
+- SQLite3 (데이터베이스) : local database
 - PyInstaller (배포)
 - Poetry (의존성 관리)
 
@@ -50,14 +50,19 @@ breaktrack/
 
 ## 설치 방법
 
-1. Poetry를 사용한 의존성 설치:
+1. poetry 가상 환경 실행
+```bash
+poetry shell
+```
+
+2. Poetry를 사용한 의존성 설치:
 ```bash
 poetry install
 ```
 
-2. 개발 환경에서 실행:
+3. 개발 환경에서 실행:
 ```bash
-poetry run app
+poetry run start
 ```
 
 ## 배포
@@ -65,7 +70,7 @@ poetry run app
 PyInstaller를 사용하여 실행 파일 생성:
 
 ```bash
-poetry run pyinstaller main.spec
+pyinstaller main.spec
 ```
 
 생성된 실행 파일은 `dist` 디렉토리에서 찾을 수 있습니다.
@@ -98,7 +103,7 @@ SettingsDialog(settings_dialog.py)에서 다음 값들을 GUI로 설정 가능:
 
 ## 사용 예시
 
-1. 앱 실행: poetry run python breaktrack/main.py
+1. 앱 실행: poetry run start
 2.	메인 화면에서 ‘시작’ 버튼 → 작업 타이머가 시작
 3.	작업 시간 종료 시, BreakDialog가 표시되어 휴식 시간 카운트다운 진행
 4.	휴식 종료 시, 메시지·태그를 입력하면 DB에 기록
