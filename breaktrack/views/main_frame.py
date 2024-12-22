@@ -11,7 +11,7 @@ class MainFrame(wx.Frame):
         self.config_controller = config_controller
 
         # 아이콘 설정 (있다면)
-        icon_path = resource_path(os.path.join("assets", "icons", "app.ico"))
+        icon_path = resource_path(os.path.join("assets", "icons", "BreakTrack.ico"))
         if os.path.exists(icon_path):
             self.SetIcon(wx.Icon(icon_path))
 
