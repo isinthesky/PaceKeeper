@@ -75,7 +75,7 @@ class BreakDialog(wx.Dialog):
         실제 1분=60초 대신 테스트 목적이면 10초로 변경 가능
         """
         # 예) 실제 사용 시: self.break_minutes * 60
-        remaining = self.break_minutes * 10  # 테스트 용으로 10초
+        remaining = self.break_minutes * 60
         while remaining >= 0 and self._running:
             mins, secs = divmod(remaining, 60)
             try:

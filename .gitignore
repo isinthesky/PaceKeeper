@@ -1,4 +1,23 @@
-/.ruff_cache
+# build
+/build
+/dist
+/*.egg-info
+
+# pyinstaller
+/breaktrack.spec
+/build
+/dist
+/BreakTrack.app
+
+# ENV
+.env
+/poetry.lock
 /break_log.db
 /break_log.txt
-/poetry.lock
+
+# lint
+.ruff_cache
+
+# etc
+.DS_Store
+/.vscode

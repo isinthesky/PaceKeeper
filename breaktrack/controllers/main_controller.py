@@ -58,7 +58,7 @@ class MainController:
             self.config.increment_cycle()
 
             study_time = self.config.get_setting("study_time", 25)
-            self.countdown(study_time * 10)  # 작업 시간
+            self.countdown(study_time * 60)
 
             if not self.config.is_running:
                 break
