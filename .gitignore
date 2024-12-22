@@ -1,0 +1,4 @@
+/.ruff_cache
+/break_log.db
+/break_log.txt
+/poetry.lock
