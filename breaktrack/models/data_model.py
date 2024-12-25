@@ -3,20 +3,21 @@ import os
 import sqlite3
 from datetime import datetime
 from breaktrack.utils import extract_tags
+from breaktrack.const import LOG_FILE, DB_FILE, MSG_BREAKTRACK_LOGS, DB_CREATE_TABLE
 
 class DataModel:
     """
     SQLite DB + 텍스트 파일 로그를 함께 관리하는 데이터 모델
     (기간 검색, 태그 검색을 대비해 테이블 구조 개선)
     """
-    def __init__(self, log_file='break_log.txt', db_file='break_log.db'):
+    def __init__(self, log_file=LOG_FILE, db_file=DB_FILE):
         self.log_file = log_file
         self.db_file = db_file
 
         # 텍스트 로그 파일 초기화
         if not os.path.exists(self.log_file):
             with open(self.log_file, 'w', encoding='utf-8') as f:
-                f.write("Breaktrack Logs\n")
+                f.write(f"{MSG_BREAKTRACK_LOGS}\n")
                 f.write("====================\n")
 
         # DB 초기화
@@ -25,26 +26,8 @@ class DataModel:
     def init_db(self):
         with sqlite3.connect(self.db_file) as conn:
             c = conn.cursor()
-
-            # 1) 테이블이 없으면 생성
-            c.execute('''
-                CREATE TABLE IF NOT EXISTS break_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    created_date TEXT NOT NULL,
-                    timestamp TEXT NOT NULL,
-                    message TEXT NOT NULL,
-                    tags TEXT
-                )
-            ''')
+            c.execute(DB_CREATE_TABLE)
             conn.commit()
-
-            # # 2) 혹시 기존 테이블 구조에 tags 컬럼이 없으면 추가 (이미 있으면 무시)
-            # try:
-            #     c.execute("SELECT tags FROM break_logs LIMIT 1")
-            # except sqlite3.OperationalError:
-            #     # 'tags' 컬럼이 없는 경우
-            #     c.execute("ALTER TABLE break_logs ADD COLUMN tags TEXT")
-            #     conn.commit()
 
     def log_break(self, message: str, tags: str=None):
         """
@@ -116,5 +99,20 @@ class DataModel:
                 WHERE tags LIKE ?
                 ORDER BY id DESC
             """, (f"%{tag_keyword}%",))
+            rows = c.fetchall()
+        return rows
+
+    def get_last_logs(self, limit=20):
+        """
+        DB에서 최신순으로 limit개 로그를 가져온다.
+        """
+        with sqlite3.connect(self.db_file) as conn:
+            c = conn.cursor()
+            c.execute("""
+                SELECT id, created_date, timestamp, message, tags
+                FROM break_logs
+                ORDER BY id DESC
+                LIMIT ?
+            """, (limit,))
             rows = c.fetchall()
         return rows

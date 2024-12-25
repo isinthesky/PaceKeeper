@@ -17,6 +17,7 @@ start = "breaktrack.main:main"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.8.4"
+vulture = "^2.14"
 
 [build-system]
 requires = ["poetry-core"]

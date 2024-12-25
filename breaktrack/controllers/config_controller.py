@@ -3,6 +3,8 @@ from enum import Enum
 from dataclasses import dataclass
 from breaktrack.models.setting_model import SettingsModel
 from breaktrack.models.data_model import DataModel
+from breaktrack.const import STATUS_WAIT, STATUS_STUDY, STATUS_SHORT_BREAK, STATUS_LONG_BREAK
+
 @dataclass
 class StatusInfo:
     """상태 정보를 담는 데이터 클래스"""
@@ -10,10 +12,10 @@ class StatusInfo:
     value: int
 
 class AppStatus(Enum):
-    WAIT = StatusInfo(label="대기", value=0)
-    STUDY = StatusInfo(label="작업", value=1)
-    SHORT_BREAK = StatusInfo(label="짧은 휴식", value=2)
-    LONG_BREAK = StatusInfo(label="긴 휴식", value=3)
+    WAIT = StatusInfo(label=STATUS_WAIT, value=0)
+    STUDY = StatusInfo(label=STATUS_STUDY, value=1)
+    SHORT_BREAK = StatusInfo(label=STATUS_SHORT_BREAK, value=2)
+    LONG_BREAK = StatusInfo(label=STATUS_LONG_BREAK, value=3)
 
     @property
     def label(self):

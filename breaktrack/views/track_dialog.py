@@ -1,10 +1,14 @@
 # views/track_dialog.py
 import wx
 from datetime import date, datetime, timedelta
+from breaktrack.const import (
+    DIALOG_TRACK, MSG_ERROR_DATAMODEL, BTN_SEARCH, LABEL_SEARCH_DATE,
+    LABEL_TAG, LABEL_ERROR, MSG_ERROR_SEARCH_DATE, CONFIG_DATA_MODEL,
+)
 
 class TrackDialog(wx.Dialog):
     def __init__(self, parent, config_controller):
-        super().__init__(parent, title="공부 기록", size=(800, 800),
+        super().__init__(parent, title=DIALOG_TRACK, size=(800, 800),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
 
@@ -22,13 +26,13 @@ class TrackDialog(wx.Dialog):
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         # 레이블
-        title_label = wx.StaticText(panel, label="공부 / 휴식 기록", style=wx.ALIGN_CENTER)
+        title_label = wx.StaticText(panel, label=DIALOG_TRACK, style=wx.ALIGN_CENTER)
         font = title_label.GetFont()
         font = font.Bold()
         title_label.SetFont(font)
         vbox.Add(title_label, flag=wx.EXPAND | wx.ALL, border=10)
 
-            # ---------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # (1) 검색 영역: 날짜 범위 + 태그 + 검색 버튼
         # ---------------------------------------------------------------------
         search_panel = wx.Panel(panel)
@@ -50,20 +54,20 @@ class TrackDialog(wx.Dialog):
             search_sizer.Add(btn, 0, wx.RIGHT, 5)
 
         # 종료일 (기본값: 오늘)
-        search_sizer.Add(wx.StaticText(search_panel, label="종료일(YYYY-MM-DD):"),
+        search_sizer.Add(wx.StaticText(search_panel, label=f"{LABEL_SEARCH_DATE}"),
                          0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
         today_str = date.today().strftime("%Y-%m-%d")
         self.end_date_tc = wx.TextCtrl(search_panel, value=today_str, size=(100, -1), style=wx.TE_CENTER)
         search_sizer.Add(self.end_date_tc, 0, wx.RIGHT, 10)
 
         # 태그
-        search_sizer.Add(wx.StaticText(search_panel, label="태그:"),
+        search_sizer.Add(wx.StaticText(search_panel, label=LABEL_TAG),
                          0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
         self.tag_tc = wx.TextCtrl(search_panel, size=(100, -1))
         search_sizer.Add(self.tag_tc, 0, wx.RIGHT, 10)
 
         # 검색 버튼
-        search_btn = wx.Button(search_panel, label="검색")
+        search_btn = wx.Button(search_panel, label=BTN_SEARCH)
         search_btn.Bind(wx.EVT_BUTTON, self.on_search)
         search_sizer.Add(search_btn, 0, wx.RIGHT, 10)
 
@@ -122,7 +126,7 @@ class TrackDialog(wx.Dialog):
         try:
             end_dt = datetime.strptime(end_date_str, "%Y-%m-%d").date()
         except ValueError:
-            wx.MessageBox("종료일 형식이 잘못되었습니다. YYYY-MM-DD 형식으로 입력하세요.", "오류", wx.OK | wx.ICON_ERROR)
+            wx.MessageBox(MSG_ERROR_SEARCH_DATE, LABEL_ERROR, wx.OK | wx.ICON_ERROR)
             return
 
         # 종료일에서 days일 전을 시작일로
@@ -142,8 +146,8 @@ class TrackDialog(wx.Dialog):
         tag_keyword = self.tag_tc.GetValue().strip()        # 예: "#rest"
 
         # 데이터 모델이 있는지 확인
-        if not hasattr(self.config, "data_model"):
-            wx.MessageBox("DataModel이 설정되지 않았습니다.", "오류", wx.OK | wx.ICON_ERROR)
+        if not hasattr(self.config, CONFIG_DATA_MODEL):
+            wx.MessageBox(MSG_ERROR_DATAMODEL, LABEL_ERROR, wx.OK | wx.ICON_ERROR)
             return
 
         data_model = self.config.data_model

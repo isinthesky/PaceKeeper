@@ -1,121 +1,146 @@
-# controllers/main_controller.py
-import threading
 import time
 import wx
-import pygame
+import threading
 from breaktrack.controllers.config_controller import ConfigController, AppStatus
 from breaktrack.views.break_dialog import BreakDialog
-from breaktrack.models.data_model import DataModel  # 필요하다면
-
+from breaktrack.models.data_model import DataModel
+from breaktrack.controllers.sound_manager import SoundManager
+from breaktrack.controllers.timer_thread import TimerThread
+from breaktrack.const import CONFIG_DATA_MODEL, DIALOG_BREAK
 class MainController:
+    """
+    메인 프레임과 상호작용하며,
+    (1) Pomodoro cycle(공부->휴식->공부...) 흐름 제어
+    (2) UI 이벤트 바인딩
+    (3) 타이머 쓰레드 관리
+    """
+
     def __init__(self, main_frame, config_controller: ConfigController):
-        """
-        메인 프레임과 설정 컨트롤러 참조
-        """
         self.main_frame = main_frame
         self.config = config_controller
-        self.data_model = DataModel()  # 필요하다면
+        self.sound_manager = SoundManager()
 
-        # pygame 초기화(알람 사운드용)
-        pygame.mixer.init()
+        # 사운드 파일 정의
         self.long_break_sound = "assets/sounds/long_brk.wav"
         self.short_break_sound = "assets/sounds/short_brk.wav"
 
-        # 메인 프레임의 이벤트 바인딩
-        self.main_frame.start_button.Bind(wx.EVT_BUTTON, self.on_start_stop)
+        # 이벤트 바인딩
+        self.main_frame.start_button.Bind(wx.EVT_BUTTON, self.toggle_timer)
         self.main_frame.Bind(wx.EVT_CLOSE, self.on_close)
 
-    def on_start_stop(self, event):
+        # TimerThread 초기값
+        self.timer_thread = None
+
+    def toggle_timer(self, event):
+        """
+        '시작' 또는 '중지' 버튼을 누를 때 실행.
+        """
         if not self.config.is_running:
             self.start_timer()
         else:
             self.stop_timer()
 
     def start_timer(self):
+        """
+        타이머 시작 (공부 시간 -> 휴식 -> 반복)
+        """
         self.config.start_app()
         self.main_frame.menu_bar.Enable(wx.ID_PREFERENCES, False)
         self.main_frame.start_button.SetLabel("중지")
 
-        self.timer_thread = threading.Thread(target=self.run_timer_loop)
-        self.timer_thread.start()
+        # Pomodoro 사이클 관리
+        # 메인 쓰레드에서 진행하면 GUI가 멈출 수 있으므로 별도 쓰레드 사용
+        self.cycle_thread = threading.Thread(target=self.run_pomodoro_cycle, daemon=True)
+        self.cycle_thread.start()
 
     def stop_timer(self):
+        """
+        타이머 중지
+        """
         self.config.stop_app()
         self.main_frame.menu_bar.Enable(wx.ID_PREFERENCES, True)
         self.main_frame.start_button.SetLabel("시작")
-        if hasattr(self, 'timer_thread') and self.timer_thread.is_alive():
+
+        # 메인 타이머 쓰레드 중지
+        if self.timer_thread and self.timer_thread.is_alive():
+            self.timer_thread.stop()
             self.timer_thread.join(timeout=2)
 
+        # UI 라벨 초기화
         wx.CallAfter(self.main_frame.timer_label.SetLabel, "00:00")
 
-    def run_timer_loop(self):
+    def run_pomodoro_cycle(self):
         """
-        - 작업 시간 -> 휴식 -> 작업 시간 -> 휴식 ... 반복
-        - 휴식 시간 카운트다운은 BreakDialog에서 처리
+        - (1) '공부 시간' 카운트다운
+        - (2) 사이클 횟수에 따라 '짧은 휴식' 또는 '긴 휴식' 결정
+        - (3) 휴식 다이얼로그 표시
+        - (4) 사용자 종료 또는 모든 사이클 반복
         """
         while self.config.is_running:
-            # 사이클 증가
-            self.config.increment_cycle()
+            self.config.increment_cycle()  # 사이클 증가
 
-            study_time = self.config.get_setting("study_time", 25)
-            self.countdown(study_time * 60)
+            # (A) 공부 시간 카운트다운
+            study_time_min = self.config.get_setting("study_time", 25)
+            total_seconds = study_time_min * 60
+            self.start_study_countdown(total_seconds)
 
             if not self.config.is_running:
                 break
 
-            # 알람
-            # 짧은 휴식 or 긴 휴식
+            # (B) 휴식 시간 결정 (짧은 or 긴)
             if self.config.get_cycle() % self.config.get_setting("cycles", 4) == 0:
-                self.play_sound(self.long_break_sound)
+                # 긴 휴식
+                self.sound_manager.play_sound(self.long_break_sound)
                 break_min = self.config.get_setting("long_break", 15)
                 self.config.set_status(AppStatus.LONG_BREAK)
             else:
-                self.play_sound(self.short_break_sound)
+                # 짧은 휴식
+                self.sound_manager.play_sound(self.short_break_sound)
                 break_min = self.config.get_setting("short_break", 5)
                 self.config.set_status(AppStatus.SHORT_BREAK)
 
-            # 휴식 다이얼로그 표시 (모달)
+            # (C) 휴식 다이얼로그(모달) 표시
             wx.CallAfter(self.show_break_dialog, break_min)
 
-            # break_dialog가 닫힐 때까지 메인 쓰레드에서 잠시 대기
-            while self.config.is_running and self.config.get_status() in [AppStatus.SHORT_BREAK, AppStatus.LONG_BREAK]:
+            # 휴식 다이얼로그가 닫힐 때까지 대기
+            while self.config.is_running and AppStatus.is_break(self.config.get_status()):
                 time.sleep(1)
 
-    def countdown(self, total_seconds):
-        """작업시간 카운트다운 -> 라벨 갱신"""
-        for remaining in range(total_seconds, -1, -1):
-            if not self.config.is_running:
-                break
-            mins, secs = divmod(remaining, 60)
-            if self.main_frame:
-                try:
-                    wx.CallAfter(self.main_frame.timer_label.SetLabel, f"{mins:02d}:{secs:02d}")
-                except Exception as e:
-                    self.config.log_break(f"오류 발생: {e}")
-                    break  # 오류 발생시 루프 종료
-            time.sleep(1)
+    def start_study_countdown(self, total_seconds):
+        """
+        공부 시간 카운트다운을 별도 TimerThread로 처리
+        """
+        self.timer_thread = TimerThread(
+            config_controller=self.config,
+            main_frame=self.main_frame,
+            total_seconds=total_seconds
+        )
+        self.timer_thread.start()
+
+        # 스레드 종료 대기
+        self.timer_thread.join()
 
     def show_break_dialog(self, break_min):
+        """
+        휴식 다이얼로그 표시. 모달로 열림.
+        """
         dlg = BreakDialog(
             parent=self.main_frame,
-            title="휴식시간",
+            title=DIALOG_BREAK,
             break_minutes=break_min,
             config_controller=self.config
         )
+
         dlg.ShowModal()
         dlg.Destroy()
-        # 휴식이 끝났으면 상태를 STUDY로 돌리거나, stop_app() 등 처리
+
+        # 휴식 후 상태를 다시 STUDY로 복원
         if self.config.is_running:
             self.config.set_status(AppStatus.STUDY)
 
-    def play_sound(self, sound_file):
-        try:
-            pygame.mixer.music.load(sound_file)
-            pygame.mixer.music.play()
-        except Exception as e:
-            wx.LogError(f"알람 재생 에러: {e}")
-
     def on_close(self, event):
-        """메인 윈도우 닫기 처리"""
+        """
+        메인 윈도우 닫기 처리
+        """
         self.stop_timer()
         self.main_frame.Destroy()

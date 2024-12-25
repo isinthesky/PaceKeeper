@@ -1,17 +1,12 @@
 # models/settings_model.py
 import json
 import os
+from breaktrack.const import CONFIG_FILE, DEFAULT_SETTINGS, MSG_ERROR_SETTINGS_LOAD, MSG_ERROR_SETTINGS_SAVE
 
 class SettingsModel:
-    def __init__(self, config_file='config.json'):
+    def __init__(self, config_file=CONFIG_FILE):
         self.config_file = config_file
-        self.default_settings = {
-            "study_time": 25,
-            "short_break": 5,
-            "long_break": 15,
-            "cycles": 4,
-            "break_dlg_padding_size": 70
-        }
+        self.default_settings = dict(DEFAULT_SETTINGS)
         self.settings = dict(self.default_settings)
 
     def load_settings(self):
@@ -20,7 +15,7 @@ class SettingsModel:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     self.settings = json.load(f)
             except Exception as e:
-                print(f"설정 로드 오류: {e}. 기본값 사용.")
+                print(MSG_ERROR_SETTINGS_LOAD.format(e))
                 self.settings = dict(self.default_settings)
         else:
             self.save_settings()
@@ -30,7 +25,7 @@ class SettingsModel:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.settings, f, indent=4)
         except Exception as e:
-            print(f"설정 저장 오류: {e}")
+            print(MSG_ERROR_SETTINGS_SAVE.format(e))
 
     def update_settings(self, new_settings: dict):
         self.settings.update(new_settings)

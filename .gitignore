@@ -21,6 +21,7 @@
 # etc
 .DS_Store
 /.vscode
+/docs
 
 # pyc
 __pycache__
