@@ -47,6 +47,8 @@ class BreakDialog(wx.Dialog):
         3) 최근 5개 로그 표시 (신규 추가)
         4) 메시지 입력창 + 제출 버튼
         """
+        self.SetBackgroundColour('#a3cca3')
+        
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.tag_buttons_panel = wx.Panel(self)

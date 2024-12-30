@@ -6,6 +6,7 @@ from breaktrack.views.break_dialog import BreakDialog
 from breaktrack.models.data_model import DataModel
 from breaktrack.controllers.sound_manager import SoundManager
 from breaktrack.controllers.timer_thread import TimerThread
+from breaktrack.utils import resource_path
 from breaktrack.const import CONFIG_DATA_MODEL, DIALOG_BREAK
 class MainController:
     """
@@ -18,11 +19,11 @@ class MainController:
     def __init__(self, main_frame, config_controller: ConfigController):
         self.main_frame = main_frame
         self.config = config_controller
-        self.sound_manager = SoundManager()
+        self.sound_manager = SoundManager(self.config)
 
         # 사운드 파일 정의
-        self.long_break_sound = "assets/sounds/long_brk.wav"
-        self.short_break_sound = "assets/sounds/short_brk.wav"
+        self.long_break_sound = resource_path("assets/sounds/long_brk.wav")
+        self.short_break_sound = resource_path("assets/sounds/short_brk.wav")
 
         # 이벤트 바인딩
         self.main_frame.start_button.Bind(wx.EVT_BUTTON, self.toggle_timer)

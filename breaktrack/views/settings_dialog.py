@@ -2,11 +2,14 @@
 import wx
 from breaktrack.const import (
     MENU_SETTINGS, BTN_SAVE, BTN_CANCEL,
-    SETTINGS_LABEL_STUDY_TIME, SETTINGS_LABEL_SHORT_BREAK, SETTINGS_LABEL_LONG_BREAK, SETTINGS_LABEL_CYCLES, SETTINGS_STUDY_TIME, SETTINGS_SHORT_BREAK, SETTINGS_LONG_BREAK, SETTINGS_CYCLES)
+    SETTINGS_LABEL_STUDY_TIME, SETTINGS_LABEL_SHORT_BREAK, SETTINGS_LABEL_LONG_BREAK, SETTINGS_LABEL_CYCLES, 
+    SETTINGS_STUDY_TIME, SETTINGS_SHORT_BREAK, SETTINGS_LONG_BREAK, SETTINGS_CYCLES,
+    SETTINGS_BREAK_SOUND_VOLUME
+)
 
 class SettingsDialog(wx.Dialog):
     def __init__(self, parent, config_controller):
-        super().__init__(parent, title=MENU_SETTINGS, size=(350, 300),
+        super().__init__(parent, title=MENU_SETTINGS, size=(350, 350),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
         self.InitUI()
@@ -56,6 +59,18 @@ class SettingsDialog(wx.Dialog):
         hbox4.Add(self.cycles, proportion=1)
         vbox.Add(hbox4, flag=wx.EXPAND | wx.ALL, border=10)
 
+        # --- break_sound_volume ---
+        hbox5 = wx.BoxSizer(wx.HORIZONTAL)
+        volume_label = wx.StaticText(panel, label="알람 볼륨 (0 ~ 100):")
+        hbox5.Add(volume_label, flag=wx.RIGHT, border=8)
+        current_volume = self.config.get_setting(SETTINGS_BREAK_SOUND_VOLUME, 50)  # 기본값 50
+        self.break_sound_volume_slider = wx.Slider(
+            panel, value=current_volume, minValue=0, maxValue=100,
+            style=wx.SL_HORIZONTAL | wx.SL_LABELS
+        )
+        hbox5.Add(self.break_sound_volume_slider, proportion=1)
+        vbox.Add(hbox5, flag=wx.EXPAND | wx.ALL, border=10) 
+        
         # 버튼
         hbox_btn = wx.BoxSizer(wx.HORIZONTAL)
         btn_ok = wx.Button(panel, wx.ID_OK, label=BTN_SAVE)
@@ -74,7 +89,8 @@ class SettingsDialog(wx.Dialog):
             SETTINGS_STUDY_TIME: self.study_time.GetValue(),
             SETTINGS_SHORT_BREAK: self.short_break.GetValue(),
             SETTINGS_LONG_BREAK: self.long_break.GetValue(),
-            SETTINGS_CYCLES: self.cycles.GetValue()
+            SETTINGS_CYCLES: self.cycles.GetValue(),
+            SETTINGS_BREAK_SOUND_VOLUME: self.break_sound_volume_slider.GetValue()
         }
         self.config.update_settings(new_settings)
         self.EndModal(wx.ID_OK)

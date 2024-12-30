@@ -1,0 +1,8 @@
+{
+    "study_time": 1,
+    "short_break": 4,
+    "long_break": 15,
+    "cycles": 4,
+    "break_dlg_padding_size": 70,
+    "break_sound_volume": 80
+}

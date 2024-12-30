@@ -2,7 +2,7 @@
 CONFIG_FILE = 'config.json'
 LOG_FILE = 'break_log.txt'
 DB_FILE = 'break_log.db'
-ASSETS_DIR = 'assets'
+ASSETS_DIR = '/assets'
 ICONS_DIR = 'icons'
 SOUNDS_DIR = 'sounds'
 
@@ -82,6 +82,7 @@ SETTINGS_SHORT_BREAK = 'short_break'
 SETTINGS_LONG_BREAK = 'long_break'
 SETTINGS_CYCLES = 'cycles'
 SETTINGS_BREAK_DLG_PADDING_SIZE = 'break_dlg_padding_size'
+SETTINGS_BREAK_SOUND_VOLUME = 'break_sound_volume'
 
 # Default settings
 DEFAULT_SETTINGS = {
@@ -89,7 +90,8 @@ DEFAULT_SETTINGS = {
     'short_break': 5,
     'long_break': 15,
     'cycles': 4,
-    'break_dlg_padding_size': 70
+    'break_dlg_padding_size': 70,
+    'break_sound_volume': 80
 }
 
 # config.data_model
