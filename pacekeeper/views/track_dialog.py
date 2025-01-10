@@ -1,7 +1,7 @@
 # views/track_dialog.py
 import wx
 from datetime import date, datetime, timedelta
-from breaktrack.const import (
+from pacekeeper.const import (
     DIALOG_TRACK, MSG_ERROR_DATAMODEL, BTN_SEARCH, LABEL_SEARCH_DATE,
     LABEL_TAG, LABEL_ERROR, MSG_ERROR_SEARCH_DATE, CONFIG_DATA_MODEL,
 )

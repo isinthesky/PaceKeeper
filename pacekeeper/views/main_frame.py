@@ -1,10 +1,10 @@
 # views/main_frame.py
 import wx
 import os
-from breaktrack.views.settings_dialog import SettingsDialog
-from breaktrack.views.track_dialog import TrackDialog
-from breaktrack.utils import resource_path
-from breaktrack.const import (
+from pacekeeper.views.settings_dialog import SettingsDialog
+from pacekeeper.views.track_dialog import TrackDialog
+from pacekeeper.utils import resource_path
+from pacekeeper.const import (
     APP_TITLE, ASSETS_DIR, ICONS_DIR, ICON_ICO,
     MENU_FILE, MENU_SETTINGS, MENU_VIEW_LOGS, MENU_EXIT,
     BTN_START

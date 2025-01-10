@@ -1,7 +1,7 @@
 import pygame
 import wx
-from breaktrack.controllers.config_controller import ConfigController
-from breaktrack.const import SETTINGS_BREAK_SOUND_VOLUME
+from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.const import SETTINGS_BREAK_SOUND_VOLUME
 
 class SoundManager:
     """알람 사운드 로직을 별도로 관리"""

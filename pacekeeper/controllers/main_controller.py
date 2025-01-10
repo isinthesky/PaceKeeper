@@ -1,13 +1,13 @@
 import time
 import wx
 import threading
-from breaktrack.controllers.config_controller import ConfigController, AppStatus
-from breaktrack.views.break_dialog import BreakDialog
-from breaktrack.models.data_model import DataModel
-from breaktrack.controllers.sound_manager import SoundManager
-from breaktrack.controllers.timer_thread import TimerThread
-from breaktrack.utils import resource_path
-from breaktrack.const import CONFIG_DATA_MODEL, DIALOG_BREAK
+from pacekeeper.controllers.config_controller import ConfigController, AppStatus
+from pacekeeper.views.break_dialog import BreakDialog
+from pacekeeper.models.data_model import DataModel
+from pacekeeper.controllers.sound_manager import SoundManager
+from pacekeeper.controllers.timer_thread import TimerThread
+from pacekeeper.utils import resource_path
+from pacekeeper.const import CONFIG_DATA_MODEL, DIALOG_BREAK
 class MainController:
     """
     메인 프레임과 상호작용하며,

@@ -1,12 +1,12 @@
 # main.py
 import wx
-import wx.adv  # TaskBarIcon을 위한 import 추가
+import wx.adv
 import os
-from breaktrack.controllers.config_controller import ConfigController
-from breaktrack.controllers.main_controller import MainController
-from breaktrack.views.main_frame import MainFrame
-from breaktrack.utils import resource_path
-from breaktrack.const import ASSETS_DIR, ICONS_DIR, ICON_PNG, APP_NAME, APP_TITLE
+from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.controllers.main_controller import MainController
+from pacekeeper.views.main_frame import MainFrame
+from pacekeeper.utils import resource_path
+from pacekeeper.const import ASSETS_DIR, ICONS_DIR, ICON_PNG, APP_NAME, APP_TITLE
 
 def main():
     """메인 함수."""

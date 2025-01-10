@@ -2,8 +2,8 @@
 import wx
 import threading
 import time
-from breaktrack.controllers.config_controller import ConfigController
-from breaktrack.const import DIALOG_BREAK, MSG_START_BREAK, MSG_ERROR_DEFAULT, BTN_SUBMIT, CONFIG_DATA_MODEL, SETTINGS_BREAK_DLG_PADDING_SIZE
+from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.const import DIALOG_BREAK, MSG_START_BREAK, MSG_ERROR_DEFAULT, BTN_SUBMIT, CONFIG_DATA_MODEL, SETTINGS_BREAK_DLG_PADDING_SIZE
 
 class BreakDialog(wx.Dialog):
     """

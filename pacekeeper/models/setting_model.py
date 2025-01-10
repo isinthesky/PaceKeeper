@@ -1,7 +1,7 @@
 # models/settings_model.py
 import json
 import os
-from breaktrack.const import CONFIG_FILE, DEFAULT_SETTINGS, MSG_ERROR_SETTINGS_LOAD, MSG_ERROR_SETTINGS_SAVE
+from pacekeeper.const import CONFIG_FILE, DEFAULT_SETTINGS, MSG_ERROR_SETTINGS_LOAD, MSG_ERROR_SETTINGS_SAVE
 
 class SettingsModel:
     def __init__(self, config_file=CONFIG_FILE):

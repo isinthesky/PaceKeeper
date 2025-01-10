@@ -13,21 +13,21 @@ def collect_all_files(src_dir, dest_dir):
             data_files.append((fullpath, os.path.join(dest_dir, relative_path)))
     return data_files
 
-datas = [
-        # Asset paths
-        ('assets/icons/*.png', 'assets/icons'),
-        ('assets/icons/*.ico', 'assets/icons'),
-        ('assets/icons/*.icns', 'assets/icons'),
-        ('assets/sounds/*.wav', 'assets/sounds'),
-        ('config.json', '.')]
+datas = []
+# Collect icons
+datas += collect_all_files('breaktrack/assets/icons/', 'assets/icons')
+# Collect sounds
+datas += collect_all_files('breaktrack/assets/sounds', 'assets/sounds')
+# Include config.json
+datas += [('breaktrack/config.json', '.')]
 
 a = Analysis(
-    ['pacekeeper/main.py'],           # Updated entry point
-    pathex=['.'],
-    binaries=[],
-    datas=datas,
+    ['breaktrack/main.py'],            # Project entry point
+    pathex=['.'],                      # Path to search for source code
+    binaries=[],                       # Binary files
+    datas=datas,                       # Data files
     hiddenimports=[
-        'pygame',
+        'pygame',                       # Uncomment if pygame is not auto-detected
     ],
     hookspath=[],
     hooksconfig={},
@@ -52,18 +52,18 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='PaceKeeper',               # Updated name
+    name='BreakTrack',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
-    icon='assets/icons/PaceKeeper.icns'  # Updated icon path
+    console=False,                  # Hide console window (GUI app)
+    icon='assets/icons/BreakTrack.icns'  # Use .icns for macOS
 )
 
 app = BUNDLE(
     exe,
-    name='PaceKeeper.app',           # Updated bundle name
-    icon='assets/icons/PaceKeeper.icns',
-    bundle_identifier='com.pacekeeper.app',  # Added bundle identifier
+    name='BreakTrack.app',
+    icon='assets/icons/BreakTrack.icns',
+    bundle_identifier=None,
 )

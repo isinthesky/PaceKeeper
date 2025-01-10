@@ -1,13 +1,13 @@
 # File paths and names
 CONFIG_FILE = 'config.json'
-LOG_FILE = 'break_log.txt'
-DB_FILE = 'break_log.db'
-ASSETS_DIR = '/assets'
+LOG_FILE = 'pace_log.txt'
+DB_FILE = 'pace_log.db'
+ASSETS_DIR = 'assets'
 ICONS_DIR = 'icons'
 SOUNDS_DIR = 'sounds'
 
 # Asset files
-ICON_NAME = 'BreakTrack'
+ICON_NAME = 'PaceKeeper'
 ICON_PNG = f'{ICON_NAME}.png'
 ICON_ICO = f'{ICON_NAME}.ico'
 ICON_ICNS = f'{ICON_NAME}.icns'
@@ -15,7 +15,7 @@ LONG_BREAK_SOUND = 'long_brk.wav'
 SHORT_BREAK_SOUND = 'short_brk.wav'
 
 # App strings
-APP_NAME = 'Breaktrack'
+APP_NAME = 'PaceKeeper'
 APP_TITLE = APP_NAME
 
 # Menu items
@@ -52,14 +52,13 @@ MSG_ERROR_SETTINGS_LOAD = '설정 로드 오류: {}. 기본값 사용.'
 MSG_ERROR_SETTINGS_SAVE = '설정 저장 오류: {}'
 MSG_ERROR_ALARM_SOUND = '알람 재생 에러: {}'
 
-
 # Messages
 MSG_START_BREAK = '휴식을 시작하세요!'
-MSG_BREAKTRACK_LOGS = 'Breaktrack Logs'
+MSG_BREAKTRACK_LOGS = 'PaceKeeper 기록'
 
 # Database
 DB_CREATE_TABLE = '''
-    CREATE TABLE IF NOT EXISTS break_logs (
+    CREATE TABLE IF NOT EXISTS pace_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_date TEXT NOT NULL,
         timestamp TEXT NOT NULL,
@@ -76,7 +75,7 @@ SETTINGS_LABEL_CYCLES = "사이클 수:"
 BTN_SAVE = "저장"
 BTN_CANCEL = "취소"
 
-# settings
+# Settings keys
 SETTINGS_STUDY_TIME = 'study_time'
 SETTINGS_SHORT_BREAK = 'short_break'
 SETTINGS_LONG_BREAK = 'long_break'
@@ -94,5 +93,5 @@ DEFAULT_SETTINGS = {
     'break_sound_volume': 80
 }
 
-# config.data_model
+# Config keys
 CONFIG_DATA_MODEL = 'data_model'

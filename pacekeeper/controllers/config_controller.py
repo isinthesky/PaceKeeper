@@ -1,9 +1,9 @@
 # controllers/config_controller.py
 from enum import Enum
 from dataclasses import dataclass
-from breaktrack.models.setting_model import SettingsModel
-from breaktrack.models.data_model import DataModel
-from breaktrack.const import STATUS_WAIT, STATUS_STUDY, STATUS_SHORT_BREAK, STATUS_LONG_BREAK
+from pacekeeper.models.setting_model import SettingsModel
+from pacekeeper.models.data_model import DataModel
+from pacekeeper.const import STATUS_WAIT, STATUS_STUDY, STATUS_SHORT_BREAK, STATUS_LONG_BREAK
 
 @dataclass
 class StatusInfo:

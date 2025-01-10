@@ -2,8 +2,8 @@
 import os
 import sqlite3
 from datetime import datetime
-from breaktrack.utils import extract_tags
-from breaktrack.const import LOG_FILE, DB_FILE, MSG_BREAKTRACK_LOGS, DB_CREATE_TABLE
+from pacekeeper.utils import extract_tags
+from pacekeeper.const import LOG_FILE, DB_FILE, MSG_BREAKTRACK_LOGS, DB_CREATE_TABLE
 
 class DataModel:
     """
