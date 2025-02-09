@@ -3,7 +3,9 @@ from enum import Enum
 from dataclasses import dataclass
 from pacekeeper.models.setting_model import SettingsModel
 from pacekeeper.models.data_model import DataModel
-from pacekeeper.const import STATUS_WAIT, STATUS_STUDY, STATUS_SHORT_BREAK, STATUS_LONG_BREAK
+from pacekeeper.consts.labels import load_language_resource
+
+lang_res = load_language_resource()
 
 @dataclass
 class StatusInfo:
@@ -12,10 +14,11 @@ class StatusInfo:
     value: int
 
 class AppStatus(Enum):
-    WAIT = StatusInfo(label=STATUS_WAIT, value=0)
-    STUDY = StatusInfo(label=STATUS_STUDY, value=1)
-    SHORT_BREAK = StatusInfo(label=STATUS_SHORT_BREAK, value=2)
-    LONG_BREAK = StatusInfo(label=STATUS_LONG_BREAK, value=3)
+    WAIT = StatusInfo(label=lang_res.base_labels['WAIT'], value=0)
+    STUDY = StatusInfo(label=lang_res.base_labels['STUDY'], value=1)
+    SHORT_BREAK = StatusInfo(label=lang_res.base_labels['SHORT_BREAK'], value=2)
+    LONG_BREAK = StatusInfo(label=lang_res.base_labels['LONG_BREAK'], value=3)
+    PAUSED = StatusInfo(label=lang_res.base_labels['PAUSED'], value=4)
 
     @property
     def label(self):
@@ -38,21 +41,23 @@ class ConfigController:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance.__initialized = False
         return cls._instance
 
     def __init__(self):
-        # 한 번만 초기화
-        if not hasattr(self, 'initialized'):
-            self.settings_model = SettingsModel()
-            self.settings_model.load_settings()  # config.json 로드
-            self.data_model = DataModel()
-            self.data_model.init_db()
+        if self.__initialized: 
+            return
+            
+        self.settings_model = SettingsModel()
+        self.settings_model.load_settings()
+        self.data_model = DataModel()
+        self.data_model.init_db()
 
-            self._status = AppStatus.WAIT
-            self.is_running = False
-            self.current_cycle = 0
+        self._status = AppStatus.WAIT
+        self.is_running = False
+        self.current_cycle = 1
 
-            self.initialized = True
+        self.__initialized = True
 
     # --- 설정 접근/수정 ---
     def get_setting(self, key: str, default=None):
@@ -75,7 +80,7 @@ class ConfigController:
     def stop_app(self):
         self.is_running = False
         self.set_status(AppStatus.WAIT)
-        self.current_cycle = 0
+        self.current_cycle = 1
 
     def increment_cycle(self):
         self.current_cycle += 1

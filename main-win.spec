@@ -9,7 +9,7 @@ block_cipher = None
 
 a = Analysis(
     # 프로젝트의 진입점(엔트리 스크립트)
-    ['breaktrack/main.py'],
+    ['pacekeeper/main.py'],
     
     # pyinstaller가 소스코드를 탐색할 경로
     pathex=['.'],
@@ -21,18 +21,18 @@ a = Analysis(
     #   (상대 경로, 타겟 내부 경로) 형식으로 지정
     datas=[
         # 아이콘 파일들
-        ('breaktrack/assets/icons/BreakTrack.ico', 'assets/icons'),
-        ('breaktrack/assets/icons/BreakTrack.png', 'assets/icons'),
-        ('breaktrack/assets/icons/BreakTrack.icns', 'assets/icons'),
+        ('pacekeeper/assets/icons/pacekeeper.ico', 'assets/icons'),
+        ('pacekeeper/assets/icons/pacekeeper.png', 'assets/icons'),
+        ('pacekeeper/assets/icons/pacekeeper.icns', 'assets/icons'),
 
         # 사운드 파일들
-        ('breaktrack/assets/sounds/long_brk.wav', 'assets/sounds'),
-        ('breaktrack/assets/sounds/short_brk.wav', 'assets/sounds'),
+        ('pacekeeper/assets/sounds/long_brk.wav', 'assets/sounds'),
+        ('pacekeeper/assets/sounds/short_brk.wav', 'assets/sounds'),
 
         # 설정 파일(config.json)  
         # (코드에서 'config.json' 을 루트 경로로 사용하므로, 
         #  빌드 후 실행 시에도 같은 위치(혹은 적절한 상대 위치)에 있도록 조정)
-        ('breaktrack/config.json', '.'),
+        ('pacekeeper/config.json', '.'),
 
         # 그 밖에 필요한 다른 파일이 있다면 이곳에 추가...
     ],
@@ -72,13 +72,13 @@ exe = EXE(
     a.zipfiles,      # zip형식으로 넣은 라이브러리들
     a.datas,         # 데이터
     [],
-    name='BreakTrack',      # 빌드 후 exe 이름 (예: BreakTrack.exe)
+    name='PaceKeeper',      # 빌드 후 exe 이름 (예: pacekeeper.exe)
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     console=False,          # 콘솔창 숨김 (GUI 앱이므로)
-    icon='breaktrack/assets/icons/BreakTrack.ico'  # exe 아이콘
+    icon='pacekeeper/assets/icons/pacekeeper.ico'  # exe 아이콘
 )
 
 
@@ -90,17 +90,17 @@ exe = EXE(
 #     pyz,
 #     a.scripts,
 #     ...
-#     name='BreakTrack',
+#     name='pacekeeper',
 #     debug=False,
 #     strip=False,
 #     upx=True,
 #     console=False,
-#     icon='breaktrack/assets/icons/BreakTrack.ico',
+#     icon='pacekeeper/assets/icons/pacekeeper.ico',
 # )
 
 
 # ----- (4-2) 폴더 구조로 수집(COLLECT) -----
-#  빌드 결과물이 dist/BreakTrack/ 폴더 형태로 생성되어,
+#  빌드 결과물이 dist/pacekeeper/ 폴더 형태로 생성되어,
 #  exe + 필요한 데이터들이 폴더에 모여 배포. 로딩 속도가 조금 빠를 수 있음.
 coll = COLLECT(
     exe,
@@ -109,5 +109,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    name='BreakTrack'
+    name='PaceKeeper'
 )

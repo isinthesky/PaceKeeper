@@ -1,0 +1,55 @@
+{
+    "BASE_LABELS": {
+      "FILE": "파일",
+      "SETTINGS": "설정",
+      "VIEW_LOGS": "기록 보기",
+      "EXIT": "종료",
+      "WAIT": "대기",
+      "STUDY": "작업",
+      "SAVE": "저장",
+      "CANCEL": "취소",
+      "SHORT_BREAK": "짧은 휴식",
+      "LONG_BREAK": "긴 휴식",
+      "PAUSED": "일시정지",
+      "START": "시작",
+      "STOP": "중지",
+      "SETTING": "설정",
+      "LOGS": "기록",
+      "ERROR": "오류",
+      "SEARCH_DATE": "종료일 (YYYY-MM-DD)",
+      "TAG": "태그: ",
+      "SEARCH": "검색",
+      "SUBMIT": "제출"
+    },
+    "TITLE_LABELS": {
+      "MAIN_TITLE": "Pace Keeper",
+      "BREAK_DIALOG_TITLE": "휴식",
+      "SETTINGS_TITLE": "설정",
+      "LOGS_TITLE": "기록"
+    },
+    "BUTTON_LABELS": {
+      "START": "시작(&A)",
+      "STOP": "중지(&T)",
+      "PAUSE": "일시정지(&P)",
+      "RESUME": "재개(&R)",
+      "SUBMIT": "제출(&S)",
+      "SEARCH": "검색(&C)"
+    },
+    "MESSAGES": {
+      "START_BREAK": "휴식을 시작하세요!",
+      "PACEKEEPER_LOGS": "PaceKeeper 기록 준비 완료",
+      "STUDY_TIME": "작업 시간(분):",
+      "SHORT_BREAK": "짧은 휴식(분):",
+      "LONG_BREAK": "긴 휴식(분):",
+      "SOUND_VOLUME": "알람 볼륨 (0 ~ 100):",
+      "CYCLES": "사이클 수:"
+    },
+    "ERROR_MESSAGES": {
+      "DEFAULT": "오류 발생: {}",
+      "SEARCH_DATE": "종료일 형식이 잘못되었습니다. YYYY-MM-DD 형식으로 입력하세요.",
+      "DATAMODEL": "DataModel이 설정되지 않았습니다.",
+      "SETTINGS_LOAD": "설정 로드 오류: {}. 기본값 사용.",
+      "SETTINGS_SAVE": "설정 저장 오류: {}",
+      "ALARM_SOUND": "알람 재생 에러: {}"
+    }
+}

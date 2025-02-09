@@ -3,6 +3,6 @@
     "short_break": 4,
     "long_break": 15,
     "cycles": 4,
-    "break_dlg_padding_size": 70,
-    "break_sound_volume": 80
+    "padding_size": 70,
+    "sound_volume": 80
 }

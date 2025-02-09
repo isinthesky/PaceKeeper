@@ -1,0 +1,55 @@
+{
+    "BASE_LABELS": {
+        "FILE": "File",
+        "SETTINGS": "Settings",
+        "VIEW_LOGS": "View Logs",
+        "EXIT": "Exit",
+        "WAIT": "Wait",
+        "STUDY": "Study",
+        "SAVE": "Save",
+        "CANCEL": "Cancel",
+        "SHORT_BREAK": "Short Break",
+        "LONG_BREAK": "Long Break",
+        "PAUSED": "Paused",
+        "START": "Start",
+        "STOP": "Stop",
+        "SETTING": "Setting",
+        "TRACK": "Track",
+        "ERROR": "Error",
+        "SEARCH_DATE": "End Date (YYYY-MM-DD)",
+        "TAG": "Tag: ",
+        "SEARCH": "Search",
+        "SUBMIT": "Submit"
+    },
+    "TITLE_LABELS": {
+      "MAIN_TITLE": "Pace Keeper",
+      "BREAK_DIALOG_TITLE": "Break",
+      "SETTINGS_TITLE": "Settings",
+      "LOGS_TITLE": "Logs"
+    },
+    "BUTTON_LABELS": {
+        "START": "&Start",
+        "STOP": "S&top",
+        "PAUSE": "&Pause",
+        "RESUME": "&Resume",
+        "SUBMIT": "&Submit",
+        "SEARCH": "Sear&ch"
+    },
+    "MESSAGES": {
+        "START_BREAK": "Start your break!",
+        "PACEKEEPER_LOGS": "PaceKeeper logs ready",
+        "STUDY_TIME": "Study time(min):",
+        "SHORT_BREAK": "Short break(min):",
+        "LONG_BREAK": "Long break(min):",
+        "SOUND_VOLUME": "Sound volume (0 ~ 100):",
+        "CYCLES": "Cycles:"
+    },
+    "ERROR_MESSAGES": {
+        "DEFAULT": "Error occurred: {}",
+        "SEARCH_DATE": "Invalid date format. Use YYYY-MM-DD.",
+        "DATAMODEL": "DataModel not initialized.",
+        "SETTINGS_LOAD": "Settings load error: {}. Using defaults.",
+        "SETTINGS_SAVE": "Settings save error: {}",
+        "ALARM_SOUND": "Alarm sound error: {}"
+    }
+}

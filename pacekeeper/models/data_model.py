@@ -3,7 +3,10 @@ import os
 import sqlite3
 from datetime import datetime
 from pacekeeper.utils import extract_tags
-from pacekeeper.const import LOG_FILE, DB_FILE, MSG_BREAKTRACK_LOGS, DB_CREATE_TABLE
+from pacekeeper.consts.settings import LOG_FILE, DB_FILE, DB_CREATE_TABLE
+from pacekeeper.consts.labels import load_language_resource
+
+lang_res = load_language_resource()
 
 class DataModel:
     """
@@ -17,7 +20,7 @@ class DataModel:
         # 텍스트 로그 파일 초기화
         if not os.path.exists(self.log_file):
             with open(self.log_file, 'w', encoding='utf-8') as f:
-                f.write(f"{MSG_BREAKTRACK_LOGS}\n")
+                f.write(f"{lang_res.messages['PACEKEEPER_LOGS']}\n")
                 f.write("====================\n")
 
         # DB 초기화
@@ -29,7 +32,7 @@ class DataModel:
             c.execute(DB_CREATE_TABLE)
             conn.commit()
 
-    def log_break(self, message: str, tags: str=None):
+    def log_study(self, message: str):
         """
         새 로그를 DB와 텍스트 파일에 기록.
         tags: 쉼표로 구분된 태그 문자열 (예: "#rest,#study")
@@ -50,21 +53,21 @@ class DataModel:
         with sqlite3.connect(self.db_file) as conn:
             c = conn.cursor()
             c.execute('''
-                INSERT INTO break_logs (created_date, timestamp, message, tags)
+                INSERT INTO pace_logs (created_date, timestamp, message, tags)
                 VALUES (?, ?, ?, ?)
             ''', (created_date, full_timestamp, message, ', '.join(tags)))
             conn.commit()
 
     def get_logs(self):
         """
-        break_logs 테이블의 모든 로그 레코드를 최신순으로 가져온다.
+        pace_logs 테이블의 모든 로그 레코드를 최신순으로 가져온다.
         [(id, created_date, timestamp, message, tags), ...]
         """
         with sqlite3.connect(self.db_file) as conn:
             c = conn.cursor()
             c.execute("""
                 SELECT id, created_date, timestamp, message, tags
-                FROM break_logs
+                FROM pace_logs
                 ORDER BY id DESC
             """)
             rows = c.fetchall()
@@ -79,7 +82,7 @@ class DataModel:
             c = conn.cursor()
             c.execute("""
                 SELECT id, created_date, timestamp, message, tags
-                FROM break_logs
+                FROM pace_logs
                 WHERE created_date BETWEEN ? AND ?
                 ORDER BY id DESC
             """, (start_date, end_date))
@@ -95,7 +98,7 @@ class DataModel:
             c = conn.cursor()
             c.execute("""
                 SELECT id, created_date, timestamp, message, tags
-                FROM break_logs
+                FROM pace_logs
                 WHERE tags LIKE ?
                 ORDER BY id DESC
             """, (f"%{tag_keyword}%",))
@@ -110,7 +113,7 @@ class DataModel:
             c = conn.cursor()
             c.execute("""
                 SELECT id, created_date, timestamp, message, tags
-                FROM break_logs
+                FROM pace_logs
                 ORDER BY id DESC
                 LIMIT ?
             """, (limit,))
