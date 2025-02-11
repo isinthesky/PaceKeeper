@@ -84,6 +84,7 @@ class ConfigController:
 
     def increment_cycle(self):
         self.current_cycle += 1
+        return self.current_cycle
 
     def get_cycle(self):
         return self.current_cycle

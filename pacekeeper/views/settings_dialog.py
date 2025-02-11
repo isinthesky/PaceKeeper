@@ -78,8 +78,8 @@ class SettingsDialog(wx.Dialog):
         
         # 버튼
         hbox_btn = wx.BoxSizer(wx.HORIZONTAL)
-        btn_ok = wx.Button(panel, wx.ID_OK, label=lang_res.button_labels['SAVE'])
-        btn_cancel = wx.Button(panel, wx.ID_CANCEL, label=lang_res.button_labels['CANCEL'])
+        btn_ok = wx.Button(panel, wx.ID_OK, label=lang_res.base_labels['SAVE'])
+        btn_cancel = wx.Button(panel, wx.ID_CANCEL, label=lang_res.base_labels['CANCEL'])
         hbox_btn.Add(btn_ok)
         hbox_btn.Add(btn_cancel, flag=wx.LEFT, border=10)
         vbox.Add(hbox_btn, flag=wx.ALIGN_CENTER | wx.ALL, border=10)

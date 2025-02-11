@@ -6,6 +6,7 @@ from pathlib import Path
 @dataclass(frozen=True)
 class LanguageResource:
     base_labels: Dict[str, str]
+    title_labels: Dict[str, str]
     button_labels: Dict[str, str]
     messages: Dict[str, str]
     error_messages: Dict[str, str]
@@ -23,6 +24,7 @@ def load_language_resource(language: str = "ko") -> LanguageResource:
 
     return LanguageResource(
         base_labels=data.get("BASE_LABELS", {}),
+        title_labels=data.get("TITLE_LABELS", {}),
         button_labels=data.get("BUTTON_LABELS", {}),
         messages=data.get("MESSAGES", {}),
         error_messages=data.get("ERROR_MESSAGES", {})
