@@ -1,9 +1,10 @@
 # controllers/config_controller.py
+
 from enum import Enum
 from dataclasses import dataclass
 from pacekeeper.models.setting_model import SettingsModel
-from pacekeeper.models.data_model import DataModel
 from pacekeeper.consts.labels import load_language_resource
+from pacekeeper.consts.settings import SET_LANGUAGE
 
 lang_res = load_language_resource()
 
@@ -50,8 +51,8 @@ class ConfigController:
             
         self.settings_model = SettingsModel()
         self.settings_model.load_settings()
-        self.data_model = DataModel()
-        self.data_model.init_db()
+
+        # DataModel 제거: 로그 DB 관련 작업은 MainController로 이동
 
         self._status = AppStatus.WAIT
         self.is_running = False
@@ -65,6 +66,20 @@ class ConfigController:
 
     def update_settings(self, new_settings: dict):
         self.settings_model.update_settings(new_settings)
+
+    # 새로 추가한 언어 설정 접근 메서드
+    def get_language(self) -> str:
+        """
+        현재 설정된 언어 코드를 반환합니다.
+        기본값은 'ko'입니다.
+        """
+        return self.settings_model.settings.get(SET_LANGUAGE, "ko")
+
+    def set_language(self, lang: str):
+        """
+        언어 코드를 업데이트합니다.
+        """
+        self.settings_model.settings[SET_LANGUAGE] = lang
 
     # --- 상태/작업 흐름 ---
     def get_status(self) -> AppStatus:

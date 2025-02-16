@@ -2,6 +2,7 @@
 from typing import Callable, Optional
 from pacekeeper.controllers.config_controller import ConfigController, AppStatus
 from pacekeeper.controllers.timer_thread import TimerThread
+import threading
 
 class TimerService:
     """
@@ -50,7 +51,9 @@ class TimerService:
         """타이머 중지 및 앱 상태 초기화."""
         if self.timer_thread and self.timer_thread.is_alive():
             self.timer_thread.stop()
-            self.timer_thread.join(timeout=2)
+            # 현재 스레드가 타이머 스레드가 아닌 경우에만 join()을 호출하여 안전하게 종료 대기
+            if threading.current_thread() != self.timer_thread:
+                self.timer_thread.join(timeout=2)
         self.timer_thread = None
         self.config_ctrl.is_running = False
         self.config_ctrl.set_status(AppStatus.WAIT)

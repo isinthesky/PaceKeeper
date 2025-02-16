@@ -16,6 +16,7 @@
         "STOP": "Stop",
         "SETTING": "Setting",
         "TRACK": "Track",
+        "LOGS": "Logs",
         "ERROR": "Error",
         "SEARCH_DATE": "End Date (YYYY-MM-DD)",
         "TAG": "Tag: ",
@@ -42,8 +43,10 @@
         "STUDY_TIME": "Study time(min):",
         "SHORT_BREAK": "Short break(min):",
         "LONG_BREAK": "Long break(min):",
-        "SOUND_VOLUME": "Sound volume (0 ~ 100):",
-        "CYCLES": "Cycles:"
+        "SOUND_VOLUME": "Sound volume:",
+        "CYCLES": "Cycles:",
+        "RECENT_LOGS": "Recent logs (10)",
+        "TODO_INPUT": "Input your todo (#tag format)"
     },
     "ERROR_MESSAGES": {
         "DEFAULT": "Error occurred: {}",

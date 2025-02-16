@@ -1,8 +1,10 @@
 {
-    "study_time": 5,
-    "short_break": 4,
+    "study_time": 1,
+    "short_break": 5,
     "long_break": 15,
     "cycles": 4,
     "padding_size": 70,
-    "sound_volume": 80
+    "sound_volume": 80,
+    "break_color": "#A8E6CF",
+    "language": "en"
 }

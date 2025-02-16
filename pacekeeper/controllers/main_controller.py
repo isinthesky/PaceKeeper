@@ -1,56 +1,68 @@
 # controllers/main_controller.py
+
+import wx
+import datetime
 from pacekeeper.controllers.config_controller import ConfigController, AppStatus
 from pacekeeper.controllers.sound_manager import SoundManager
 from pacekeeper.controllers.timer_controller import TimerService
+from pacekeeper.repository.log_repository import SQLiteLogRepository
 from pacekeeper.utils import resource_path
 from pacekeeper.consts.labels import load_language_resource
-from icecream import ic
 
-lang_res = load_language_resource()
+lang_res = load_language_resource(ConfigController().get_language())
+
+MINUTE_TO_SECOND = 60
 
 class MainController:
     """
     MainController: 애플리케이션의 비즈니스 로직 제어  
-    책임: 타이머, 사운드, 사이클 관리 등 UI(MainFrame)와 분리하여 처리
+    책임: 타이머, 사운드, 사이클 관리 및 로그 DB 제어, 그리고 최근 로그 업데이트
     """
     def __init__(self, main_frame: 'MainFrame', config_ctrl: ConfigController):
         self.main_frame = main_frame
         self.config_ctrl = config_ctrl
+        
+        self.log_repository = SQLiteLogRepository()
         self.sound_manager = SoundManager(config_ctrl)
+        # TimerService는 타이머 종료 시 호출할 on_finish 콜백을 동적으로 할당할 수 있도록 합니다.
         self.timer_service = TimerService(
             config_ctrl, 
             update_callback=self.main_frame.update_timer_label,
-            on_finish=self.on_study_timer_finish
+            on_finish=None  # 시작 시 동적으로 할당
         )
         self.paused = False
-
-    def start_study_timer(self):
-        """공부 타이머 시작 메서드"""
-        study_minutes = self.config_ctrl.get_setting("study_time", 25)
-        total_seconds = study_minutes * 60
-        self.timer_service.start(total_seconds)
         
-    def stop_study_timer(self):
-        """공부 타이머 중단 메서드"""
+        # 앱 시작 시, 최근 로그를 UI에 업데이트합니다.
+        self.refresh_recent_logs()
+
+    def start_study_session(self):
+        """학습 세션 시작 메소드 (기존 start_study() 대체)"""
+        self.study_start_time = datetime.datetime.now()  # 학습 시작 시간 기록
+        study_minutes = self.config_ctrl.get_setting("study_time", 25)
+        total_seconds = study_minutes * MINUTE_TO_SECOND
+        
+        # 학습 세션 상태 설정 및 타이머 종료 시 수행할 콜백 할당
+        self.config_ctrl.set_status(AppStatus.STUDY)
+        self.timer_service.on_finish = self.on_study_session_finished
+
+        # 타이머 시작 (내부적으로 기존 타이머 종료 후 새 타이머 스레드 시작)
+        self.timer_service.start(total_seconds)
+
+    def on_study_session_finished(self):
+        """학습 세션 종료 후 실행될 로직 및 휴식 세션 전환"""
         self.timer_service.stop()
-        # 추가로 UI 갱신이나 상태 초기화 작업이 필요하면 이곳에 구현합니다.
-    
-    def toggle_pause(self):
-        """일시정지/재개 토글 메서드"""
-        if self.timer_service.is_paused():
-            self.timer_service.resume()
-            self.paused = False
-        else:
-            self.timer_service.pause()
-            self.paused = True
-
-    def on_study_timer_finish(self):
-        """공부 타이머 종료 후 휴식 시작 로직"""
-        # UI 스레드에서 안전하게 실행
-        self.start_break()
-
-    def start_break(self):
-        """휴식 로직 실행 메서드"""
+        
+        # 학습 종료 시 로그 저장 (사용자 입력값)
+        user_input = self.main_frame.log_input_panel.get_value().strip()
+        if user_input:
+            try:
+                self.log_repository.add_study_log(message=user_input)
+            except Exception as e:
+                wx.MessageBox(f"로그 저장 실패: {str(e)}", "Error", wx.OK | wx.ICON_ERROR)
+        
+        # 로그 추가 후 최신 로그 목록을 UI에 업데이트합니다.
+        self.refresh_recent_logs()
+        
         # 사이클 증가 및 휴식 시간 결정
         cycle = self.config_ctrl.increment_cycle()
         if cycle % self.config_ctrl.get_setting("cycles", 4) == 0:
@@ -62,4 +74,79 @@ class MainController:
             self.config_ctrl.set_status(AppStatus.SHORT_BREAK)
             self.sound_manager.play_sound(resource_path("assets/sounds/short_brk.wav"))
             
-        self.main_frame.show_break_dialog(break_min)
+        # 휴식 세션 시작 (UI 생성은 메인 스레드에서 관리)
+        wx.CallAfter(self.start_break_session, break_min)
+
+    def start_break_session(self, break_min: int):
+        """휴식 세션 시작 메소드"""
+        total_seconds = break_min * MINUTE_TO_SECOND
+
+        # 휴식 종료 후 실행될 콜백 할당
+        self.timer_service.on_finish = self.on_break_session_finished
+
+        # 타이머 시작 (휴식 타이머)
+        self.timer_service.start(total_seconds)
+        # UI 창(다이얼로그 등)은 반드시 메인 스레드에서 생성되어야 하므로 wx.CallAfter 사용
+        wx.CallAfter(self.main_frame.show_break_dialog, break_min)
+
+    def on_break_session_finished(self):
+        """휴식 세션 종료 후 실행될 로직"""
+        self.timer_service.stop()
+
+    def toggle_pause(self):
+        """일시정지/재개 토글 메서드"""
+        if self.timer_service.is_paused():
+            self.timer_service.resume()
+            self.paused = False
+        else:
+            self.timer_service.pause()
+            self.paused = True
+
+    def stop_study_timer(self):
+        """공부 타이머 중단 메서드"""
+        self.timer_service.stop()
+        # 추가로 UI 갱신이나 상태 초기화 작업이 필요하면 이곳에 구현합니다.
+
+    def refresh_recent_logs(self):
+        """
+        MainFrame의 recent_logs 컨트롤 및 TagButtonsPanel을 업데이트하여 최신 로그 목록과 태그 버튼을 반영하는 메서드.
+        중복된 메시지는 하나만 보여주고, 최대 10개의 로그만 표시합니다.
+        """
+        logs = self.log_repository.get_logs()
+        unique_logs = []
+        seen_messages = set()
+        
+        for log in logs:
+            # log[3]가 메시지에 해당합니다.
+            message = log[3]
+            if message in seen_messages:
+                continue
+            unique_logs.append(log)
+            seen_messages.add(message)
+            if len(unique_logs) >= 10:
+                break
+
+        # 최근 로그 UI 컨트롤 업데이트
+        self.main_frame.recent_logs.update_logs(unique_logs)
+
+        # 로그에서 태그를 추출하여 TagButtonsPanel 업데이트
+        tags = set()
+        for log in unique_logs:
+            tag_value = log[4]
+            if tag_value:
+                # 쉼표를 기준으로 분리한 후 각 태그 처리
+                parts = tag_value.split(',')
+                for part in parts:
+                    tag = part.strip()
+                    if tag:
+                        if not tag.startswith('#'):
+                            tag = '#' + tag
+                        tags.add(tag)
+        self.main_frame.tag_panel.update_tags(list(tags))
+
+    def get_all_logs(self):
+        """
+        기록 보기 다이얼로그 등에서 사용하기 위한 함수로,
+        중복 메시지 포함 모든 로그 데이터를 반환합니다.
+        """
+        return self.log_repository.get_logs()

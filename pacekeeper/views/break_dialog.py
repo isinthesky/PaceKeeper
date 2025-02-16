@@ -1,92 +1,99 @@
-# views/break_dialog.py
 import wx
-from pacekeeper.controllers.config_controller import ConfigController, AppStatus
+from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.controllers.main_controller import MainController
 from pacekeeper.consts.labels import load_language_resource
-from pacekeeper.consts.settings import SET_PADDING_SIZE, CONFIG_DATA_MODEL
-from pacekeeper.views.controls import BreakDialogPanel
+from pacekeeper.consts.settings import SET_PADDING_SIZE, SET_BREAK_COLOR
+from pacekeeper.views.controls import TimerLabel
 
-lang_res = load_language_resource()
+lang_res = load_language_resource(ConfigController().get_language())
 
 class BreakDialog(wx.Dialog):
     """
-    휴식 시간을 카운트다운하는 모달 다이얼로그  
-    UI는 BreakDialogPanel을 사용하고, 타이머 제어는 MainController의 기능을 호출하도록 함.
+    휴식 시간을 카운트다운하는 모달 다이얼로그 및 UI 패널 통합 클래스
+    
+    주요 기능:
+      - 안내 문구와 남은 시간 표시(타이머 라벨) 제공
+      - 타이머 중지 및 다이얼로그 종료 이벤트 처리
+      - 타이머 종료 시 on_break_end 콜백 실행
+      - '휴식 닫기' 버튼을 통한 휴식 종료 기능 추가
     """
-    def __init__(self, parent, config_controller: ConfigController, break_minutes=5, on_break_end=None):
-        display_width, display_height = wx.GetDisplaySize()
-        self.config = config_controller
+    def __init__(self, parent, main_controller: MainController, config_ctrl: ConfigController, break_minutes=5, on_break_end=None):
+        self.main_controller = main_controller
+        self.config = config_ctrl
         self.break_minutes = break_minutes
         self.on_break_end = on_break_end
-        self._destroyed = False  # 종료 상태 추적
+        self._destroyed = False
+        
+        # 디스플레이 전체 크기를 고려하여 대화상자 크기 설정
+        display_width, display_height = wx.GetDisplaySize()
+        dlg_width = display_width - self.config.get_setting(SET_PADDING_SIZE, 100)
+        dlg_height = display_height - self.config.get_setting(SET_PADDING_SIZE, 100)
         
         super().__init__(
             parent,
             title=lang_res.title_labels['BREAK_DIALOG_TITLE'],
-            size=(display_width - self.config.get_setting(SET_PADDING_SIZE, 100),
-                  display_height - self.config.get_setting(SET_PADDING_SIZE, 100)),
+            size=(dlg_width, dlg_height),
             style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP
         )
-
-        # UI: BreakDialogPanel를 사용하여 레이아웃 구성
-        self.panel = BreakDialogPanel(
-            self,
-            config_ctrl=self.config,
-            on_item_double_click=self.on_item_double_click,
-            on_tag_selected=self.add_tag_to_input,
-            on_text_change=self.on_text_change,
-            on_submit=self.on_submit
-        )
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.panel, 1, wx.EXPAND)
-        self.SetSizer(sizer)
+        
+        # 추가: config에 저장된 SET_BREAK_COLOR 값으로 배경색 설정 (기본값 "#FDFFB6")
+        bg_color = self.config.get_setting(SET_BREAK_COLOR, "#FDFFB6")
+        self.SetBackgroundColour(bg_color)
+        
+        # 타이머 정지를 위한 함수 지정
+        self.stop_timer_func = self.main_controller.timer_service.stop
+        
+        self.init_ui()
+        self.init_events()
         self.CenterOnScreen()
-
-        # 타이머 제어: MainController에서 제공하는 함수(start_timer_func, stop_timer_func)를 할당받아 사용
-        # 예를 들어, 외부에서 아래와 같이 할당할 수 있습니다.
-        #   break_dialog.start_timer_func = main_controller.start_break_timer
-        #   break_dialog.stop_timer_func = main_controller.stop_timer
-        if hasattr(self, 'start_timer_func') and callable(self.start_timer_func):
-            total_seconds = self.break_minutes * 60  # 분 → 초 변환
-            self.start_timer_func(total_seconds, self.panel.break_label, self.on_break_finish)
-        else:
-            print("start_timer_func not provided to BreakDialog.")
-
-    def on_break_finish(self):
-        """타이머 종료 후 호출될 콜백 (MainController에서 호출)"""
-        if not self._destroyed and self.on_break_end:
-            wx.CallAfter(self.on_break_end)
-        if not self._destroyed:
-            wx.CallAfter(self.EndModal, wx.ID_OK)
-
-    def on_item_double_click(self, event):
-        index = event.GetIndex()
-        message = self.panel.recent_logs.list_ctrl.GetItemText(index, 1)
-        tags = self.panel.recent_logs.list_ctrl.GetItemText(index, 2)
-        full_text = f"{tags} {message}".strip() if tags else message
-        self.panel.input_panel.set_value(full_text)
-        if self.panel.input_panel.button:
-            self.panel.input_panel.button.Enable(True)
-
-    def on_text_change(self, event):
-        user_text = self.panel.input_panel.get_value().strip()
-        if self.panel.input_panel.button:
-            self.panel.input_panel.button.Enable(bool(user_text))
-
-    def on_submit(self, event):
-        self._destroyed = True
-        # 타이머 중지 함수는 MainController에서 할당받은 stop_timer_func를 사용
+        
+    def init_ui(self):
+        """UI 구성: 안내 문구와 남은 시간 표시(타이머 라벨), 그리고 휴식 닫기 버튼 추가"""
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        # 안내 문구
+        st = wx.StaticText(self, label=lang_res.messages['START_BREAK'], style=wx.ALIGN_CENTER)
+        st.SetForegroundColour("black")  # 라벨 폰트 색상을 검정색으로 지정
+        main_sizer.Add(st, flag=wx.ALIGN_CENTER | wx.TOP, border=20)
+        
+        # 남은 시간 표시를 위한 타이머 라벨
+        self.break_label = TimerLabel(self, initial_text="00:00", font_increment=10, alignment=wx.ALIGN_CENTER)
+        self.break_label.SetForegroundColour("black")  # 타이머 라벨의 폰트 색상을 검정색으로 지정 (필요시)
+        main_sizer.Add(self.break_label, flag=wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, border=20)
+        
+        # 휴식 닫기 버튼 추가
+        self.close_button = wx.Button(self, label="휴식 닫기")
+        self.close_button.SetBackgroundColour("#797979")
+        main_sizer.Add(self.close_button, flag=wx.ALIGN_CENTER | wx.ALL, border=20)
+        
+        self.SetSizer(main_sizer)
+        
+    def init_events(self):
+        """이벤트 바인딩: 다이얼로그 종료 시 타이머 정지 처리 및 휴식 닫기 버튼 이벤트 바인딩"""
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+        self.close_button.Bind(wx.EVT_BUTTON, self.on_close_button)
+        
+    def on_close(self, event):
+        """다이얼로그 종료 시 타이머 정지 및 리소스 정리"""
         if hasattr(self, 'stop_timer_func') and callable(self.stop_timer_func):
             self.stop_timer_func()
-        user_text = self.panel.input_panel.get_value().strip()
-        if hasattr(self.config, CONFIG_DATA_MODEL) and user_text:
-            self.config.data_model.log_study(user_text)
-            self.panel.recent_logs.load_data()
-        if self.on_break_end:
-            self.on_break_end(manual_submit=True)
-        self.EndModal(wx.ID_OK)
+        event.Skip()
         
-    def add_tag_to_input(self, tag):
-        current = self.panel.input_panel.get_value()
-        if tag not in current:
-            new_text = f"{current} {tag}" if current else f"{tag}"
-            self.panel.input_panel.set_value(new_text.strip())
+    def on_close_button(self, event):
+        """
+        휴식 닫기 버튼 클릭 시 호출되는 이벤트 핸들러
+        타이머를 정지시키고 휴식 종료 처리 후 다이얼로그를 종료합니다.
+        """
+        if hasattr(self, 'stop_timer_func') and callable(self.stop_timer_func):
+            self.stop_timer_func()
+        self.on_break_finish()
+        
+    def on_break_finish(self):
+        """
+        타이머 종료 및 휴식 중 강제 종료 시 호출되는 메서드  
+        on_break_end 콜백을 호출하고, 다이얼로그를 종료합니다.
+        """
+        if not self._destroyed:
+            if self.on_break_end:
+                wx.CallAfter(self.on_break_end)
+            wx.CallAfter(self.EndModal, wx.ID_OK)

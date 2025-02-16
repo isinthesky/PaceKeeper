@@ -42,8 +42,10 @@
       "STUDY_TIME": "작업 시간(분):",
       "SHORT_BREAK": "짧은 휴식(분):",
       "LONG_BREAK": "긴 휴식(분):",
-      "SOUND_VOLUME": "알람 볼륨 (0 ~ 100):",
-      "CYCLES": "사이클 수:"
+      "SOUND_VOLUME": "알람 볼륨:",
+      "CYCLES": "사이클 수:",
+      "RECENT_LOGS": "최근 기록 10개",
+      "TODO_INPUT": "할일 입력 (#tag 형식으로 입력)"
     },
     "ERROR_MESSAGES": {
       "DEFAULT": "오류 발생: {}",

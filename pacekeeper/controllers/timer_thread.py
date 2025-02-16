@@ -46,9 +46,11 @@ class TimerThread(threading.Thread):
             time.sleep(1)
             remaining -= 1
 
-        # 타이머가 정상 종료된 경우에만 on_finish 호출
+        # 타이머가 정상 종료된 경우, on_finish 콜백 실행을 메인 스레드로 전환
         if self._running and self.on_finish:
-            self.on_finish()
+            callback = self.on_finish
+            self.on_finish = None  # 중복 호출 방지
+            wx.CallAfter(callback)
 
     def stop(self):
         """타이머 종료 및 스레드 안전 종료 처리"""

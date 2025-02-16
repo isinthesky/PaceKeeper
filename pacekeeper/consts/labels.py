@@ -13,8 +13,14 @@ class LanguageResource:
 
 def load_language_resource(language: str = "ko") -> LanguageResource:
     """
-    주어진 언어 코드에 따른 리소스 파일을 로드하여 LanguageResource 객체를 반환합니다.
+    주어진 언어 코드('en' 또는 'ko')에 따른 리소스 파일을 로드하여 LanguageResource 객체를 반환합니다.
+    만약 지원되지 않는 언어 코드가 전달되면 기본값 'ko'를 사용합니다.
     """
+    allowed_languages = ['en', 'ko']
+    if language not in allowed_languages:
+        print(f"지원되지 않는 언어 코드 '{language}' 입니다. 기본값 'ko'로 설정합니다.")
+        language = "ko"
+
     file_path = Path(__file__).parent / f"lang_{language}.json"
     try:
         with open(file_path, encoding="utf-8") as f:

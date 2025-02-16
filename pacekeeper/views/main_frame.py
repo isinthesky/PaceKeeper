@@ -1,20 +1,18 @@
 # views/main_frame.py
 import wx
-import os
+import re  # 추가: 해시태그 검사를 위한 정규식 모듈
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.controllers.main_controller import MainController
 from pacekeeper.views.settings_dialog import SettingsDialog
 from pacekeeper.views.log_dialog import LogDialog
 from pacekeeper.views.break_dialog import BreakDialog
-from pacekeeper.views.controls import RecentLogsControl, TimerLabel, TextInputPanel
-from pacekeeper.utils import resource_path
+from pacekeeper.views.controls import RecentLogsControl, TimerLabel, TextInputPanel, TagButtonsPanel
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import (
-    APP_TITLE, ASSETS_DIR, ICONS_DIR, ICON_ICO,
-    SET_MAIN_DLG_WIDTH, SET_MAIN_DLG_HEIGHT
+    APP_TITLE, SET_MAIN_DLG_WIDTH, SET_MAIN_DLG_HEIGHT
 )
 
-lang_res = load_language_resource()
+lang_res = load_language_resource(ConfigController().get_language())
 
 class MainFrame(wx.Frame):
     """
@@ -23,25 +21,17 @@ class MainFrame(wx.Frame):
     """
     def __init__(self, parent, config_ctrl: ConfigController):
         width = config_ctrl.get_setting(SET_MAIN_DLG_WIDTH, 800)
-        height = config_ctrl.get_setting(SET_MAIN_DLG_HEIGHT, 400)
+        height = config_ctrl.get_setting(SET_MAIN_DLG_HEIGHT, 550)
         super().__init__(parent, title=APP_TITLE, size=(width, height))
         self.config_ctrl = config_ctrl
 
-        # 의존성 주입: MainController 생성
-        self.main_controller = MainController(main_frame=self, config_ctrl=self.config_ctrl)
-        
-        self.timer_running = False
-        self.timer_paused = False
-
-        # 아이콘 설정
-        icon_path = resource_path(os.path.join(ASSETS_DIR, ICONS_DIR, ICON_ICO))
-        if os.path.exists(icon_path):
-            self.SetIcon(wx.Icon(icon_path))
-        
-        # UI 구성 및 이벤트 바인딩 분리
+        # UI 구성 및 이벤트 바인딩 분리 먼저 호출
         self.init_ui()
         self.init_menu()
         self.init_events()
+
+        # 이후에 MainController 생성
+        self.main_controller = MainController(main_frame=self, config_ctrl=self.config_ctrl)
 
         self.Layout()
         self.Fit()
@@ -52,15 +42,26 @@ class MainFrame(wx.Frame):
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         
         # 타이머 라벨
-        self.timer_label = TimerLabel(self.panel, font_increment=20, bold=True, alignment=wx.ALIGN_LEFT)
+        self.timer_label = TimerLabel(self.panel, font_increment=20, bold=True, alignment=wx.ALIGN_CENTER)
         self.main_sizer.Add(self.timer_label, flag=wx.EXPAND | wx.ALL, border=20)
 
-        # 최근 기록 표시 영역
-        self.recent_logs = RecentLogsControl(self.panel, self.config_ctrl)
+        # 최근 기록 표시 영역 (콜백 on_logs_updated 설정)
+        self.recent_logs = RecentLogsControl(
+            self.panel, self.config_ctrl, 
+            on_double_click=self.on_log_double_click,
+            on_logs_updated=self.update_tag_buttons
+        )
         self.main_sizer.Add(self.recent_logs, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
-
+        
+        # 태그 버튼 패널
+        self.tag_panel = TagButtonsPanel(self.panel, on_tag_selected=self.add_tag_to_input)
+        self.main_sizer.Add(self.tag_panel, flag=wx.EXPAND | wx.ALL, border=10)
+        # RecentLogsControl의 update_logs 호출 시 update_tag_buttons()가 자동 호출됩니다.
+        
         # 텍스트 입력 패널 (예: 할일 입력)
-        self.log_input_panel = TextInputPanel(self.panel, box_label="할일 입력")
+        self.log_input_panel = TextInputPanel(self.panel)
+        # 텍스트가 변경될 때마다 해시태그 포함 여부를 체크해 start button 활성화를 업데이트합니다.
+        self.log_input_panel.Bind(wx.EVT_TEXT, self.on_log_input_text_change)
         self.main_sizer.Add(self.log_input_panel, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
         # 시작/중지 버튼 패널
@@ -86,6 +87,9 @@ class MainFrame(wx.Frame):
         self.main_sizer.Add(self.button_panel, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=20)
 
         self.panel.SetSizer(self.main_sizer)
+        
+        self.update_tag_buttons()
+        self.update_start_button_state()
 
     def init_menu(self):
         """메뉴바 초기화 및 메뉴 아이템 생성"""
@@ -105,14 +109,38 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_exit, self.exit_item)
         self.start_button.Bind(wx.EVT_BUTTON, self.on_toggle_timer)
         self.pause_button.Bind(wx.EVT_BUTTON, self.on_pause)
-        # 텍스트 입력 엔터키 이벤트 (필요시)
-        self.log_input_panel.input_ctrl.Bind(wx.EVT_TEXT_ENTER, self.on_text_enter)
+        
+    def update_tag_buttons(self):
+        """
+        최근 로그에서 태그를 추출하여 TagButtonsPanel을 업데이트합니다.
+        로그 데이터는 config_ctrl의 data_model을 통해 불러옵니다.
+        """
+        # tag_panel이 아직 설정되지 않았으면 아무런 작업도 수행하지 않습니다.
+        if not hasattr(self, "tag_panel"):
+            return
+
+        logs = []
+        if hasattr(self.config_ctrl, "data_model"):
+            logs = self.config_ctrl.data_model.get_last_logs(10)
+            
+        tags = set()
+        for row in logs:
+            tag_value = row[4]
+            if tag_value:
+                tags.add(tag_value)
+        self.tag_panel.update_tags(list(tags))
+
+    def on_log_double_click(self, event):
+        """최근 로그 리스트의 항목을 더블 클릭했을 때, 해당 로그 메시지를 log_input_panel에 복사"""
+        index = event.GetIndex()
+        message = self.recent_logs.list_ctrl.GetItemText(index, 1)
+        self.log_input_panel.set_value(message)
+        event.Skip() 
 
     def on_open_settings(self, event):
         """설정 다이얼로그 오픈"""
         dlg = SettingsDialog(self, self.config_ctrl)
         if dlg.ShowModal() == wx.ID_OK:
-            # 설정 변경 후 필요한 업데이트 처리
             pass
         dlg.Destroy()
 
@@ -127,52 +155,104 @@ class MainFrame(wx.Frame):
         self.Close()
 
     def on_toggle_timer(self, event):
-        """타이머 시작/중단 토글 이벤트 핸들러"""
-        if not self.timer_running:
-            # 타이머 시작
-            self.timer_running = True
+        """
+        타이머 시작/중단 토글 이벤트 핸들러
+        수정: MainController의 타이머 상태를 직접 활용하여 UI 업데이트를 진행
+        """
+        if not self.main_controller.timer_service.is_running():
+            # 타이머가 실행 중이 아니면 학습 세션 시작 전에 해시태그 검증 (추가 검증 가능)
+            # 정상적으로 활성화된 상태에서 클릭되었으므로 해시태그는 포함되어 있는 것으로 가정합니다.
             self.start_button.SetLabel(lang_res.button_labels.get('STOP', "STOP"))
             self.pause_button.Enable()
-            self.main_controller.start_study_timer()
+            self.main_controller.start_study_session()
         else:
-            # 타이머 중단
-            self.timer_running = False
+            # 타이머가 실행 중이면 강제 종료 처리
+            self.main_controller.stop_study_timer()
             self.start_button.SetLabel(lang_res.button_labels.get('START', "START"))
             self.pause_button.Disable()
-            self.main_controller.stop_study_timer()
-            # 타이머 중단 시 타이머 라벨 초기화 (원하는 값으로 수정 가능)
             self.timer_label.SetLabel("00:00")
+            # 추가 UI 초기화 작업이 있다면 여기에
+
+        # 세션 시작/종료 후, 시작 버튼 상태 업데이트
+        self.update_start_button_state()
 
     def on_pause(self, event):
-        """타이머 일시정지/재개 이벤트 핸들러"""
+        """
+        타이머 일시정지/재개 이벤트 핸들러
+        수정: MainController의 토글 메서드를 활용하고, timer_service의 상태로 버튼 라벨 변경
+        """
         self.main_controller.toggle_pause()
-        self.timer_paused = not self.timer_paused  # 상태 토글
-        
-        # 버튼 라벨 동적 변경
-        if self.timer_paused:
+        if self.main_controller.timer_service.is_paused():
             self.pause_button.SetLabel(lang_res.button_labels.get('RESUME', "RESUME"))
         else:
             self.pause_button.SetLabel(lang_res.button_labels.get('PAUSE', "PAUSE"))
         
-
-    def on_text_enter(self, event):
-        """사용자 입력 텍스트 처리"""
-        text = self.log_input_panel.get_value()
-        # 입력값 처리 로직 구현 (예: 로그 저장, 태그 처리 등)
-        self.log_input_panel.set_value("")
-        event.Skip()
+    def add_tag_to_input(self, tag):
+        current = self.log_input_panel.get_value()
+        if tag not in current:
+            new_text = f"{current} {tag}" if current else f"{tag}"
+            self.log_input_panel.set_value(new_text.strip())
+        # 태그 추가 후 버튼 상태도 업데이트 (옵션)
+        self.update_start_button_state()
 
     def update_timer_label(self, time_str: str):
-        """타이머 라벨 업데이트 (Controller에서 호출)"""
+        """타이머 라벨 업데이트 (Controller에서 호출)
+        
+           메인 타이머 라벨(self.timer_label)과, 휴식 다이얼로그가 열려 있다면 그 안의 
+           타이머 라벨(self.break_label) 모두 업데이트합니다.
+        """
         self.timer_label.SetLabel(time_str)
+        if hasattr(self, "break_dialog") and self.break_dialog is not None:
+            if hasattr(self.break_dialog, "break_label"):
+                self.break_dialog.break_label.SetLabel(time_str)
 
     def show_break_dialog(self, break_min):
-        """휴식 다이얼로그 표시 (Controller에서 호출)"""
-        dlg = BreakDialog(self, self.config_ctrl, break_minutes=break_min)
-        dlg.ShowModal()
-        dlg.Destroy()
+        def on_break_end():
+            # 3. UI 초기화
+            self.start_button.SetLabel(lang_res.button_labels.get('START', "START"))
+            self.pause_button.Disable()
+            self.log_input_panel.set_value("")
+            self.update_start_button_state()
+            
+        self.break_dialog = BreakDialog(
+            self, 
+            self.main_controller, 
+            self.config_ctrl, 
+            break_minutes=break_min, 
+            on_break_end=on_break_end
+        )
+        original_update_callback = self.main_controller.timer_service.update_callback
+
+        def break_update(time_str):
+            if self.break_dialog and hasattr(self.break_dialog, "break_label"):
+                self.break_dialog.break_label.SetLabel(time_str)
+        self.main_controller.timer_service.update_callback = break_update
+
+        self.break_dialog.ShowModal()
+        self.main_controller.timer_service.update_callback = original_update_callback
+        self.break_dialog.Destroy()
+        self.break_dialog = None
 
     def on_close(self, event):
         """창 닫기 시 타이머 스레드 정리"""
         self.main_controller.timer_service.stop()
-        event.Skip()  # 정상 종료 처리
+        event.Skip() 
+
+    # 추가: TextInputPanel의 텍스트 변경 이벤트 핸들러
+    def on_log_input_text_change(self, event):
+        self.update_start_button_state()
+        event.Skip()
+
+    
+    def update_start_button_state(self):
+        # 세션 중이면 start_button은 항상 활성화 (STOP용)
+        if hasattr(self, "main_controller") and self.main_controller.timer_service.is_running():
+            self.start_button.Enable()
+            return
+
+        text = self.log_input_panel.get_value() or ""
+        # 해시태그 패턴: '#' 뒤에 하나 이상의 알파벳, 숫자, 언더스코어가 오는 경우
+        if re.search(r'#\w+', text):
+            self.start_button.Enable()
+        else:
+            self.start_button.Disable() 

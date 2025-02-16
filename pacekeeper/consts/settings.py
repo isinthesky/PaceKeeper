@@ -1,4 +1,3 @@
-
 # App strings
 APP_NAME = 'PaceKeeper'
 APP_TITLE = APP_NAME
@@ -29,7 +28,8 @@ DB_CREATE_TABLE = '''
         created_date TEXT NOT NULL,
         timestamp TEXT NOT NULL,
         message TEXT NOT NULL,
-        tags TEXT
+        tags TEXT,
+        state SMALLINT DEFAULT 1
     )
 '''
 
@@ -40,6 +40,8 @@ SET_LONG_BREAK = 'long_break'
 SET_CYCLES = 'cycles'
 SET_PADDING_SIZE = 'padding_size'
 SET_SOUND_VOLUME = 'sound_volume'
+SET_BREAK_COLOR = 'break_color'
+SET_LANGUAGE = 'language'
 SET_MAIN_DLG_WIDTH = 'main_dlg_width'
 SET_MAIN_DLG_HEIGHT = 'main_dlg_height'
 
@@ -51,6 +53,8 @@ DEFAULT_SETTINGS = {
     SET_CYCLES: 4,
     SET_PADDING_SIZE: 100,
     SET_SOUND_VOLUME: 80,
+    SET_BREAK_COLOR: '#FDFFB6',
+    SET_LANGUAGE: 'ko',
     SET_MAIN_DLG_WIDTH: 800,
     SET_MAIN_DLG_HEIGHT: 400
 }

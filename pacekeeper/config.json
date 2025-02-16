@@ -5,6 +5,8 @@
     "cycles": 4,
     "padding_size": 70,
     "sound_volume": 80,
+    "break_color": "#FDFFB6",
+    "language": "ko",
     "main_dlg_width": 800,
     "main_dlg_height": 400
 }

@@ -19,7 +19,11 @@ datas = [
         ('assets/icons/*.ico', 'assets/icons'),
         ('assets/icons/*.icns', 'assets/icons'),
         ('assets/sounds/*.wav', 'assets/sounds'),
-        ('config.json', '.')]
+        ('config.json', '.'),
+        # 언어 리소스 파일 추가
+        ('pacekeeper/consts/lang_ko.json', 'pacekeeper/consts'),
+        ('pacekeeper/consts/lang_en.json', 'pacekeeper/consts')
+]
 
 a = Analysis(
     ['pacekeeper/main.py'],           # Updated entry point

@@ -32,7 +32,7 @@ class DataModel:
             c.execute(DB_CREATE_TABLE)
             conn.commit()
 
-    def log_study(self, message: str):
+    def add_study_log(self, message: str):
         """
         새 로그를 DB와 텍스트 파일에 기록.
         tags: 쉼표로 구분된 태그 문자열 (예: "#rest,#study")
