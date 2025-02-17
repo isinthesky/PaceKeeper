@@ -5,7 +5,7 @@ import os
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.controllers.main_controller import MainController
 from pacekeeper.views.main_frame import MainFrame
-from pacekeeper.utils import resource_path
+from pacekeeper.utils.functions import resource_path
 from pacekeeper.consts.settings import ASSETS_DIR, ICONS_DIR, ICON_PNG, APP_NAME, APP_TITLE
 
 def main():

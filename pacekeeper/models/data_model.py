@@ -2,7 +2,7 @@
 import os
 import sqlite3
 from datetime import datetime
-from pacekeeper.utils import extract_tags
+from pacekeeper.utils.functions import extract_tags
 from pacekeeper.consts.settings import LOG_FILE, DB_FILE, DB_CREATE_TABLE
 from pacekeeper.consts.labels import load_language_resource
 

@@ -6,7 +6,7 @@ from pacekeeper.controllers.config_controller import ConfigController, AppStatus
 from pacekeeper.controllers.sound_manager import SoundManager
 from pacekeeper.controllers.timer_controller import TimerService
 from pacekeeper.repository.log_repository import SQLiteLogRepository
-from pacekeeper.utils import resource_path
+from pacekeeper.utils.functions import resource_path
 from pacekeeper.consts.labels import load_language_resource
 
 lang_res = load_language_resource(ConfigController().get_language())

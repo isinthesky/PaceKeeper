@@ -39,7 +39,7 @@ class RecentLogsControl(wx.Panel):
         
         # ListCtrl을 StaticBoxSizer 내부에 추가하여 간격 없이 표시합니다.
         self.list_ctrl = wx.ListCtrl(self, style=wx.LC_REPORT | wx.BORDER_SUNKEN)
-        self.list_ctrl.InsertColumn(0, "시간", width=150)
+        self.list_ctrl.InsertColumn(0, "시간", width=140)
         self.list_ctrl.InsertColumn(1, "메시지", width=400)
         self.list_ctrl.InsertColumn(2, "태그", width=200)
         if on_double_click:

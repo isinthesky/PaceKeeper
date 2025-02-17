@@ -36,6 +36,30 @@ class MainFrame(wx.Frame):
         self.Layout()
         self.Fit()
 
+        self.original_size = self.GetSize()
+        self.study_size = (250, 170)
+
+    def hide_main_controls(self):
+        """
+        학습 타이머 실행 시, recent_logs(리스트 컨트롤), tag_panel(태그 버튼), 
+        log_input_panel(텍스트 입력 컨트롤)을 숨기고 창 크기를 작게 만듭니다.
+        """
+        self.recent_logs.Hide()
+        self.tag_panel.Hide()
+        self.log_input_panel.Hide()
+        self.SetSize(self.study_size)
+        self.Layout()
+
+    def restore_main_controls(self):
+        """
+        쉬는 시간 종료 후, 숨겨진 컨트롤들을 다시 보이고 원래 창 크기로 복원합니다.
+        """
+        self.recent_logs.Show()
+        self.tag_panel.Show()
+        self.log_input_panel.Show()
+        self.SetSize(self.original_size)
+        self.Layout()
+
     def init_ui(self):
         """UI 컴포넌트 초기화 및 레이아웃 구성"""
         self.panel = wx.Panel(self)
@@ -157,23 +181,22 @@ class MainFrame(wx.Frame):
     def on_toggle_timer(self, event):
         """
         타이머 시작/중단 토글 이벤트 핸들러
-        수정: MainController의 타이머 상태를 직접 활용하여 UI 업데이트를 진행
+        study timer 시작 시 주요 컨트롤(최근 로그, 태그 버튼, 텍스트 입력)을 숨기고 창 크기를 축소합니다.
         """
         if not self.main_controller.timer_service.is_running():
             # 타이머가 실행 중이 아니면 학습 세션 시작 전에 해시태그 검증 (추가 검증 가능)
-            # 정상적으로 활성화된 상태에서 클릭되었으므로 해시태그는 포함되어 있는 것으로 가정합니다.
             self.start_button.SetLabel(lang_res.button_labels.get('STOP', "STOP"))
             self.pause_button.Enable()
             self.main_controller.start_study_session()
+            self.hide_main_controls()  # 컨트롤 숨기기 및 작은 창으로 전환
         else:
-            # 타이머가 실행 중이면 강제 종료 처리
+            # 타이머가 실행 중이면 강제 종료 처리 및 UI 복원
             self.main_controller.stop_study_timer()
             self.start_button.SetLabel(lang_res.button_labels.get('START', "START"))
             self.pause_button.Disable()
             self.timer_label.SetLabel("00:00")
-            # 추가 UI 초기화 작업이 있다면 여기에
+            self.restore_main_controls()  # 원래 UI 복원
 
-        # 세션 시작/종료 후, 시작 버튼 상태 업데이트
         self.update_start_button_state()
 
     def on_pause(self, event):
@@ -208,12 +231,13 @@ class MainFrame(wx.Frame):
 
     def show_break_dialog(self, break_min):
         def on_break_end():
-            # 3. UI 초기화
+            # 쉬는 시간 종료 후 UI 초기화
             self.start_button.SetLabel(lang_res.button_labels.get('START', "START"))
             self.pause_button.Disable()
             self.log_input_panel.set_value("")
             self.update_start_button_state()
-            
+            self.restore_main_controls()  # 숨긴 컨트롤 복원 및 원래 창 크기로 복구
+
         self.break_dialog = BreakDialog(
             self, 
             self.main_controller, 
@@ -242,7 +266,6 @@ class MainFrame(wx.Frame):
     def on_log_input_text_change(self, event):
         self.update_start_button_state()
         event.Skip()
-
     
     def update_start_button_state(self):
         # 세션 중이면 start_button은 항상 활성화 (STOP용)
