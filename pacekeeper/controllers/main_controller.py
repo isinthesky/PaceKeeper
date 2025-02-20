@@ -43,7 +43,7 @@ class MainController:
 
     def start_study_session(self):
         """학습 세션 시작 메소드 (기존 start_study() 대체)"""
-        self.study_start_time = datetime.datetime.now()  # 학습 시작 시간 기록
+        self.study_start_time = datetime.datetime.now()
         study_minutes = self.config_ctrl.get_setting("study_time", 25)
         total_seconds = study_minutes * MINUTE_TO_SECOND
         
@@ -62,7 +62,8 @@ class MainController:
         user_input = self.main_frame.log_input_panel.get_value().strip()
         if user_input:
             try:
-                self.log_service.create_study_log(user_input)
+                # 저장된 study_start_time을 create_study_log에 전달
+                self.log_service.create_study_log(user_input, study_start_time=self.study_start_time)
             except Exception as e:
                 wx.MessageBox(f"로그 저장 실패: {str(e)}", "Error", wx.OK | wx.ICON_ERROR)
         

@@ -16,14 +16,18 @@ class LogService:
         self.tag_repo = TagRepository()
         self.logger.log_system_event("LogService 초기화됨.")
 
-    def create_study_log(self, message: str) -> None:
+    def create_study_log(self, message: str, study_start_time: Optional[datetime] = None) -> None:
         """
-        메시지와 선택적 카테고리명을 이용해 학습 로그를 생성합니다.
+        메시지와 선택적 study_start_time을 이용해 학습 로그를 생성합니다.
+        study_start_time이 제공되면 이를 시작 시간으로 사용하고, 그렇지 않으면 현재 시간을 사용합니다.
         """
         self.logger.log_user_action(f"학습 로그 생성 요청: {message}")
 
         now = datetime.now()
-        start_date = now.strftime("%Y-%m-%d %H:%M:%S")
+        if study_start_time:
+            start_date = study_start_time.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            start_date = now.strftime("%Y-%m-%d %H:%M:%S")
         end_date = now.strftime("%Y-%m-%d %H:%M:%S")
         
         # 메시지에서 태그 추출 및 태그 테이블에 추가하여 태그 ID 수집
