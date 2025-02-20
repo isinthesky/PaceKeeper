@@ -18,17 +18,33 @@ ASSETS_DIR = 'assets'
 ICONS_DIR = 'icons'
 SOUNDS_DIR = 'sounds'
 
-# Config keys
-CONFIG_DATA_MODEL = 'data_model'
-
 # Database
-DB_CREATE_TABLE = '''
+CATEGORY_CREATE_TABLE = '''
+    CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        state SMALLINT DEFAULT 1
+    )
+'''
+
+TAG_CREATE_TABLE = '''
+    CREATE TABLE IF NOT EXISTS tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        category_id INTEGER NOT NULL,
+        state SMALLINT DEFAULT 1
+    )
+'''
+
+LOG_CREATE_TABLE = '''
     CREATE TABLE IF NOT EXISTS pace_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        created_date TEXT NOT NULL,
-        timestamp TEXT NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
         message TEXT NOT NULL,
-        tags TEXT,
+        tags TEXT CHECK( json_valid(tags) ),
         state SMALLINT DEFAULT 1
     )
 '''

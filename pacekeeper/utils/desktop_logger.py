@@ -1,7 +1,8 @@
-import logging
-import logging.handlers
 import os
 import sys
+import logging
+import logging.handlers
+from icecream import ic
 
 class DesktopLogger:
     def __init__(self, app_name="PaceKeeper"):
@@ -18,7 +19,7 @@ class DesktopLogger:
             self.log_dir = os.path.join(base_dir, app_name, 'logs')
         else:
             self.log_dir = os.path.join(base_dir, f".{app_name.lower()}", "logs")
-        
+            
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir, exist_ok=True)
         

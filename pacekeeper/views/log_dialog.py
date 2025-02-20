@@ -1,9 +1,13 @@
 # views/track_dialog.py
 import wx
+import json
+from typing import List
 from datetime import date, datetime, timedelta
 from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.services.log_service import LogService
+from pacekeeper.repository.entities import Log
 from pacekeeper.consts.labels import load_language_resource
-from pacekeeper.consts.settings import CONFIG_DATA_MODEL
+from icecream import ic
 
 lang_res = load_language_resource(ConfigController().get_language())
 
@@ -12,11 +16,7 @@ class LogDialog(wx.Dialog):
         super().__init__(parent, title=lang_res.base_labels['LOGS'], size=(800, 800),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
-
-        # 만약 config에 data_model이 없다면, SQLiteLogRepository를 생성하여 할당합니다.
-        if not hasattr(self.config, CONFIG_DATA_MODEL):
-            from pacekeeper.repository.log_repository import SQLiteLogRepository
-            self.config.data_model = SQLiteLogRepository()
+        self.log_service = LogService()
 
         # 종료일 기본값: 오늘
         end_dt = date.today()
@@ -53,6 +53,7 @@ class LogDialog(wx.Dialog):
             ("1주", 7),
             ("1일", 1),
         ]
+        
         for label, days in period_buttons:
             btn = wx.Button(search_panel, label=label, size=(40, -1))
             btn.Bind(wx.EVT_BUTTON, lambda evt, d=days: self.on_period_button(evt, d))
@@ -108,10 +109,7 @@ class LogDialog(wx.Dialog):
         """
         DB에서 전체 로그를 가져와서 ListCtrl에 표시
         """
-        if hasattr(self.config, "data_model"):
-            rows = self.config.data_model.get_logs()
-        else:
-            rows = []
+        rows: List[Log] = self.log_service.retrieve_all_logs()
         self.load_rows(rows)
 
     def load_rows(self, rows):
@@ -121,10 +119,10 @@ class LogDialog(wx.Dialog):
         self.list_ctrl.DeleteAllItems()
         for row in rows:
             # row 예: (id, created_date, timestamp, message, tags)
-            idx = self.list_ctrl.InsertItem(self.list_ctrl.GetItemCount(), str(row[0]))
-            self.list_ctrl.SetItem(idx, 1, str(row[2]))  # timestamp
-            self.list_ctrl.SetItem(idx, 2, str(row[3]))  # message
-            self.list_ctrl.SetItem(idx, 3, str(row[4]))  # tags
+            idx = self.list_ctrl.InsertItem(self.list_ctrl.GetItemCount(), str(row.id))
+            self.list_ctrl.SetItem(idx, 1, str(row.created_date))  # timestamp
+            self.list_ctrl.SetItem(idx, 2, str(row.message))  # message
+            self.list_ctrl.SetItem(idx, 3, json.dumps(row.tags))  # tags
 
     def on_period_button(self, event, days):
         """
@@ -151,17 +149,11 @@ class LogDialog(wx.Dialog):
         start_date = self.selected_start_date
         end_date = self.selected_end_date
         tag_keyword = self.tag_tc.GetValue().strip()
-
-        if not hasattr(self.config, CONFIG_DATA_MODEL):
-            wx.MessageBox(lang_res.error_messages['DATAMODEL'], lang_res.base_labels['ERROR'], wx.OK | wx.ICON_ERROR)
-            return
-
-        data_model = self.config.data_model
-
+    
         # 날짜 범위 조건 처리
-        rows_date = set(data_model.get_logs_by_period(start_date, end_date)) if start_date and end_date else set(data_model.get_logs())
+        rows_date = set(self.log_service.retrieve_logs_by_period(start_date, end_date)) if start_date and end_date else set(self.log_service.retrieve_all_logs())
         # 태그 조건 처리
-        rows_tag = set(data_model.get_logs_by_tag(tag_keyword)) if tag_keyword else set(data_model.get_logs())
+        rows_tag = set(self.log_service.retrieve_logs_by_tag(tag_keyword)) if tag_keyword else set(self.log_service.retrieve_all_logs())
         intersect_rows = rows_date.intersection(rows_tag)
         sorted_rows = sorted(list(intersect_rows), key=lambda x: x[0], reverse=True)
         self.load_rows(sorted_rows)
@@ -194,12 +186,9 @@ class LogDialog(wx.Dialog):
             except ValueError:
                 continue
 
-        if hasattr(self.config, "data_model"):
-            self.config.data_model.delete_logs_by_ids(ids_to_delete)
-            wx.MessageBox("선택한 로그가 삭제되었습니다.", "정보", wx.OK | wx.ICON_INFORMATION)
-            self.load_all_logs()
-        else:
-            wx.MessageBox("데이터 모델이 설정되어 있지 않습니다.", "오류", wx.OK | wx.ICON_ERROR)
+        self.log_service.remove_logs_by_ids(ids_to_delete)
+        wx.MessageBox("선택한 로그가 삭제되었습니다.", "정보", wx.OK | wx.ICON_INFORMATION)
+        self.load_all_logs()
 
     def on_close(self, event):
         self.Destroy()

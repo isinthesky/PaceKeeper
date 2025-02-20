@@ -17,6 +17,7 @@
         "SETTING": "Setting",
         "TRACK": "Track",
         "LOGS": "Logs",
+        "CATEGORY": "Category",
         "ERROR": "Error",
         "SEARCH_DATE": "End Date (YYYY-MM-DD)",
         "TAG": "Tag: ",

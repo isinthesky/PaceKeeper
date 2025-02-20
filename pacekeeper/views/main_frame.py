@@ -5,13 +5,15 @@ from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.controllers.main_controller import MainController
 from pacekeeper.views.settings_dialog import SettingsDialog
 from pacekeeper.views.log_dialog import LogDialog
+from pacekeeper.views.category_dialog import CategoryDialog
 from pacekeeper.views.break_dialog import BreakDialog
 from pacekeeper.views.controls import RecentLogsControl, TimerLabel, TextInputPanel, TagButtonsPanel
+from pacekeeper.services.tag_service import TagService
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import (
     APP_TITLE, SET_MAIN_DLG_WIDTH, SET_MAIN_DLG_HEIGHT
 )
-
+from icecream import ic
 lang_res = load_language_resource(ConfigController().get_language())
 
 class MainFrame(wx.Frame):
@@ -24,6 +26,7 @@ class MainFrame(wx.Frame):
         height = config_ctrl.get_setting(SET_MAIN_DLG_HEIGHT, 550)
         super().__init__(parent, title=APP_TITLE, size=(width, height))
         self.config_ctrl = config_ctrl
+        self.tag_service = TagService()
 
         # UI 구성 및 이벤트 바인딩 분리 먼저 호출
         self.init_ui()
@@ -121,6 +124,7 @@ class MainFrame(wx.Frame):
         file_menu = wx.Menu()
         self.settings_item = file_menu.Append(wx.ID_PREFERENCES, f"{lang_res.base_labels['SETTINGS']}\tCtrl+S")
         self.track_item = file_menu.Append(wx.ID_ANY, f"{lang_res.base_labels['LOGS']}\tCtrl+L")
+        self.category_item = file_menu.Append(wx.ID_ANY, f"{lang_res.base_labels['CATEGORY']}\tCtrl+C")
         self.exit_item = file_menu.Append(wx.ID_EXIT, f"{lang_res.base_labels['EXIT']}\tCtrl+Q")
         menu_bar.Append(file_menu, lang_res.base_labels['FILE'])
         self.SetMenuBar(menu_bar)
@@ -130,6 +134,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)  # 창 닫기 이벤트 바인딩 추가
         self.Bind(wx.EVT_MENU, self.on_open_settings, self.settings_item)
         self.Bind(wx.EVT_MENU, self.on_show_track, self.track_item)
+        self.Bind(wx.EVT_MENU, self.on_show_category, self.category_item)
         self.Bind(wx.EVT_MENU, self.on_exit, self.exit_item)
         self.start_button.Bind(wx.EVT_BUTTON, self.on_toggle_timer)
         self.pause_button.Bind(wx.EVT_BUTTON, self.on_pause)
@@ -137,22 +142,15 @@ class MainFrame(wx.Frame):
     def update_tag_buttons(self):
         """
         최근 로그에서 태그를 추출하여 TagButtonsPanel을 업데이트합니다.
-        로그 데이터는 config_ctrl의 data_model을 통해 불러옵니다.
         """
         # tag_panel이 아직 설정되지 않았으면 아무런 작업도 수행하지 않습니다.
         if not hasattr(self, "tag_panel"):
             return
 
-        logs = []
-        if hasattr(self.config_ctrl, "data_model"):
-            logs = self.config_ctrl.data_model.get_last_logs(10)
-            
-        tags = set()
-        for row in logs:
-            tag_value = row[4]
-            if tag_value:
-                tags.add(tag_value)
-        self.tag_panel.update_tags(list(tags))
+        tags = self.tag_service.get_tags()
+        ic("update_tag_buttons", tags)
+        
+        self.tag_panel.update_tags(tags)
 
     def on_log_double_click(self, event):
         """최근 로그 리스트의 항목을 더블 클릭했을 때, 해당 로그 메시지를 log_input_panel에 복사"""
@@ -171,6 +169,12 @@ class MainFrame(wx.Frame):
     def on_show_track(self, event):
         """로그 다이얼로그 오픈"""
         dlg = LogDialog(self, self.config_ctrl)
+        dlg.ShowModal()
+        dlg.Destroy()
+        
+    def on_show_category(self, event): 
+        """카테고리 다이얼로그 오픈"""
+        dlg = CategoryDialog(self, self.config_ctrl)
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -213,9 +217,9 @@ class MainFrame(wx.Frame):
     def add_tag_to_input(self, tag):
         current = self.log_input_panel.get_value()
         if tag not in current:
-            new_text = f"{current} {tag}" if current else f"{tag}"
+            new_text = f"{current} #{tag['name']}" if current else f"#{tag['name']}"
             self.log_input_panel.set_value(new_text.strip())
-        # 태그 추가 후 버튼 상태도 업데이트 (옵션)
+        
         self.update_start_button_state()
 
     def update_timer_label(self, time_str: str):

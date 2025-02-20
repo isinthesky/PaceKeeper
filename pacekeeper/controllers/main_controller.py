@@ -1,17 +1,22 @@
 # controllers/main_controller.py
 
 import wx
+import json
 import datetime
 from pacekeeper.controllers.config_controller import ConfigController, AppStatus
 from pacekeeper.controllers.sound_manager import SoundManager
 from pacekeeper.controllers.timer_controller import TimerService
-from pacekeeper.repository.log_repository import SQLiteLogRepository
+from pacekeeper.services.log_service import LogService
+from pacekeeper.services.tag_service import TagService
+from pacekeeper.services.category_service import CategoryService
+from pacekeeper.repository.entities import Log
 from pacekeeper.utils.functions import resource_path
 from pacekeeper.consts.labels import load_language_resource
+from icecream import ic
 
 lang_res = load_language_resource(ConfigController().get_language())
 
-MINUTE_TO_SECOND = 60
+MINUTE_TO_SECOND = 5
 
 class MainController:
     """
@@ -22,9 +27,10 @@ class MainController:
         self.main_frame = main_frame
         self.config_ctrl = config_ctrl
         
-        self.log_repository = SQLiteLogRepository()
+        self.category_service = CategoryService()
+        self.tag_service = TagService()
+        self.log_service = LogService()
         self.sound_manager = SoundManager(config_ctrl)
-        # TimerService는 타이머 종료 시 호출할 on_finish 콜백을 동적으로 할당할 수 있도록 합니다.
         self.timer_service = TimerService(
             config_ctrl, 
             update_callback=self.main_frame.update_timer_label,
@@ -56,7 +62,7 @@ class MainController:
         user_input = self.main_frame.log_input_panel.get_value().strip()
         if user_input:
             try:
-                self.log_repository.add_study_log(message=user_input)
+                self.log_service.create_study_log(user_input)
             except Exception as e:
                 wx.MessageBox(f"로그 저장 실패: {str(e)}", "Error", wx.OK | wx.ICON_ERROR)
         
@@ -112,41 +118,38 @@ class MainController:
         MainFrame의 recent_logs 컨트롤 및 TagButtonsPanel을 업데이트하여 최신 로그 목록과 태그 버튼을 반영하는 메서드.
         중복된 메시지는 하나만 보여주고, 최대 10개의 로그만 표시합니다.
         """
-        logs = self.log_repository.get_logs()
+        logs:list[Log] = self.log_service.retrieve_recent_logs()
         unique_logs = []
         seen_messages = set()
         
         for log in logs:
-            # log[3]가 메시지에 해당합니다.
-            message = log[3]
+            message = log.message
             if message in seen_messages:
                 continue
+            
+            tag_text = self.tag_service.get_tag_text(log.tags)
+            tag_str = json.dumps(tag_text)
+            tag_list = tag_str.replace('[', '').replace(']', '').replace('"', '')
+            setattr(log, "tag_text", tag_list)
+            ic("tag_text", tag_list)
+            
             unique_logs.append(log)
             seen_messages.add(message)
             if len(unique_logs) >= 10:
                 break
-
+                        
         # 최근 로그 UI 컨트롤 업데이트
-        self.main_frame.recent_logs.update_logs(unique_logs)
+        self.main_frame.recent_logs.update_logs(logs=unique_logs)
 
-        # 로그에서 태그를 추출하여 TagButtonsPanel 업데이트
-        tags = set()
-        for log in unique_logs:
-            tag_value = log[4]
-            if tag_value:
-                # 쉼표를 기준으로 분리한 후 각 태그 처리
-                parts = tag_value.split(',')
-                for part in parts:
-                    tag = part.strip()
-                    if tag:
-                        if not tag.startswith('#'):
-                            tag = '#' + tag
-                        tags.add(tag)
-        self.main_frame.tag_panel.update_tags(list(tags))
+        ic("unique_logs", unique_logs)
+                        
+        tag_text = self.tag_service.get_tag_text(log.tags)
+        ic("tag_text", tag_text)
+        # self.main_frame.tag_panel.update_tags(list(tags))
 
     def get_all_logs(self):
         """
         기록 보기 다이얼로그 등에서 사용하기 위한 함수로,
         중복 메시지 포함 모든 로그 데이터를 반환합니다.
         """
-        return self.log_repository.get_logs()
+        return self.log_service.retrieve_all_logs()

@@ -2,6 +2,7 @@
 import os
 import sys
 import re
+
 def resource_path(relative_path: str) -> str:
     """
     PyInstaller 환경 등에서 리소스 절대 경로를 반환

@@ -2,7 +2,7 @@
 
 from enum import Enum
 from dataclasses import dataclass
-from pacekeeper.models.setting_model import SettingsModel
+from pacekeeper.services.setting_model import SettingsModel
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import SET_LANGUAGE
 
@@ -51,8 +51,6 @@ class ConfigController:
             
         self.settings_model = SettingsModel()
         self.settings_model.load_settings()
-
-        # DataModel 제거: 로그 DB 관련 작업은 MainController로 이동
 
         self._status = AppStatus.WAIT
         self.is_running = False
