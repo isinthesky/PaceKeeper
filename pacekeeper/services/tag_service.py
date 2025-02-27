@@ -19,14 +19,12 @@ class TagService:
         """
         태그 ID 목록을 받아 태그 이름을 문자열로 변환합니다.
         """
-        ic("get_tag_text", tag_ids)
         tag_texts = []
         for tag_id in tag_ids:
             tag:Tag = self.repository.get_tag(tag_id)
             if tag:
                 tag_texts.append(tag)
                 
-        ic("tag_texts", tag_texts)
           
         return [tag.name for tag in tag_texts]
     

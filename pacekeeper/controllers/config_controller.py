@@ -62,6 +62,14 @@ class ConfigController:
     def get_setting(self, key: str, default=None):
         return self.settings_model.settings.get(key, default)
 
+    def set_setting(self, key: str, value):
+        """설정 값을 업데이트합니다."""
+        self.settings_model.settings[key] = value
+        
+    def save_settings(self):
+        """설정을 파일에 저장합니다."""
+        self.settings_model.save_settings()
+
     def update_settings(self, new_settings: dict):
         self.settings_model.update_settings(new_settings)
 

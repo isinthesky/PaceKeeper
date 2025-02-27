@@ -39,10 +39,40 @@ class CategoryRepository:
                 category = Category(name=name, description=description, color=color, state=1)
                 session.add(category)
                 session.commit()
+                # 세션이 닫히기 전에 필요한 속성을 미리 로드하여 DetachedInstanceError 방지
+                category_id = category.id
+                category_name = category.name
+                category_description = category.description
+                category_color = category.color
+                category_state = category.state
                 self.desktop_logger.log_system_event(f"카테고리 추가 완료: {name}")
+                
+                # 세션이 닫힌 후에도 사용할 수 있는 새 카테고리 객체 생성
+                detached_category = Category(
+                    id=category_id,
+                    name=category_name, 
+                    description=category_description, 
+                    color=category_color, 
+                    state=category_state
+                )
+                return detached_category
             else:
+                # 이미 존재하는 카테고리의 경우에도 동일하게 처리
+                category_id = category.id
+                category_name = category.name
+                category_description = category.description
+                category_color = category.color
+                category_state = category.state
                 self.desktop_logger.log_system_event(f"카테고리 이미 존재함: {name}")
-            return category
+                
+                detached_category = Category(
+                    id=category_id,
+                    name=category_name, 
+                    description=category_description, 
+                    color=category_color, 
+                    state=category_state
+                )
+                return detached_category
         except Exception as e:
             session.rollback()
             self.desktop_logger.log_error("카테고리 추가 실패", exc_info=True)
@@ -58,8 +88,24 @@ class CategoryRepository:
         try:
             category = session.query(Category).filter(Category.id == category_id, Category.state >= 1).first()
             if category:
+                # 세션이 닫히기 전에 필요한 속성을 미리 로드
+                category_id = category.id
+                category_name = category.name
+                category_description = category.description
+                category_color = category.color
+                category_state = category.state
+                
                 self.desktop_logger.log_system_event(f"카테고리 조회 성공: {category.name}")
-                return category
+                
+                # 세션이 닫힌 후에도 사용할 수 있는 새 카테고리 객체 생성
+                detached_category = Category(
+                    id=category_id,
+                    name=category_name, 
+                    description=category_description, 
+                    color=category_color, 
+                    state=category_state
+                )
+                return detached_category
             else:
                 self.desktop_logger.log_system_event(f"카테고리 조회 실패: ID {category_id}")
                 return None
@@ -77,7 +123,20 @@ class CategoryRepository:
         try:
             categories = session.query(Category).filter(Category.state >= 1).order_by(Category.id).all()
             self.desktop_logger.log_system_event("전체 카테고리 조회 성공")
-            return categories
+            
+            # 세션이 닫히기 전에 모든 카테고리 객체의 속성을 미리 로드하여 새 객체 목록 생성
+            detached_categories = []
+            for category in categories:
+                detached_category = Category(
+                    id=category.id,
+                    name=category.name,
+                    description=category.description,
+                    color=category.color,
+                    state=category.state
+                )
+                detached_categories.append(detached_category)
+                
+            return detached_categories
         except Exception as e:
             self.desktop_logger.log_error("카테고리 조회 실패", exc_info=True)
             return []

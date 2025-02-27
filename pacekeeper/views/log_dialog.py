@@ -1,22 +1,33 @@
-# views/track_dialog.py
-import wx
+# views/log_dialog.py
 import json
 from typing import List
 from datetime import date, datetime, timedelta
+from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
+                           QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView,
+                           QWidget, QMessageBox, QScrollArea)
+from PyQt5.QtCore import Qt, QDate
+from PyQt5.QtGui import QFont
+
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.services.log_service import LogService
+from pacekeeper.services.tag_service import TagService
 from pacekeeper.repository.entities import Log
 from pacekeeper.consts.labels import load_language_resource
+from pacekeeper.views.controls import TagButtonsPanel
 from icecream import ic
 
 lang_res = load_language_resource(ConfigController().get_language())
 
-class LogDialog(wx.Dialog):
+class LogDialog(QDialog):
     def __init__(self, parent, config_controller):
-        super().__init__(parent, title=lang_res.base_labels['LOGS'], size=(800, 800),
-                         style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
+        super().__init__(parent)
+        self.setWindowTitle(lang_res.base_labels['LOGS'])
+        self.resize(800, 800)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        
         self.config = config_controller
         self.log_service = LogService()
+        self.tag_service = TagService()
 
         # 종료일 기본값: 오늘
         end_dt = date.today()
@@ -25,24 +36,23 @@ class LogDialog(wx.Dialog):
         self.selected_end_date = end_dt.strftime("%Y-%m-%d")
 
         self.InitUI()
-        self.Center()
+        self.center_on_screen()
 
     def InitUI(self):
-        panel = wx.Panel(self)
-        vbox = wx.BoxSizer(wx.VERTICAL)
+        main_layout = QVBoxLayout(self)
 
         # 레이블
-        title_label = wx.StaticText(panel, label=lang_res.base_labels['LOGS'], style=wx.ALIGN_CENTER)
-        font = title_label.GetFont()
-        font = font.Bold()
-        title_label.SetFont(font)
-        vbox.Add(title_label, flag=wx.EXPAND | wx.ALL, border=10)
+        title_label = QLabel(lang_res.base_labels['LOGS'])
+        font = title_label.font()
+        font.setBold(True)
+        title_label.setFont(font)
+        title_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(title_label)
 
         # ---------------------------------------------------------------------
         # (1) 검색 영역: 날짜 범위 + 태그 + 검색 버튼
         # ---------------------------------------------------------------------
-        search_panel = wx.Panel(panel)
-        search_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        search_layout = QHBoxLayout()
 
         # -- 기간 선택 버튼들 --
         # 1년 / 3달 / 1달 / 1주 / 1일
@@ -55,131 +65,199 @@ class LogDialog(wx.Dialog):
         ]
         
         for label, days in period_buttons:
-            btn = wx.Button(search_panel, label=label, size=(40, -1))
-            btn.Bind(wx.EVT_BUTTON, lambda evt, d=days: self.on_period_button(evt, d))
-            search_sizer.Add(btn, 0, wx.RIGHT, 5)
+            btn = QPushButton(label)
+            btn.setFixedWidth(40)
+            btn.clicked.connect(lambda checked, d=days: self.on_period_button(d))
+            search_layout.addWidget(btn)
 
         # 종료일 (기본값: 오늘)
-        search_sizer.Add(wx.StaticText(search_panel, label=lang_res.base_labels['SEARCH_DATE']),
-                         0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
+        search_layout.addWidget(QLabel(lang_res.base_labels['SEARCH_DATE']))
         today_str = date.today().strftime("%Y-%m-%d")
-        self.end_date_tc = wx.TextCtrl(search_panel, value=today_str, size=(100, -1), style=wx.TE_CENTER)
-        search_sizer.Add(self.end_date_tc, 0, wx.RIGHT, 10)
+        self.end_date_tc = QLineEdit(today_str)
+        self.end_date_tc.setFixedWidth(100)
+        self.end_date_tc.setAlignment(Qt.AlignCenter)
+        search_layout.addWidget(self.end_date_tc)
 
         # 태그
-        search_sizer.Add(wx.StaticText(search_panel, label=lang_res.base_labels['TAG']),
-                         0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
-        self.tag_tc = wx.TextCtrl(search_panel, size=(100, -1))
-        search_sizer.Add(self.tag_tc, 0, wx.RIGHT, 10)
+        search_layout.addWidget(QLabel(lang_res.base_labels['TAG']))
+        self.tag_tc = QLineEdit()
+        self.tag_tc.setFixedWidth(100)
+        search_layout.addWidget(self.tag_tc)
 
         # 검색 버튼
-        search_btn = wx.Button(search_panel, label=lang_res.button_labels['SEARCH'])
-        search_btn.Bind(wx.EVT_BUTTON, self.on_search)
-        search_sizer.Add(search_btn, 0, wx.RIGHT, 10)
-
-        search_panel.SetSizer(search_sizer)
-        vbox.Add(search_panel, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=5)
+        search_btn = QPushButton(lang_res.button_labels['SEARCH'])
+        search_btn.clicked.connect(self.on_search)
+        search_layout.addWidget(search_btn)
+        
+        # 레이아웃에 검색 영역 추가
+        main_layout.addLayout(search_layout)
+        
+        # ---------------------------------------------------------------------
+        # (1-1) 태그 버튼 패널: 자주 사용하는 태그 버튼 표시
+        # ---------------------------------------------------------------------
+        tag_panel_layout = QVBoxLayout()
+        tag_panel_label = QLabel("자주 사용하는 태그")
+        tag_panel_label.setAlignment(Qt.AlignCenter)
+        tag_panel_layout.addWidget(tag_panel_label)
+        
+        # 태그 버튼 패널 생성
+        self.tag_buttons_panel = TagButtonsPanel(self, self.on_tag_button_clicked)
+        
+        # 태그 버튼 패널을 스크롤 영역에 추가
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.tag_buttons_panel)
+        scroll_area.setMaximumHeight(100)  # 높이 제한
+        
+        tag_panel_layout.addWidget(scroll_area)
+        main_layout.addLayout(tag_panel_layout)
+        
+        # 태그 버튼 패널 업데이트
+        self.update_tag_buttons()
 
         # ---------------------------------------------------------------------
-        # (2) ListCtrl: 로그를 테이블 형태로 표시
+        # (2) TableWidget: 로그를 테이블 형태로 표시
         # ---------------------------------------------------------------------
-        # ID 컬럼은 내부 참조용으로 사용하고, 사용자에게는 보이지 않도록 너비 0 설정
-        self.list_ctrl = wx.ListCtrl(panel, style=wx.LC_REPORT)
-        self.list_ctrl.InsertColumn(0, "ID", width=0, format=wx.LIST_FORMAT_RIGHT)
-        self.list_ctrl.InsertColumn(1, "Timestamp", width=180, format=wx.LIST_FORMAT_CENTER)
-        self.list_ctrl.InsertColumn(2, "Message", width=340, format=wx.LIST_FORMAT_LEFT)
-        self.list_ctrl.InsertColumn(3, "Tags", width=200, format=wx.LIST_FORMAT_LEFT)
-        vbox.Add(self.list_ctrl, proportion=1, flag=wx.EXPAND | wx.ALL, border=5)
+        self.table_widget = QTableWidget()
+        self.table_widget.setColumnCount(4)
+        self.table_widget.setHorizontalHeaderLabels(["ID", "Timestamp", "Message", "Tags"])
+        self.table_widget.setColumnHidden(0, True)  # ID 컬럼 숨김
+        self.table_widget.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.table_widget.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.table_widget.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.table_widget.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table_widget.setSelectionMode(QTableWidget.ExtendedSelection)
+        main_layout.addWidget(self.table_widget)
 
         # ---------------------------------------------------------------------
         # (3) 삭제 버튼: 선택한 로그 항목들을 삭제
         # ---------------------------------------------------------------------
-        btn_panel = wx.Panel(panel)
-        btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        delete_btn = wx.Button(btn_panel, label="선택 삭제")
-        delete_btn.Bind(wx.EVT_BUTTON, self.on_delete)
-        btn_sizer.Add(delete_btn, 0, wx.ALL, 5)
-        btn_panel.SetSizer(btn_sizer)
-        vbox.Add(btn_panel, 0, wx.ALIGN_CENTER | wx.ALL, 5)
+        btn_layout = QHBoxLayout()
+        delete_btn = QPushButton("선택 삭제")
+        delete_btn.clicked.connect(self.on_delete)
+        btn_layout.addWidget(delete_btn)
+        btn_layout.setAlignment(Qt.AlignCenter)
+        main_layout.addLayout(btn_layout)
 
-        panel.SetSizer(vbox)
+        self.setLayout(main_layout)
         self.load_all_logs()
 
     def load_all_logs(self):
         """
-        DB에서 전체 로그를 가져와서 ListCtrl에 표시
+        DB에서 전체 로그를 가져와서 TableWidget에 표시
         """
         rows: List[Log] = self.log_service.retrieve_all_logs()
         self.load_rows(rows)
 
     def load_rows(self, rows):
         """
-        ListCtrl 초기화 후, rows 데이터(ID, created_date, timestamp, message, tags) 출력
+        TableWidget 초기화 후, rows 데이터(ID, start_date, message, tags) 출력
         """
-        self.list_ctrl.DeleteAllItems()
-        for row in rows:
-            # row 예: (id, created_date, timestamp, message, tags)
-            idx = self.list_ctrl.InsertItem(self.list_ctrl.GetItemCount(), str(row.id))
-            self.list_ctrl.SetItem(idx, 1, str(row.created_date))  # timestamp
-            self.list_ctrl.SetItem(idx, 2, str(row.message))  # message
-            self.list_ctrl.SetItem(idx, 3, json.dumps(row.tags))  # tags
+        self.table_widget.setRowCount(0)
+        
+        # 데이터가 없는 경우 메시지 표시
+        if not rows:
+            # 테이블에 "데이터가 없습니다" 메시지를 표시
+            self.table_widget.setRowCount(1)
+            self.table_widget.setColumnCount(4)
+            no_data_item = QTableWidgetItem("데이터가 없습니다")
+            no_data_item.setTextAlignment(Qt.AlignCenter)
+            # 첫 번째 열에 메시지 표시
+            self.table_widget.setItem(0, 1, no_data_item)
+            # 셀 병합
+            self.table_widget.setSpan(0, 1, 1, 3)
+            return
+            
+        for row_idx, row in enumerate(rows):
+            self.table_widget.insertRow(row_idx)
+            self.table_widget.setItem(row_idx, 0, QTableWidgetItem(str(row.id)))
+            self.table_widget.setItem(row_idx, 1, QTableWidgetItem(str(row.start_date)))
+            self.table_widget.setItem(row_idx, 2, QTableWidgetItem(str(row.message)))
+            
+            # 태그 ID를 태그 이름으로 변환
+            tag_text = ""
+            try:
+                if row.tags and row.tags != "[]":
+                    tag_ids = json.loads(row.tags)
+                    if tag_ids:
+                        tag_names = self.tag_service.get_tag_text(tag_ids)
+                        tag_text = ", ".join(tag_names)
+            except Exception as e:
+                ic(f"태그 변환 오류: {e}")
+                tag_text = str(row.tags)
+                
+            self.table_widget.setItem(row_idx, 3, QTableWidgetItem(tag_text))
 
-    def on_period_button(self, event, days):
+    def on_period_button(self, days):
         """
         기간 버튼 클릭 시 종료일에서 days일 만큼 빼서 시작일을 결정하고 검색 실행
         """
-        end_date_str = self.end_date_tc.GetValue().strip()
+        end_date_str = self.end_date_tc.text().strip()
         if not end_date_str:
             end_date_str = date.today().strftime("%Y-%m-%d")
-            self.end_date_tc.SetValue(end_date_str)
+            self.end_date_tc.setText(end_date_str)
         try:
             end_dt = datetime.strptime(end_date_str, "%Y-%m-%d").date()
         except ValueError:
-            wx.MessageBox(lang_res.error_messages['SEARCH_DATE'], lang_res.base_labels['ERROR'], wx.OK | wx.ICON_ERROR)
+            QMessageBox.critical(self, lang_res.base_labels['ERROR'], 
+                               lang_res.error_messages['SEARCH_DATE'])
             return
 
         start_dt = end_dt - timedelta(days=days)
         self.selected_start_date = start_dt.strftime("%Y-%m-%d")
-        self.on_search(None)
+        self.selected_end_date = end_date_str
+        self.on_search()
 
-    def on_search(self, event):
+    def on_search(self):
         """
         '검색' 버튼 클릭 시 날짜 범위와 태그 검색을 수행
         """
         start_date = self.selected_start_date
         end_date = self.selected_end_date
-        tag_keyword = self.tag_tc.GetValue().strip()
+        tag_keyword = self.tag_tc.text().strip().lower()  # 소문자로 변환
     
         # 날짜 범위 조건 처리
-        rows_date = set(self.log_service.retrieve_logs_by_period(start_date, end_date)) if start_date and end_date else set(self.log_service.retrieve_all_logs())
+        rows_date = self.log_service.retrieve_logs_by_period(start_date, end_date) if start_date and end_date else self.log_service.retrieve_all_logs()
+        
         # 태그 조건 처리
-        rows_tag = set(self.log_service.retrieve_logs_by_tag(tag_keyword)) if tag_keyword else set(self.log_service.retrieve_all_logs())
-        intersect_rows = rows_date.intersection(rows_tag)
-        sorted_rows = sorted(list(intersect_rows), key=lambda x: x[0], reverse=True)
+        if tag_keyword:
+            rows_tag = self.log_service.retrieve_logs_by_tag(tag_keyword)
+            
+            # ID 기반으로 교집합 찾기
+            date_ids = {log.id for log in rows_date}
+            tag_ids = {log.id for log in rows_tag}
+            common_ids = date_ids.intersection(tag_ids)
+            
+            # 교집합 ID에 해당하는 로그만 필터링
+            result_rows = [log for log in rows_date if log.id in common_ids]
+        else:
+            # 태그 키워드가 없으면 날짜 기준 결과만 사용
+            result_rows = rows_date
+            
+        # ID 기준 내림차순 정렬
+        sorted_rows = sorted(result_rows, key=lambda x: x.id, reverse=True)
         self.load_rows(sorted_rows)
 
-    def on_delete(self, event):
+    def on_delete(self):
         """
         선택된 로그 항목들을 삭제하는 이벤트 핸들러
         """
         # 선택된 항목 인덱스를 가져옴
-        selected_indices = []
-        index = self.list_ctrl.GetFirstSelected()
-        while index != -1:
-            selected_indices.append(index)
-            index = self.list_ctrl.GetNextSelected(index)
-
-        if not selected_indices:
-            wx.MessageBox("삭제할 로그를 선택하세요.", "알림", wx.OK | wx.ICON_INFORMATION)
+        selected_rows = self.table_widget.selectionModel().selectedRows()
+        
+        if not selected_rows:
+            QMessageBox.information(self, "알림", "삭제할 로그를 선택하세요.")
             return
 
-        answer = wx.MessageBox("선택한 로그를 삭제하시겠습니까?", "확인", wx.YES_NO | wx.ICON_QUESTION)
-        if answer != wx.YES:
+        answer = QMessageBox.question(self, "확인", "선택한 로그를 삭제하시겠습니까?", 
+                                    QMessageBox.Yes | QMessageBox.No)
+        if answer != QMessageBox.Yes:
             return
 
         ids_to_delete = []
-        for idx in selected_indices:
-            id_str = self.list_ctrl.GetItemText(idx, 0)
+        for index in selected_rows:
+            row = index.row()
+            id_str = self.table_widget.item(row, 0).text()
             try:
                 log_id = int(id_str)
                 ids_to_delete.append(log_id)
@@ -187,8 +265,33 @@ class LogDialog(wx.Dialog):
                 continue
 
         self.log_service.remove_logs_by_ids(ids_to_delete)
-        wx.MessageBox("선택한 로그가 삭제되었습니다.", "정보", wx.OK | wx.ICON_INFORMATION)
+        QMessageBox.information(self, "정보", "선택한 로그가 삭제되었습니다.")
         self.load_all_logs()
 
-    def on_close(self, event):
-        self.Destroy()
+    def center_on_screen(self):
+        """화면 중앙에 다이얼로그를 배치합니다."""
+        screen_geometry = self.screen().geometry()
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2
+        self.move(x, y)
+
+    def update_tag_buttons(self):
+        """
+        태그 버튼 패널을 업데이트합니다.
+        """
+        try:
+            # 태그 서비스에서 모든 태그 가져오기
+            tags = self.tag_service.get_tags()
+            ic("태그 목록 조회 성공", len(tags))
+            
+            # 태그 버튼 패널 업데이트
+            self.tag_buttons_panel.update_tags(tags)
+        except Exception as e:
+            ic("태그 버튼 패널 업데이트 실패", e)
+    
+    def on_tag_button_clicked(self, tag):
+        """
+        태그 버튼 클릭 시 해당 태그로 검색을 수행합니다.
+        """
+        self.tag_tc.setText(tag["name"])
+        self.on_search()

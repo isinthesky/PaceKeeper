@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+---
+
+# wxPython 에서 pyqt5 변환 작업
+
+## 1. 변환 작업 계획
+
+[qt-plan.md](mdc:docs/qt-plan.md)
+
+## 2. 변환 작업 가이드 
+
+[qt-change-guide.md](mdc:docs/qt-change-guide.md)
+
+## 3. 참고 코드
+
+[qt-main.md](mdc:docs/qt-main.md) [qt-views-mainwindow.md](mdc:docs/qt-views-mainwindow.md) [qt-ctrls-maincontroller.md](mdc:docs/qt-ctrls-maincontroller.md) [qt-views-control.md](mdc:docs/qt-views-control.md) [qt-views-settingsdlg.md](mdc:docs/qt-views-settingsdlg.md) [qt-ctrls-timercontroller.md](mdc:docs/qt-ctrls-timercontroller.md) [qt-views-breakdlg.md](mdc:docs/qt-views-breakdlg.md)
+
+## 4. 어플리케이션 점검
+
+[qt-change-summery.md](mdc:docs/qt-change-summery.md)
+

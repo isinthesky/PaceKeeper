@@ -1,0 +1,15 @@
+dist/
+docs/
+build/
+tests/
+
+.ruff_cache/
+.git/
+.vscode/
+
+.cursorignore
+.cursorrules
+.gitignore
+
+*.db
+*.spec

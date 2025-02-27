@@ -1,6 +1,11 @@
+# 이 파일은 더 이상 사용되지 않습니다.
+# PyQt5 변환 과정에서 timer_controller.py의 QTimer로 대체되었습니다.
+# 참조용으로 보관합니다.
+
 import threading
 import time
-import wx  # wx 모듈 추가
+# wx 모듈은 PyQt5로 변환되었으므로 더 이상 필요하지 않습니다.
+# import wx
 from typing import Callable, Optional
 
 class TimerThread(threading.Thread):
@@ -9,6 +14,8 @@ class TimerThread(threading.Thread):
     - update_callback: 남은 시간을 업데이트하는 콜백 함수 (문자열 인자)
     - on_finish: 타이머 종료 시 호출되는 콜백 함수
     - pauseable: 일시정지 기능 사용 여부
+    
+    참고: 이 클래스는 PyQt5 변환 과정에서 QTimer로 대체되었습니다.
     """
     def __init__(
         self,
@@ -40,7 +47,9 @@ class TimerThread(threading.Thread):
             mins, secs = divmod(remaining, 60)
             # 메인 스레드에서 UI 업데이트를 안전하게 수행
             try:
-                wx.CallAfter(self.update_callback, f"{mins:02d}:{secs:02d}")
+                # PyQt5에서는 QTimer.singleShot 또는 signal/slot을 사용합니다.
+                # wx.CallAfter(self.update_callback, f"{mins:02d}:{secs:02d}")
+                print("update_callback 호출 (더 이상 사용되지 않음):", f"{mins:02d}:{secs:02d}")
             except Exception as e:
                 print("update_callback 호출 에러:", e)
             time.sleep(1)
@@ -50,7 +59,9 @@ class TimerThread(threading.Thread):
         if self._running and self.on_finish:
             callback = self.on_finish
             self.on_finish = None  # 중복 호출 방지
-            wx.CallAfter(callback)
+            # PyQt5에서는 QTimer.singleShot 또는 signal/slot을 사용합니다.
+            # wx.CallAfter(callback)
+            print("on_finish 콜백 호출 (더 이상 사용되지 않음)")
 
     def stop(self):
         """타이머 종료 및 스레드 안전 종료 처리"""

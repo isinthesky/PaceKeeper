@@ -1,4 +1,5 @@
 import json
+import os
 from dataclasses import dataclass
 from typing import Dict
 from pathlib import Path
@@ -8,6 +9,10 @@ class LanguageResource:
     base_labels: Dict[str, str]
     title_labels: Dict[str, str]
     button_labels: Dict[str, str]
+    menu_labels: Dict[str, str]
+    tab_labels: Dict[str, str]
+    group_labels: Dict[str, str]
+    setting_labels: Dict[str, str]
     messages: Dict[str, str]
     error_messages: Dict[str, str]
 
@@ -32,6 +37,10 @@ def load_language_resource(language: str = "ko") -> LanguageResource:
         base_labels=data.get("BASE_LABELS", {}),
         title_labels=data.get("TITLE_LABELS", {}),
         button_labels=data.get("BUTTON_LABELS", {}),
+        menu_labels=data.get("MENU_LABELS", {}),
+        tab_labels=data.get("TAB_LABELS", {}),
+        group_labels=data.get("GROUP_LABELS", {}),
+        setting_labels=data.get("SETTING_LABELS", {}),
         messages=data.get("MESSAGES", {}),
         error_messages=data.get("ERROR_MESSAGES", {})
     )

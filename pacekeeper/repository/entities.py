@@ -57,5 +57,15 @@ class Log(Base):
     end_date = Column(String, nullable=True)
     state = Column(SmallInteger, default=1)
     
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "message": self.message,
+            "tags": self.tags,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "state": self.state
+        }
+    
     def __repr__(self):
         return f"<Log(message='{self.message}', tags='{self.tags}', start_date='{self.start_date}', end_date='{self.end_date}')>"

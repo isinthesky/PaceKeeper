@@ -5,7 +5,7 @@
         "VIEW_LOGS": "View Logs",
         "EXIT": "Exit",
         "WAIT": "Wait",
-        "STUDY": "Study",
+        "STUDY": "Work",
         "SAVE": "Save",
         "CANCEL": "Cancel",
         "SHORT_BREAK": "Short Break",
@@ -25,36 +25,75 @@
         "SUBMIT": "Submit"
     },
     "TITLE_LABELS": {
-      "MAIN_TITLE": "Pace Keeper",
-      "BREAK_DIALOG_TITLE": "Break",
-      "SETTINGS_TITLE": "Settings",
-      "LOGS_TITLE": "Logs"
+        "MAIN_TITLE": "Pace Keeper",
+        "BREAK_DIALOG_TITLE": "Break",
+        "SETTINGS_TITLE": "Settings",
+        "LOGS_TITLE": "Logs"
     },
     "BUTTON_LABELS": {
-        "START": "&Start",
-        "STOP": "S&top",
-        "PAUSE": "&Pause",
-        "RESUME": "&Resume",
-        "SUBMIT": "&Submit",
-        "SEARCH": "Sear&ch"
+        "START": "Start",
+        "STOP": "Stop",
+        "PAUSE": "Pause",
+        "RESUME": "Resume",
+        "SAVE": "Save",
+        "CANCEL": "Cancel",
+        "CLOSE": "Close",
+        "SUBMIT": "Submit",
+        "SEARCH": "Search"
+    },
+    "MENU_LABELS": {
+        "FILE": "File",
+        "EDIT": "Edit",
+        "VIEW": "View",
+        "HELP": "Help",
+        "SETTINGS": "Settings",
+        "LOGS": "Logs",
+        "CATEGORY": "Category",
+        "EXIT": "Exit",
+        "ABOUT": "About"
+    },
+    "TAB_LABELS": {
+        "TIMER": "Timer",
+        "SOUND": "Sound",
+        "VISUAL": "Visual",
+        "LANGUAGE": "Language"
+    },
+    "GROUP_LABELS": {
+        "TIMER_SETTINGS": "Timer Settings",
+        "SOUND_SETTINGS": "Sound Settings",
+        "VISUAL_SETTINGS": "Visual Settings",
+        "LANGUAGE_SETTINGS": "Language Settings"
+    },
+    "SETTING_LABELS": {
+        "STUDY_TIME": "Work Time (min):",
+        "SHORT_BREAK": "Short Break (min):",
+        "LONG_BREAK": "Long Break (min):",
+        "CYCLES": "Number of Cycles:",
+        "SOUND_ENABLE": "Enable Sound:",
+        "TTS_ENABLE": "Enable TTS:",
+        "ALARM_VOLUME": "Alarm Volume:",
+        "BREAK_COLOR": "Break Color:",
+        "LANGUAGE": "Language:"
     },
     "MESSAGES": {
         "START_BREAK": "Start your break!",
         "PACEKEEPER_LOGS": "PaceKeeper logs ready",
-        "STUDY_TIME": "Study time(min):",
-        "SHORT_BREAK": "Short break(min):",
-        "LONG_BREAK": "Long break(min):",
-        "SOUND_VOLUME": "Sound volume:",
-        "CYCLES": "Cycles:",
-        "RECENT_LOGS": "Recent logs (10)",
-        "TODO_INPUT": "Input your todo (#tag format)"
+        "RECENT_LOGS": "Recent 10 logs",
+        "TASK_DESCRIPTION": "Enter task (#tag format)",
+        "READY": "Ready",
+        "TIMER_STARTED": "Timer started",
+        "TIMER_PAUSED": "Timer paused",
+        "TIMER_RESUMED": "Timer resumed",
+        "TIMER_STOPPED": "Timer stopped",
+        "CONFIRM_EXIT": "Are you sure you want to exit?",
+        "ABOUT_TEXT": "PaceKeeper is an application for managing work and break times."
     },
     "ERROR_MESSAGES": {
         "DEFAULT": "Error occurred: {}",
-        "SEARCH_DATE": "Invalid date format. Use YYYY-MM-DD.",
-        "DATAMODEL": "DataModel not initialized.",
+        "SEARCH_DATE": "Invalid end date format. Please use YYYY-MM-DD format.",
+        "DATAMODEL": "DataModel is not set.",
         "SETTINGS_LOAD": "Settings load error: {}. Using defaults.",
         "SETTINGS_SAVE": "Settings save error: {}",
-        "ALARM_SOUND": "Alarm sound error: {}"
+        "ALARM_SOUND": "Alarm play error: {}"
     }
 }

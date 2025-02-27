@@ -51,11 +51,13 @@ LOG_CREATE_TABLE = '''
 
 # Settings keys
 SET_STUDY_TIME = 'study_time'
-SET_SHORT_BREAK = 'short_break'
-SET_LONG_BREAK = 'long_break'
-SET_CYCLES = 'cycles'
+SET_SHORT_BREAK_TIME = 'short_break_time'
+SET_LONG_BREAK_TIME = 'long_break_time'
+SET_POMODORO_CYCLES = 'pomodoro_cycles'
 SET_PADDING_SIZE = 'padding_size'
-SET_SOUND_VOLUME = 'sound_volume'
+SET_SOUND_ENABLE = 'sound_enable'
+SET_TTS_ENABLE = 'tts_enable'
+SET_ALARM_VOLUME = 'alarm_volume'
 SET_BREAK_COLOR = 'break_color'
 SET_LANGUAGE = 'language'
 SET_MAIN_DLG_WIDTH = 'main_dlg_width'
@@ -64,13 +66,19 @@ SET_MAIN_DLG_HEIGHT = 'main_dlg_height'
 # Default settings
 DEFAULT_SETTINGS = {
     SET_STUDY_TIME: 25,
-    SET_SHORT_BREAK: 5,
-    SET_LONG_BREAK: 15,
-    SET_CYCLES: 4,
+    SET_SHORT_BREAK_TIME: 5,
+    SET_LONG_BREAK_TIME: 15,
+    SET_POMODORO_CYCLES: 4,
     SET_PADDING_SIZE: 100,
-    SET_SOUND_VOLUME: 80,
+    SET_SOUND_ENABLE: True,
+    SET_TTS_ENABLE: False,
+    SET_ALARM_VOLUME: 80,
     SET_BREAK_COLOR: '#FDFFB6',
     SET_LANGUAGE: 'ko',
     SET_MAIN_DLG_WIDTH: 800,
-    SET_MAIN_DLG_HEIGHT: 400
+    SET_MAIN_DLG_HEIGHT: 550
 }
+
+# 사용 가능한 언어 설정
+AVAILABLE_LANGS = ['ko', 'en']
+AVAILABLE_LANG_LABELS = ['한국어', 'English']

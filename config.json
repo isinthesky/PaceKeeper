@@ -5,6 +5,12 @@
     "cycles": 4,
     "padding_size": 70,
     "sound_volume": 80,
-    "break_color": "#A8E6CF",
-    "language": "en"
+    "break_color": "#c8ea99",
+    "language": "en",
+    "short_break_time": 5,
+    "long_break_time": 15,
+    "pomodoro_cycles": 4,
+    "sound_enable": true,
+    "tts_enable": false,
+    "alarm_volume": 50
 }

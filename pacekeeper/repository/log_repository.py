@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import create_engine, desc, and_
+from sqlalchemy import create_engine, desc, and_, or_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -81,9 +81,24 @@ class LogRepository:
         session = Session()
         try:
             logs = session.query(Log).filter(Log.state >= 1).order_by(desc(Log.id)).all()
+            
+            # 세션이 닫히기 전에 모든 로그 객체의 속성을 미리 로드하여 새 객체 목록 생성
+            detached_logs = []
+            for log in logs:
+                detached_log = Log(
+                    id=log.id,
+                    start_date=log.start_date,
+                    end_date=log.end_date,
+                    message=log.message,
+                    tags=log.tags,
+                    state=log.state
+                )
+                detached_logs.append(detached_log)
+                
             self.desktop_logger.log_system_event("전체 로그 조회 성공")
-            return logs
-        except SQLAlchemyError:
+            return detached_logs
+        except SQLAlchemyError as e:
+            self.desktop_logger.log_error(f"전체 로그 조회 실패: {e}", exc_info=True)
             return []
         finally:
             session.close()
@@ -94,6 +109,12 @@ class LogRepository:
         """
         session = Session()
         try:
+            # 날짜 형식이 YYYY-MM-DD인 경우 시간 정보 추가
+            if len(start_date) == 10:  # YYYY-MM-DD 형식
+                start_date = f"{start_date} 00:00:00"
+            if len(end_date) == 10:  # YYYY-MM-DD 형식
+                end_date = f"{end_date} 23:59:59"
+                
             logs = session.query(Log).filter(
                 and_(
                     Log.start_date >= start_date,
@@ -101,9 +122,24 @@ class LogRepository:
                     Log.state >= 1
                 )
             ).order_by(desc(Log.id)).all()
+            
+            # 세션이 닫히기 전에 모든 로그 객체의 속성을 미리 로드하여 새 객체 목록 생성
+            detached_logs = []
+            for log in logs:
+                detached_log = Log(
+                    id=log.id,
+                    start_date=log.start_date,
+                    end_date=log.end_date,
+                    message=log.message,
+                    tags=log.tags,
+                    state=log.state
+                )
+                detached_logs.append(detached_log)
+                
             self.desktop_logger.log_system_event(f"기간({start_date} ~ {end_date}) 로그 조회 성공")
-            return logs
-        except SQLAlchemyError:
+            return detached_logs
+        except SQLAlchemyError as e:
+            self.desktop_logger.log_error(f"기간 로그 조회 실패: {e}", exc_info=True)
             return []
         finally:
             session.close()
@@ -111,16 +147,41 @@ class LogRepository:
     def get_logs_by_tag(self, tag_keyword: str) -> List[Log]:
         """
         지정된 태그를 포함하는 활성 로그 조회 메서드 (state가 1 이상)
+        태그 키워드는 메시지 내용과 태그 ID 모두에서 검색됩니다.
         """
         session = Session()
         try:
+            # 메시지 내용에서 태그 검색 (예: #test)
+            message_filter = Log.message.like(f"%#{tag_keyword}%")
+            
+            # 태그 ID에서 검색 (태그 이름이 저장된 태그 ID 검색)
+            tag_filter = Log.tags.like(f"%{tag_keyword}%")
+            
+            # 두 조건 중 하나라도 만족하는 로그 검색
             logs = session.query(Log).filter(
-                Log.tags.like(f"%{tag_keyword}%"),
-                Log.state >= 1
+                and_(
+                    or_(message_filter, tag_filter),
+                    Log.state >= 1
+                )
             ).order_by(desc(Log.id)).all()
+            
+            # 세션이 닫히기 전에 모든 로그 객체의 속성을 미리 로드하여 새 객체 목록 생성
+            detached_logs = []
+            for log in logs:
+                detached_log = Log(
+                    id=log.id,
+                    start_date=log.start_date,
+                    end_date=log.end_date,
+                    message=log.message,
+                    tags=log.tags,
+                    state=log.state
+                )
+                detached_logs.append(detached_log)
+                
             self.desktop_logger.log_system_event(f"태그({tag_keyword}) 로그 조회 성공")
-            return logs
-        except SQLAlchemyError:
+            return detached_logs
+        except SQLAlchemyError as e:
+            self.desktop_logger.log_error(f"태그 로그 조회 실패: {e}", exc_info=True)
             return []
         finally:
             session.close()
@@ -132,9 +193,24 @@ class LogRepository:
         session = Session()
         try:
             logs = session.query(Log).filter(Log.state >= 1).order_by(desc(Log.id)).limit(limit).all()
+            
+            # 세션이 닫히기 전에 모든 로그 객체의 속성을 미리 로드하여 새 객체 목록 생성
+            detached_logs = []
+            for log in logs:
+                detached_log = Log(
+                    id=log.id,
+                    start_date=log.start_date,
+                    end_date=log.end_date,
+                    message=log.message,
+                    tags=log.tags,
+                    state=log.state
+                )
+                detached_logs.append(detached_log)
+                
             self.desktop_logger.log_system_event(f"최근 {limit}개의 로그 조회 성공")
-            return logs
-        except SQLAlchemyError:
+            return detached_logs
+        except SQLAlchemyError as e:
+            self.desktop_logger.log_error(f"최근 로그 조회 실패: {e}", exc_info=True)
             return []
         finally:
             session.close()

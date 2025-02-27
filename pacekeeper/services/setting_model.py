@@ -8,7 +8,12 @@ lang_res = load_language_resource()
 
 class SettingsModel:
     def __init__(self, config_file=CONFIG_FILE):
-        self.config_file = config_file
+        # 사용자 홈 디렉토리에 .pacekeeper 폴더 생성
+        self.config_dir = os.path.join(os.path.expanduser('~'), '.pacekeeper')
+        os.makedirs(self.config_dir, exist_ok=True)
+        
+        # 설정 파일 경로 설정
+        self.config_file = os.path.join(self.config_dir, config_file)
         self.default_settings = dict(DEFAULT_SETTINGS)
         self.settings = dict(self.default_settings)
 
