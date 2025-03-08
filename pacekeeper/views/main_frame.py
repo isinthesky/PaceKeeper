@@ -172,11 +172,13 @@ class MainFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
         
-    def on_show_category(self, event): 
+    def on_show_category(self, event):
         """카테고리 다이얼로그 오픈"""
         dlg = CategoryDialog(self, self.config_ctrl)
         dlg.ShowModal()
         dlg.Destroy()
+        # After closing the CategoryDialog, update tag buttons to reflect updated category id and color
+        self.update_tag_buttons()
 
     def on_exit(self, event):
         """앱 종료 처리"""
@@ -240,7 +242,8 @@ class MainFrame(wx.Frame):
             self.pause_button.Disable()
             self.log_input_panel.set_value("")
             self.update_start_button_state()
-            self.restore_main_controls()  # 숨긴 컨트롤 복원 및 원래 창 크기로 복구
+            self.restore_main_controls() 
+            self.update_tag_buttons()
 
         self.break_dialog = BreakDialog(
             self, 

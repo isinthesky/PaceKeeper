@@ -39,8 +39,8 @@ class CategoryDialog(wx.Dialog):
         hbox.Add(controls_panel, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
 
         # TagButtonsPanel: 오른쪽에 배치
-        tag_panel = TagButtonsPanel(panel, on_tag_selected=self.add_tag_to_input)
-        hbox.Add(tag_panel, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
+        self.tag_panel = TagButtonsPanel(panel, on_tag_selected=self.add_tag_to_input)
+        hbox.Add(self.tag_panel, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
 
         # 좌우 영역을 vbox에 추가 (비율 1로 지정하여 공간을 동일하게 나눔)
         vbox.Add(hbox, proportion=1, flag=wx.EXPAND)
@@ -60,49 +60,57 @@ class CategoryDialog(wx.Dialog):
         self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
         
         tags = self.tag_service.get_tags()
-        ic("tags", tags)
-        tag_panel.update_tags(tags)
+        self.tag_panel.update_tags(tags)
         
     def add_tag_to_input(self, tag):
-        ic("add_tag_to_input", tag)
         self.selected_tag = tag
         
     def on_key_down(self, event):
         """
         다이얼로그에서 키 입력 이벤트를 처리하는 핸들러입니다.
-        EVT_CHAR_HOOK을 이용하여 키 입력을 최상위 창에서 직접 받을 수 있습니다.
+        - Ctrl + 숫자 키: 선택된 태그의 카테고리 ID를 업데이트합니다.
+        - 일반 키 입력: 텍스트 컨트롤에 입력되도록 이벤트를 전달합니다.
         """
         keycode = event.GetKeyCode()
-        ic("키 입력 이벤트:", keycode)
+        ctrl_down = event.ControlDown()
+        mod_key = event.GetModifiers()
+        alt_down = event.AltDown()
+        shift_down = event.ShiftDown()
         
-        select_number  = keycode - 48
+        ic("on_key_down", keycode, ctrl_down, mod_key, alt_down, shift_down)
         
-        if select_number < 0 or select_number > 9:
-            return
-                
-        if not self.selected_tag:
-            ic("selected_tag가 없습니다.")
-            return
+        # Ctrl + 숫자 키 처리 (0-9)
+        if ctrl_down and keycode >= 48 and keycode <= 57:
+            select_number = keycode - 48
+            ic("Ctrl + 숫자 키 입력:", select_number)
             
-        ic("숫자 키 입력", select_number)
-        ic("selected_tag", self.selected_tag)
-        
-        category = self.category_service.get_category(select_number)
-        ic("category", category)
-        
-        if not category:
-            ic("category가 없습니다.")
-            return
-        
-        tag = self.tag_service.get_tag(self.selected_tag["id"])
-        ic("tag", tag)
-        
-        tag.category_id = category.id
-        
-        updated_tag = self.tag_service.update_tag(tag)
-        ic("updated_tag", updated_tag)
-        
-        event.Skip()  # 이벤트를 다른 핸들러로 전달
+            if not self.selected_tag:
+                ic("selected_tag가 없습니다.")
+                event.Skip()
+                return
+                
+            category = self.category_service.get_category(select_number)
+            ic("category", category)
+            
+            if not category:
+                ic("category가 없습니다.")
+                event.Skip()
+                return
+            
+            tag = self.tag_service.get_tag(self.selected_tag.id)
+            ic("tag", tag)
+            
+            tag.category_id = category.id
+            
+            updated_tag = self.tag_service.update_tag(tag)
+            ic("updated_tag", updated_tag)
+            
+            # 갱신된 태그 정보를 반영하여 버튼 색상 업데이트
+            updated_tags = self.tag_service.get_tags()
+            self.tag_panel.update_tags(updated_tags)
+        else:
+            # 일반 키 입력은 기본 처리로 전달 (텍스트 컨트롤 등에 입력)
+            event.Skip()
         
     def on_close(self, event):
         self.EndModal(wx.ID_CANCEL)

@@ -134,19 +134,17 @@ class MainController:
             setattr(log, "tag_text", tag_list)
             ic("tag_text", tag_list)
             
-            unique_logs.append(log)
+            log_dict = log.to_dict()
+            log_dict["tag_text"] = tag_list
+            ic("log_dict", log_dict)
+            
+            unique_logs.append(log_dict)
             seen_messages.add(message)
             if len(unique_logs) >= 10:
                 break
-                        
-        # 최근 로그 UI 컨트롤 업데이트
+            
+            
         self.main_frame.recent_logs.update_logs(logs=unique_logs)
-
-        ic("unique_logs", unique_logs)
-                        
-        tag_text = self.tag_service.get_tag_text(log.tags)
-        ic("tag_text", tag_text)
-        # self.main_frame.tag_panel.update_tags(list(tags))
 
     def get_all_logs(self):
         """

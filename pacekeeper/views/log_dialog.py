@@ -5,6 +5,7 @@ from typing import List
 from datetime import date, datetime, timedelta
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.services.log_service import LogService
+from pacekeeper.services.category_service import CategoryService
 from pacekeeper.repository.entities import Log
 from pacekeeper.consts.labels import load_language_resource
 from icecream import ic
@@ -17,7 +18,7 @@ class LogDialog(wx.Dialog):
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
         self.log_service = LogService()
-
+        self.category_service = CategoryService()
         # 종료일 기본값: 오늘
         end_dt = date.today()
         start_dt = end_dt - timedelta(days=90)
@@ -86,9 +87,10 @@ class LogDialog(wx.Dialog):
         # ID 컬럼은 내부 참조용으로 사용하고, 사용자에게는 보이지 않도록 너비 0 설정
         self.list_ctrl = wx.ListCtrl(panel, style=wx.LC_REPORT)
         self.list_ctrl.InsertColumn(0, "ID", width=0, format=wx.LIST_FORMAT_RIGHT)
-        self.list_ctrl.InsertColumn(1, "Timestamp", width=180, format=wx.LIST_FORMAT_CENTER)
-        self.list_ctrl.InsertColumn(2, "Message", width=340, format=wx.LIST_FORMAT_LEFT)
-        self.list_ctrl.InsertColumn(3, "Tags", width=200, format=wx.LIST_FORMAT_LEFT)
+        self.list_ctrl.InsertColumn(1, "start_date", width=180, format=wx.LIST_FORMAT_CENTER)
+        self.list_ctrl.InsertColumn(2, "end_date", width=180, format=wx.LIST_FORMAT_CENTER)
+        self.list_ctrl.InsertColumn(3, "Message", width=340, format=wx.LIST_FORMAT_LEFT)
+        self.list_ctrl.InsertColumn(4, "Tags", width=200, format=wx.LIST_FORMAT_LEFT)
         vbox.Add(self.list_ctrl, proportion=1, flag=wx.EXPAND | wx.ALL, border=5)
 
         # ---------------------------------------------------------------------
@@ -110,19 +112,27 @@ class LogDialog(wx.Dialog):
         DB에서 전체 로그를 가져와서 ListCtrl에 표시
         """
         rows: List[Log] = self.log_service.retrieve_all_logs()
+        rows  = rows if rows else []
         self.load_rows(rows)
 
-    def load_rows(self, rows):
-        """
-        ListCtrl 초기화 후, rows 데이터(ID, created_date, timestamp, message, tags) 출력
-        """
+    def load_rows(self, logs: List[Log]):
         self.list_ctrl.DeleteAllItems()
-        for row in rows:
-            # row 예: (id, created_date, timestamp, message, tags)
+        
+        categories = self.category_service.get_categories()
+        cat_dict = {category.id: category.name for category in categories}
+        
+        for row in logs:
             idx = self.list_ctrl.InsertItem(self.list_ctrl.GetItemCount(), str(row.id))
-            self.list_ctrl.SetItem(idx, 1, str(row.created_date))  # timestamp
-            self.list_ctrl.SetItem(idx, 2, str(row.message))  # message
-            self.list_ctrl.SetItem(idx, 3, json.dumps(row.tags))  # tags
+            # 생성 일시를 올바른 필드 created_at으로 변경
+            self.list_ctrl.SetItem(idx, 1, str(row.start_date))  # timestamp
+            self.list_ctrl.SetItem(idx, 2, str(row.end_date))  
+            self.list_ctrl.SetItem(idx, 3, str(row.message))
+            
+            # row.tags가 숫자 배열로 구성된 경우, 카테고리 id를 이름으로 변환
+            # 예: row.tags = [1, 2] => ['Work', 'Personal']
+            tag_names = [cat_dict.get(tag_id, str(tag_id)) for tag_id in row.tags]
+            # tag_names를 콤마로 join 하여 표시
+            self.list_ctrl.SetItem(idx, 4, ", ".join(tag_names))
 
     def on_period_button(self, event, days):
         """

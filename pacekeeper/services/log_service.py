@@ -37,16 +37,12 @@ class LogService:
             for tag in tags_list:
                 try:
                     tag_entity = self.tag_repo.add_tag(tag)
-                    ic("tag_entity", tag_entity)
                     tag_ids.append(tag_entity.id)
-                    ic("tag_ids", tag_ids)
                 except Exception as e:
                     self.logger.log_error("태그 추가 실패", exc_info=True)
 
         # 태그 ID 리스트를 JSON 형식으로 변환하여 저장
         tags_json = json.dumps(tag_ids)
-        
-        ic(tags_json)
 
         new_log = Log(
             start_date=start_date,
@@ -102,10 +98,8 @@ class LogService:
         """
         try:
             logs = self.repository.get_recent_logs(limit)
-            for log in logs:
-                ic("log", log.__dict__)
             self.logger.log_system_event(f"최근 {limit}개의 로그 조회 성공")
-            return logs
+            return logs if logs else []
         except Exception as e:
             self.logger.log_error("최근 로그 조회 실패", exc_info=True)
             return []

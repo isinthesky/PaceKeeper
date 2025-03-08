@@ -172,7 +172,7 @@ class TagButtonsPanel(wx.Panel):
         self.service = CategoryService()
         self.selected_tag = None
             
-    def update_tags(self, tags:list[dict]):
+    def update_tags(self, tags:list[Tag]):
         """
         태그 버튼 업데이트 메서드.
         """
@@ -184,10 +184,10 @@ class TagButtonsPanel(wx.Panel):
                 
         for tag in tags:
             if tag:
-                btn = wx.Button(self, label=tag["name"])
+                btn = wx.Button(self, label=tag.name)
                 btn.Bind(wx.EVT_BUTTON, lambda event, t=tag: self.on_tag_selected(t))
                 
-                category = color_set.get(tag["category_id"])
+                category = color_set.get(tag.category_id)
                 if category:
                     btn.SetBackgroundColour(category.color)
                     

@@ -33,15 +33,6 @@ class Tag(Base):
     description = Column(Text, nullable=True, default="")
     category_id = Column(Integer, nullable=False, default=0)
     state = Column(SmallInteger, default=1)
-    
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "category_id": self.category_id,
-            "state": self.state
-        }
         
     def __repr__(self):
         return f"<id={self.id}, name='{self.name}', description='{self.description}', category_id='{self.category_id}'>"
@@ -57,5 +48,14 @@ class Log(Base):
     end_date = Column(String, nullable=True)
     state = Column(SmallInteger, default=1)
     
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "message": self.message,
+            "tags": self.tags,
+            "start_date": self.start_date,
+            "end_date": self.end_date
+        }
+        
     def __repr__(self):
         return f"<Log(message='{self.message}', tags='{self.tags}', start_date='{self.start_date}', end_date='{self.end_date}')>"

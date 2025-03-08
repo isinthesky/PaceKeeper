@@ -19,7 +19,6 @@ class TagService:
         """
         태그 ID 목록을 받아 태그 이름을 문자열로 변환합니다.
         """
-        ic("get_tag_text", tag_ids)
         tag_texts = []
         for tag_id in tag_ids:
             tag:Tag = self.repository.get_tag(tag_id)
@@ -41,12 +40,11 @@ class TagService:
             self.logger.log_error("태그 조회 실패", exc_info=True)
             return None
 
-    def get_tags(self) -> list[dict]:
+    def get_tags(self) -> list[Tag]:
         """
         모든 태그 목록을 반환합니다.
         """
-        tags: List[Tag] = self.repository.get_tags()
-        return [tag.to_dict() for tag in tags]
+        return self.repository.get_tags()
 
     def update_tag(self, tag: Tag) -> Optional[Tag]:
         """

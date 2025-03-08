@@ -49,7 +49,6 @@ class TagRepository:
             return tag
         except Exception as e:
             session.rollback()
-            ic("add_tag_error", e)
             self.desktop_logger.log_error("태그 추가 실패", exc_info=True)
             raise e
         finally:
@@ -69,7 +68,7 @@ class TagRepository:
         finally:
             session.close()
     
-    def get_tags(self) -> List[Tag]:
+    def get_tags(self) -> list[Tag]:
         """
         모든 활성 태그를 조회합니다.
         """

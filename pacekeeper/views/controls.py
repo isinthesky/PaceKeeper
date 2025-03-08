@@ -53,7 +53,7 @@ class RecentLogsControl(wx.Panel):
         # 초기 데이터 로드를 제한된 개수의 로그를 불러옵니다.
         self.update_logs(limit=10)
 
-    def update_logs(self, logs:list[any]=None, limit=50):
+    def update_logs(self, logs:list[any]=[], limit=50):
         """
         리스트 컨트롤의 항목들을 최신 로그로 업데이트합니다.
         
@@ -65,9 +65,9 @@ class RecentLogsControl(wx.Panel):
         logs = logs[:limit] if logs else []
         
         for idx, row in enumerate(reversed(logs)):
-            self.list_ctrl.InsertItem(idx, row.start_date)
-            self.list_ctrl.SetItem(idx, 1, row.message)
-            self.list_ctrl.SetItem(idx, 2, row.tag_text)
+            self.list_ctrl.InsertItem(idx, row["start_date"])
+            self.list_ctrl.SetItem(idx, 1, row["message"])
+            self.list_ctrl.SetItem(idx, 2, row["tag_text"])
         
         # 로그 업데이트가 완료되면 콜백으로 태그 버튼 업데이트 진행
         if self.on_logs_updated:
@@ -83,7 +83,7 @@ class TagButtonsPanel(wx.Panel):
         self.service = CategoryService()
         self.selected_tag = None
         
-    def update_tags(self, tags:list[dict]):
+    def update_tags(self, tags:list[Tag]):
         """
         태그 버튼 업데이트 메서드.
         """
@@ -98,10 +98,10 @@ class TagButtonsPanel(wx.Panel):
         
         for tag in tags:
             if tag:         
-                btn = wx.Button(self, label=tag["name"])
+                btn = wx.Button(self, label=tag.name)
                 btn.Bind(wx.EVT_BUTTON, lambda event, t=tag: self.on_tag_selected(t))
             
-                category = color_set.get(tag["category_id"])
+                category = color_set.get(tag.category_id)
                 if category:
                     btn.SetBackgroundColour(category.color)
 
