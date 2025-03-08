@@ -19,6 +19,19 @@ class CategoryDialog(wx.Dialog):
         self.selected_tag = None
         self.InitUI()
         self.Center()
+        # 초기 데이터 로드
+        self.refresh_data()
+
+    def refresh_data(self):
+        """
+        카테고리 목록과 태그 목록을 새로고침합니다.
+        이 메서드는 카테고리나 태그가 변경될 때마다 호출해야 합니다.
+        """
+        # 카테고리 목록 갱신
+        self.controls_panel.update_category_list()
+        # 태그 목록 갱신
+        tags = self.tag_service.get_tags()
+        self.tag_panel.update_tags(tags)
 
     def InitUI(self):
         panel = wx.Panel(self)
@@ -34,9 +47,9 @@ class CategoryDialog(wx.Dialog):
         # 좌우 영역용 Horizontal BoxSizer 생성
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        # CategoryControlsPanel: 왼쪽에 배치
-        controls_panel = CategoryControlsPanel(panel)
-        hbox.Add(controls_panel, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
+        # CategoryControlsPanel: 왼쪽에 배치 (인스턴스 변수로 저장)
+        self.controls_panel = CategoryControlsPanel(panel)
+        hbox.Add(self.controls_panel, proportion=1, flag=wx.EXPAND | wx.ALL, border=10)
 
         # TagButtonsPanel: 오른쪽에 배치
         self.tag_panel = TagButtonsPanel(panel, on_tag_selected=self.add_tag_to_input)
@@ -59,9 +72,6 @@ class CategoryDialog(wx.Dialog):
         # 키 입력 이벤트 처리를 위한 바인딩 추가 (다이얼로그 내에서 키 입력을 캡처)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
         
-        tags = self.tag_service.get_tags()
-        self.tag_panel.update_tags(tags)
-        
     def add_tag_to_input(self, tag):
         self.selected_tag = tag
         
@@ -73,13 +83,11 @@ class CategoryDialog(wx.Dialog):
         """
         keycode = event.GetKeyCode()
         ctrl_down = event.ControlDown()
-        mod_key = event.GetModifiers()
-        alt_down = event.AltDown()
-        shift_down = event.ShiftDown()
         
-        ic("on_key_down", keycode, ctrl_down, mod_key, alt_down, shift_down)
+        if keycode == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_CANCEL)
+            return
         
-        # Ctrl + 숫자 키 처리 (0-9)
         if ctrl_down and keycode >= 48 and keycode <= 57:
             select_number = keycode - 48
             ic("Ctrl + 숫자 키 입력:", select_number)
@@ -106,8 +114,7 @@ class CategoryDialog(wx.Dialog):
             ic("updated_tag", updated_tag)
             
             # 갱신된 태그 정보를 반영하여 버튼 색상 업데이트
-            updated_tags = self.tag_service.get_tags()
-            self.tag_panel.update_tags(updated_tags)
+            self.refresh_data()
         else:
             # 일반 키 입력은 기본 처리로 전달 (텍스트 컨트롤 등에 입력)
             event.Skip()

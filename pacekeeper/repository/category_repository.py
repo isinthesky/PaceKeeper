@@ -39,10 +39,18 @@ class CategoryRepository:
                 category = Category(name=name, description=description, color=color, state=1)
                 session.add(category)
                 session.commit()
+                # 세션에서 객체를 분리하기 전에 필요한 정보를 새 객체에 복사
+                result = Category(id=category.id, name=category.name, 
+                                 description=category.description, 
+                                 color=category.color, state=category.state)
                 self.desktop_logger.log_system_event(f"카테고리 추가 완료: {name}")
             else:
+                # 이미 존재하는 카테고리의 경우에도 정보를 새 객체에 복사
+                result = Category(id=category.id, name=category.name, 
+                                 description=category.description, 
+                                 color=category.color, state=category.state)
                 self.desktop_logger.log_system_event(f"카테고리 이미 존재함: {name}")
-            return category
+            return result
         except Exception as e:
             session.rollback()
             self.desktop_logger.log_error("카테고리 추가 실패", exc_info=True)
@@ -58,8 +66,12 @@ class CategoryRepository:
         try:
             category = session.query(Category).filter(Category.id == category_id, Category.state >= 1).first()
             if category:
+                # 세션에서 객체를 분리하기 전에 필요한 정보를 새 객체에 복사
+                result = Category(id=category.id, name=category.name, 
+                                 description=category.description, 
+                                 color=category.color, state=category.state)
                 self.desktop_logger.log_system_event(f"카테고리 조회 성공: {category.name}")
-                return category
+                return result
             else:
                 self.desktop_logger.log_system_event(f"카테고리 조회 실패: ID {category_id}")
                 return None
@@ -76,8 +88,14 @@ class CategoryRepository:
         session: SessionType = Session()
         try:
             categories = session.query(Category).filter(Category.state >= 1).order_by(Category.id).all()
+            # 세션에서 객체를 분리하기 전에 필요한 정보를 새 객체에 복사
+            result = []
+            for category in categories:
+                result.append(Category(id=category.id, name=category.name, 
+                                      description=category.description, 
+                                      color=category.color, state=category.state))
             self.desktop_logger.log_system_event("전체 카테고리 조회 성공")
-            return categories
+            return result
         except Exception as e:
             self.desktop_logger.log_error("카테고리 조회 실패", exc_info=True)
             return []

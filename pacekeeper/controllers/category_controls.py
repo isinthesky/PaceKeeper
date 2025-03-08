@@ -84,6 +84,15 @@ class CategoryControlsPanel(wx.Panel):
             wx.MessageBox(f"카테고리 생성 완료 {name}", "정보", wx.OK | wx.ICON_INFORMATION)
             self.clear_form()
             self.update_category_list()
+            
+            # 부모 다이얼로그의 refresh_data 메서드 호출 (있는 경우)
+            parent = self.GetParent()
+            while parent:
+                if hasattr(parent, 'refresh_data') and callable(parent.refresh_data):
+                    parent.refresh_data()
+                    break
+                parent = parent.GetParent()
+                
         except Exception as e:
             wx.MessageBox(f"카테고리 생성 실패 {e}", "오류", wx.OK | wx.ICON_ERROR)
 
@@ -105,6 +114,15 @@ class CategoryControlsPanel(wx.Panel):
             wx.MessageBox("카테고리 수정 완료", "정보", wx.OK | wx.ICON_INFORMATION)
             self.clear_form()
             self.update_category_list()
+            
+            # 부모 다이얼로그의 refresh_data 메서드 호출 (있는 경우)
+            parent = self.GetParent()
+            while parent:
+                if hasattr(parent, 'refresh_data') and callable(parent.refresh_data):
+                    parent.refresh_data()
+                    break
+                parent = parent.GetParent()
+                
         except Exception as e:
             wx.MessageBox(f"카테고리 수정 실패 {e}", "오류", wx.OK | wx.ICON_ERROR)
 
@@ -123,6 +141,15 @@ class CategoryControlsPanel(wx.Panel):
             wx.MessageBox("카테고리 삭제 완료", "정보", wx.OK | wx.ICON_INFORMATION)
             self.clear_form()
             self.update_category_list()
+            
+            # 부모 다이얼로그의 refresh_data 메서드 호출 (있는 경우)
+            parent = self.GetParent()
+            while parent:
+                if hasattr(parent, 'refresh_data') and callable(parent.refresh_data):
+                    parent.refresh_data()
+                    break
+                parent = parent.GetParent()
+                
         except Exception as e:
             wx.MessageBox(f"카테고리 삭제 실패 {e}", "오류", wx.OK | wx.ICON_ERROR)
 

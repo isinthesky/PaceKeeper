@@ -45,8 +45,11 @@ class TagRepository:
                 self.desktop_logger.log_system_event(f"태그 추가 완료: {name}")
             else:
                 self.desktop_logger.log_system_event(f"태그 이미 존재함: {name}")
-                
-            return tag
+            
+            # 세션에서 객체를 분리하기 전에 필요한 정보를 새 객체에 복사
+            result = Tag(id=tag.id, name=tag.name, description=tag.description, 
+                        category_id=tag.category_id, state=tag.state)
+            return result
         except Exception as e:
             session.rollback()
             self.desktop_logger.log_error("태그 추가 실패", exc_info=True)
@@ -61,7 +64,12 @@ class TagRepository:
         session: SessionType = Session()
         try:
             tag = session.query(Tag).filter(Tag.id == tag_id).first()
-            return tag
+            if tag:
+                # 세션에서 객체를 분리하기 전에 필요한 정보를 새 객체에 복사
+                result = Tag(id=tag.id, name=tag.name, description=tag.description, 
+                            category_id=tag.category_id, state=tag.state)
+                return result
+            return None
         except Exception as e:
             self.desktop_logger.log_error(f"태그 조회 실패: {e}", exc_info=True)
             return None
@@ -75,8 +83,13 @@ class TagRepository:
         session: SessionType = Session()
         try:
             tags = session.query(Tag).filter(Tag.state >= 1).order_by(desc(Tag.id)).all()
+            # 세션에서 객체를 분리하기 전에 필요한 정보를 새 객체에 복사
+            result = []
+            for tag in tags:
+                result.append(Tag(id=tag.id, name=tag.name, description=tag.description, 
+                                 category_id=tag.category_id, state=tag.state))
             self.desktop_logger.log_system_event("전체 태그 조회 성공")
-            return tags
+            return result
         except Exception as e:
             self.desktop_logger.log_error("태그 조회 실패", exc_info=True)
             return []
@@ -99,14 +112,18 @@ class TagRepository:
                     tag.category_id = category_id
                 session.commit()
                 session.refresh(tag)
+                # 세션에서 객체를 분리하기 전에 필요한 정보를 새 객체에 복사
+                result = Tag(id=tag.id, name=tag.name, description=tag.description, 
+                            category_id=tag.category_id, state=tag.state)
                 self.desktop_logger.log_system_event(f"태그 업데이트 완료: ID {tag_id}")
-                return tag
+                return result
             else:
                 self.desktop_logger.log_system_event(f"업데이트할 태그가 존재하지 않음: ID {tag_id}")
                 return None
         except Exception as e:
             session.rollback()
             self.desktop_logger.log_error("태그 업데이트 실패", exc_info=True)
+            return None
         finally:
             session.close()
     
