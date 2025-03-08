@@ -208,6 +208,8 @@ class SettingsDialog(wx.Dialog):
 
         # 이벤트 바인딩
         btn_ok.Bind(wx.EVT_BUTTON, self.on_save)
+        # ESC 키 이벤트 바인딩 추가
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
 
     def on_color_selected(self, clicked_panel):
         """
@@ -239,3 +241,15 @@ class SettingsDialog(wx.Dialog):
         }
         self.config.update_settings(new_settings)
         self.EndModal(wx.ID_OK)
+
+    def on_key_down(self, event):
+        """
+        키 입력 이벤트를 처리하는 핸들러입니다.
+        ESC 키를 누르면 다이얼로그를 닫습니다.
+        """
+        keycode = event.GetKeyCode()
+        
+        if keycode == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_CANCEL)
+        else:
+            event.Skip()  # 다른 키 입력은 기본 처리로 전달

@@ -5,7 +5,7 @@ from typing import List
 from datetime import date, datetime, timedelta
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.services.log_service import LogService
-from pacekeeper.services.category_service import CategoryService
+from pacekeeper.services.tag_service import TagService
 from pacekeeper.repository.entities import Log
 from pacekeeper.consts.labels import load_language_resource
 from icecream import ic
@@ -18,7 +18,7 @@ class LogDialog(wx.Dialog):
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
         self.log_service = LogService()
-        self.category_service = CategoryService()
+        self.tag_service = TagService()
         # 종료일 기본값: 오늘
         end_dt = date.today()
         start_dt = end_dt - timedelta(days=90)
@@ -58,7 +58,10 @@ class LogDialog(wx.Dialog):
         for label, days in period_buttons:
             btn = wx.Button(search_panel, label=label, size=(40, -1))
             btn.Bind(wx.EVT_BUTTON, lambda evt, d=days: self.on_period_button(evt, d))
-            search_sizer.Add(btn, 0, wx.RIGHT, 5)
+            search_sizer.Add(btn, flag=wx.ALL, border=5)
+            
+        # ESC 키 이벤트 바인딩 추가
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
 
         # 종료일 (기본값: 오늘)
         search_sizer.Add(wx.StaticText(search_panel, label=lang_res.base_labels['SEARCH_DATE']),
@@ -87,9 +90,9 @@ class LogDialog(wx.Dialog):
         # ID 컬럼은 내부 참조용으로 사용하고, 사용자에게는 보이지 않도록 너비 0 설정
         self.list_ctrl = wx.ListCtrl(panel, style=wx.LC_REPORT)
         self.list_ctrl.InsertColumn(0, "ID", width=0, format=wx.LIST_FORMAT_RIGHT)
-        self.list_ctrl.InsertColumn(1, "start_date", width=180, format=wx.LIST_FORMAT_CENTER)
-        self.list_ctrl.InsertColumn(2, "end_date", width=180, format=wx.LIST_FORMAT_CENTER)
-        self.list_ctrl.InsertColumn(3, "Message", width=340, format=wx.LIST_FORMAT_LEFT)
+        self.list_ctrl.InsertColumn(1, "Start Time", width=180, format=wx.LIST_FORMAT_CENTER)
+        self.list_ctrl.InsertColumn(2, "End Time", width=180, format=wx.LIST_FORMAT_CENTER)
+        self.list_ctrl.InsertColumn(3, "Message", width=300, format=wx.LIST_FORMAT_LEFT)
         self.list_ctrl.InsertColumn(4, "Tags", width=200, format=wx.LIST_FORMAT_LEFT)
         vbox.Add(self.list_ctrl, proportion=1, flag=wx.EXPAND | wx.ALL, border=5)
 
@@ -118,8 +121,10 @@ class LogDialog(wx.Dialog):
     def load_rows(self, logs: List[Log]):
         self.list_ctrl.DeleteAllItems()
         
-        categories = self.category_service.get_categories()
-        cat_dict = {category.id: category.name for category in categories}
+        tags = self.tag_service.get_tags()
+        tag_dict = {tag.id: tag.name for tag in tags}
+        
+        ic("태그 사전:", tag_dict)
         
         for row in logs:
             idx = self.list_ctrl.InsertItem(self.list_ctrl.GetItemCount(), str(row.id))
@@ -128,11 +133,30 @@ class LogDialog(wx.Dialog):
             self.list_ctrl.SetItem(idx, 2, str(row.end_date))  
             self.list_ctrl.SetItem(idx, 3, str(row.message))
             
-            # row.tags가 숫자 배열로 구성된 경우, 카테고리 id를 이름으로 변환
-            # 예: row.tags = [1, 2] => ['Work', 'Personal']
-            tag_names = [cat_dict.get(tag_id, str(tag_id)) for tag_id in row.tags]
-            # tag_names를 콤마로 join 하여 표시
-            self.list_ctrl.SetItem(idx, 4, ", ".join(tag_names))
+            ic("로그 태그:", row.tags)
+            
+            # 태그 ID 목록 처리
+            tag_names = []
+            
+            try:
+                # 문자열을 리스트로 변환 시도
+                import ast
+                tag_ids = ast.literal_eval(row.tags)
+                if isinstance(tag_ids, list):
+                    for tag_id in tag_ids:
+                        if tag_id in tag_dict:
+                            tag_names.append(tag_dict[tag_id])
+            except (ValueError, SyntaxError):
+                # 쉼표로 구분된 문자열로 처리
+                tag_ids = [tid.strip() for tid in row.tags.replace('[', '').replace(']', '').split(',')]
+                for tag_id in tag_ids:
+                    if tag_id and tag_id.isdigit() and int(tag_id) in tag_dict:
+                        tag_names.append(tag_dict[int(tag_id)])
+            
+            # 태그 이름을 쉼표로 구분하여 표시
+            tag_names_str = ", ".join(tag_names)
+            ic("태그 이름:", tag_names_str)
+            self.list_ctrl.SetItem(idx, 4, tag_names_str)
 
     def on_period_button(self, event, days):
         """
@@ -202,3 +226,15 @@ class LogDialog(wx.Dialog):
 
     def on_close(self, event):
         self.Destroy()
+
+    def on_key_down(self, event):
+        """
+        키 입력 이벤트를 처리하는 핸들러입니다.
+        ESC 키를 누르면 다이얼로그를 닫습니다.
+        """
+        keycode = event.GetKeyCode()
+        
+        if keycode == wx.WXK_ESCAPE:
+            self.EndModal(wx.ID_CANCEL)
+        else:
+            event.Skip()  # 다른 키 입력은 기본 처리로 전달

@@ -108,8 +108,8 @@ class MainFrame(wx.Frame):
             
         self.pause_button.Disable()
 
-        button_sizer.Add(self.start_button, proportion=1, flag=wx.EXPAND | wx.RIGHT, border=15)
-        button_sizer.Add(self.pause_button, proportion=1, flag=wx.EXPAND | wx.LEFT, border=15)
+        button_sizer.Add(self.start_button, proportion=1, flag=wx.EXPAND | wx.RIGHT, border=5)
+        button_sizer.Add(self.pause_button, proportion=1, flag=wx.EXPAND | wx.LEFT, border=5)
         self.button_panel.SetSizer(button_sizer)
         self.main_sizer.Add(self.button_panel, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=20)
 
@@ -217,10 +217,9 @@ class MainFrame(wx.Frame):
             self.pause_button.SetLabel(lang_res.button_labels.get('PAUSE', "PAUSE"))
         
     def add_tag_to_input(self, tag):
-        current = self.log_input_panel.get_value()
-        if tag not in current:
-            new_text = f"{current} #{tag['name']}" if current else f"#{tag['name']}"
-            self.log_input_panel.set_value(new_text.strip())
+        current = self.log_input_panel.get_value()        
+        new_text = f"{current} #{tag.name}" if tag else ""
+        self.log_input_panel.set_value(new_text.strip())
         
         self.update_start_button_state()
 

@@ -72,6 +72,8 @@ class BreakDialog(wx.Dialog):
         """이벤트 바인딩: 다이얼로그 종료 시 타이머 정지 처리 및 휴식 닫기 버튼 이벤트 바인딩"""
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.close_button.Bind(wx.EVT_BUTTON, self.on_close_button)
+        # ESC 키 이벤트 바인딩 추가
+        self.Bind(wx.EVT_CHAR_HOOK, self.on_key_down)
         
     def on_close(self, event):
         """다이얼로그 종료 시 타이머 정지 및 리소스 정리"""
@@ -87,6 +89,21 @@ class BreakDialog(wx.Dialog):
         if hasattr(self, 'stop_timer_func') and callable(self.stop_timer_func):
             self.stop_timer_func()
         self.on_break_finish()
+        
+    def on_key_down(self, event):
+        """
+        키 입력 이벤트를 처리하는 핸들러입니다.
+        ESC 키를 누르면 다이얼로그를 닫습니다.
+        """
+        keycode = event.GetKeyCode()
+        
+        if keycode == wx.WXK_ESCAPE:
+            # 휴식 닫기 버튼과 동일한 동작 수행
+            if hasattr(self, 'stop_timer_func') and callable(self.stop_timer_func):
+                self.stop_timer_func()
+            self.on_break_finish()
+        else:
+            event.Skip()  # 다른 키 입력은 기본 처리로 전달
         
     def on_break_finish(self):
         """
