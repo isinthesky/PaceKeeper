@@ -50,7 +50,7 @@ class ColorOptionPanel(wx.Panel):
 
 class SettingsDialog(wx.Dialog):
     def __init__(self, parent, config_controller):
-        super().__init__(parent, title=lang_res.base_labels['SETTINGS'], size=(350, 430),
+        super().__init__(parent, title=lang_res.base_labels['SETTINGS'], size=(350, 450),
                          style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
         self.config = config_controller
         self.InitUI()
