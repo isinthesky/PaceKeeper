@@ -11,6 +11,9 @@ from pacekeeper.repository.entities import Base
 
 from sqlalchemy import create_engine
 
+# 전역 변수로 taskbar 선언
+taskbar = None
+
 def init_database(db_uri=f"sqlite:///{DB_FILE}"):
     """
     데이터베이스 엔진을 생성하고, 모든 테이블을 생성합니다.
@@ -19,8 +22,20 @@ def init_database(db_uri=f"sqlite:///{DB_FILE}"):
     Base.metadata.create_all(engine)
     return engine
 
+def cleanup():
+    """앱 종료 시 리소스 정리"""
+    global taskbar
+    if taskbar:
+        try:
+            taskbar.RemoveIcon()
+            taskbar.Destroy()
+        except:
+            pass  # 이미 제거되었거나 오류가 발생해도 무시
+
 def main():
     """메인 함수."""
+    global taskbar
+    
     # 데이터베이스 및 테이블 새로 생성
     engine = init_database()  # 데이터베이스가 없거나, 테이블이 없는 경우 새로 생성됩니다.
     
@@ -40,8 +55,14 @@ def main():
     # 메인 프레임 생성
     frame = MainFrame(None, config_ctrl=config_ctrl)
 
+    # 앱 종료 시 TaskBarIcon 정리를 위한 이벤트 바인딩
+    app.Bind(wx.EVT_END_SESSION, lambda event: cleanup())
+    
     frame.Show()
     app.MainLoop()
+    
+    # 앱 종료 시 정리 작업
+    cleanup()
 
 if __name__ == "__main__":
     main()

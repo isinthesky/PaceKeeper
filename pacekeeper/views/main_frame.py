@@ -40,7 +40,7 @@ class MainFrame(wx.Frame):
         self.Fit()
 
         self.original_size = self.GetSize()
-        self.study_size = (250, 170)
+        self.study_size = (250, 200)
 
     def hide_main_controls(self):
         """
@@ -70,7 +70,7 @@ class MainFrame(wx.Frame):
         
         # 타이머 라벨
         self.timer_label = TimerLabel(self.panel, font_increment=20, bold=True, alignment=wx.ALIGN_CENTER)
-        self.main_sizer.Add(self.timer_label, flag=wx.EXPAND | wx.ALL, border=20)
+        self.main_sizer.Add(self.timer_label, flag=wx.EXPAND | wx.ALL, border=15)
 
         # 최근 기록 표시 영역 (콜백 on_logs_updated 설정)
         self.recent_logs = RecentLogsControl(
@@ -103,7 +103,7 @@ class MainFrame(wx.Frame):
         # 버튼 폰트 조정
         for btn in (self.start_button, self.pause_button):
             font = btn.GetFont()
-            font.PointSize += 3
+            font.PointSize += 2
             btn.SetFont(font)
             
         self.pause_button.Disable()
@@ -217,7 +217,7 @@ class MainFrame(wx.Frame):
             self.pause_button.SetLabel(lang_res.button_labels.get('PAUSE', "PAUSE"))
         
     def add_tag_to_input(self, tag):
-        current = self.log_input_panel.get_value()        
+        current = self.log_input_panel.get_value()
         new_text = f"{current} #{tag.name}" if tag else ""
         self.log_input_panel.set_value(new_text.strip())
         
@@ -264,9 +264,13 @@ class MainFrame(wx.Frame):
         self.break_dialog = None
 
     def on_close(self, event):
-        """창 닫기 시 타이머 스레드 정리"""
-        self.main_controller.timer_service.stop()
-        event.Skip() 
+        """창 닫기 시 타이머 스레드 정리 및 앱 종료"""
+        # 타이머 서비스 중지 및 리소스 정리
+        self.main_controller.cleanup()
+        
+        # 앱 종료를 위해 프레임 파괴 및 메인 루프 종료
+        self.Destroy()
+        wx.CallAfter(wx.GetApp().ExitMainLoop)
 
     # 추가: TextInputPanel의 텍스트 변경 이벤트 핸들러
     def on_log_input_text_change(self, event):

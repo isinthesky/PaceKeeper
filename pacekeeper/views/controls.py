@@ -154,3 +154,222 @@ class BreakDialogPanel(wx.Panel):
         main_sizer.Add(self.break_label, flag=wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, border=20)
 
         self.SetSizer(main_sizer)
+
+class RoundButton(wx.Control):
+    """
+    A custom button control with rounded corners, hover effects and customizable colors.
+    """
+    def __init__(self, parent, id=wx.ID_ANY, label="", pos=wx.DefaultPosition, 
+                 size=wx.DefaultSize, style=0, validator=wx.DefaultValidator, 
+                 name="RoundButton", bg_color="#3498db", hover_color="#2980b9", 
+                 text_color="#ffffff", border_color=None, corner_radius=10):
+        """
+        Initialize a button with rounded corners and custom colors.
+        
+        Args:
+            parent: Parent window
+            id: Button ID
+            label: Button text
+            pos: Button position
+            size: Button size
+            style: Button style
+            validator: Button validator
+            name: Button name
+            bg_color: Background color (hex)
+            hover_color: Color when mouse hovers over button (hex)
+            text_color: Text color (hex)
+            border_color: Border color (hex), None for no border
+            corner_radius: Radius of the rounded corners (pixels)
+        """
+        super().__init__(parent, id, pos, size, style | wx.BORDER_NONE, validator, name)
+        
+        # Set button properties
+        self.label = label
+        self.bg_color = bg_color
+        self.hover_color = hover_color
+        self.text_color = text_color
+        self.border_color = border_color
+        self.corner_radius = corner_radius
+        self.current_color = bg_color
+        
+        # State tracking
+        self.hover = False
+        self.pressed = False
+        
+        # Set minimum size
+        min_width, min_height = 80, 40
+        width, height = size
+        if width == -1:
+            width = min_width
+        if height == -1:
+            height = min_height
+        self.SetMinSize((width, height))
+        self.SetSize((width, height))
+        
+        # Bind events
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseEnter)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
+        
+        # Set background style for custom painting
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
+    
+    def OnPaint(self, event):
+        """Paint the button with rounded corners."""
+        dc = wx.AutoBufferedPaintDC(self)
+        gc = wx.GraphicsContext.Create(dc)
+        
+        if not gc:
+            dc.Clear()
+            return
+            
+        # Get the button's dimensions
+        width, height = self.GetSize()
+        
+        # Clear the background
+        dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
+        dc.Clear()
+        
+        # Create a rounded rectangle path
+        path = gc.CreatePath()
+        
+        # Adjust corner radius if it's too large for the button size
+        corner_radius = min(self.corner_radius, width/2, height/2)
+        
+        # Draw rounded rectangle
+        path.AddRoundedRectangle(0, 0, width, height, corner_radius)
+        
+        # Fill the button
+        gc.SetBrush(wx.Brush(self.current_color))
+        if self.border_color:
+            gc.SetPen(wx.Pen(self.border_color, 2))
+        else:
+            gc.SetPen(wx.TRANSPARENT_PEN)
+            
+        gc.DrawPath(path)
+        
+        # Draw the text
+        if self.label:
+            font = self.GetFont()
+            gc.SetFont(font, wx.Colour(self.text_color))
+            text_width, text_height = gc.GetTextExtent(self.label)
+            gc.DrawText(self.label, (width - text_width) / 2, (height - text_height) / 2)
+    
+    def OnLeftDown(self, event):
+        """Handle left mouse button down event."""
+        self.pressed = True
+        # Darken the button when pressed
+        self.current_color = self.AdjustColor(self.hover_color, -30)
+        self.Refresh()
+        event.Skip()
+    
+    def OnLeftUp(self, event):
+        """Handle left mouse button up event."""
+        if self.pressed:
+            self.pressed = False
+            # If still hovering, use hover color
+            if self.hover:
+                self.current_color = self.hover_color
+            else:
+                self.current_color = self.bg_color
+            self.Refresh()
+            
+            # Fire a button event
+            evt = wx.CommandEvent(wx.wxEVT_BUTTON, self.GetId())
+            evt.SetEventObject(self)
+            self.GetEventHandler().ProcessEvent(evt)
+        event.Skip()
+    
+    def OnMouseEnter(self, event):
+        """Handle mouse enter event."""
+        self.hover = True
+        if not self.pressed:
+            self.current_color = self.hover_color
+            self.Refresh()
+        event.Skip()
+    
+    def OnMouseLeave(self, event):
+        """Handle mouse leave event."""
+        self.hover = False
+        if not self.pressed:
+            self.current_color = self.bg_color
+            self.Refresh()
+        event.Skip()
+    
+    def SetLabel(self, label):
+        """Set the button label."""
+        self.label = label
+        self.Refresh()
+    
+    def GetLabel(self):
+        """Get the button label."""
+        return self.label
+    
+    def SetBackgroundColour(self, color):
+        """Set the button background color."""
+        self.bg_color = color
+        if not self.hover and not self.pressed:
+            self.current_color = color
+            self.Refresh()
+    
+    def SetHoverColour(self, color):
+        """Set the button hover color."""
+        self.hover_color = color
+        if self.hover and not self.pressed:
+            self.current_color = color
+            self.Refresh()
+    
+    def SetTextColour(self, color):
+        """Set the button text color."""
+        self.text_color = color
+        self.Refresh()
+    
+    def SetBorderColour(self, color):
+        """Set the button border color."""
+        self.border_color = color
+        self.Refresh()
+    
+    def SetCornerRadius(self, radius):
+        """Set the corner radius."""
+        self.corner_radius = radius
+        self.Refresh()
+    
+    def Enable(self, enable=True):
+        """Enable or disable the button."""
+        super().Enable(enable)
+        if not enable:
+            self.current_color = self.AdjustColor(self.bg_color, 30)  # Lighten the color
+        else:
+            self.current_color = self.bg_color
+        self.Refresh()
+    
+    def Disable(self):
+        """Disable the button."""
+        self.Enable(False)
+    
+    @staticmethod
+    def AdjustColor(hex_color, amount):
+        """
+        Adjust a hex color by the given amount.
+        
+        Args:
+            hex_color: Hex color string (e.g., "#3498db")
+            amount: Amount to adjust (-255 to 255)
+            
+        Returns:
+            Adjusted hex color string
+        """
+        if hex_color.startswith('#'):
+            hex_color = hex_color[1:]
+            
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        
+        r = max(0, min(255, r + amount))
+        g = max(0, min(255, g + amount))
+        b = max(0, min(255, b + amount))
+        
+        return f"#{r:02x}{g:02x}{b:02x}"

@@ -113,6 +113,18 @@ class MainController:
         """공부 타이머 중단 메서드"""
         self.timer_service.stop()
         # 추가로 UI 갱신이나 상태 초기화 작업이 필요하면 이곳에 구현합니다.
+        
+    def cleanup(self):
+        """앱 종료 시 모든 리소스 정리"""
+        # 타이머 서비스 중지
+        self.timer_service.stop()
+        
+        # 사운드 매니저 정리
+        self.sound_manager.cleanup()
+        
+        # 기타 필요한 정리 작업 수행
+        # ConfigController에는 save_settings() 메서드가 없지만 settings_model에는 있음
+        self.config_ctrl.settings_model.save_settings()
 
     def refresh_recent_logs(self):
         """

@@ -26,4 +26,12 @@ class SoundManager:
             
     def stop_sound(self):
         """사운드 정지"""
-        pygame.mixer.music.stop() 
+        pygame.mixer.music.stop()
+        
+    def cleanup(self):
+        """리소스 정리"""
+        try:
+            self.stop_sound()
+            pygame.mixer.quit()
+        except Exception as e:
+            wx.LogError(f"Sound cleanup error: {e}") 
