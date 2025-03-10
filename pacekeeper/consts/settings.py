@@ -60,6 +60,12 @@ SET_BREAK_COLOR = 'break_color'
 SET_LANGUAGE = 'language'
 SET_MAIN_DLG_WIDTH = 'main_dlg_width'
 SET_MAIN_DLG_HEIGHT = 'main_dlg_height'
+SET_THEME = 'theme'
+
+# 테마 상수
+THEME_DEFAULT = 'default'
+THEME_PINK = 'pink'
+THEME_DARK = 'dark'
 
 # Default settings
 DEFAULT_SETTINGS = {
@@ -72,5 +78,6 @@ DEFAULT_SETTINGS = {
     SET_BREAK_COLOR: '#FDFFB6',
     SET_LANGUAGE: 'ko',
     SET_MAIN_DLG_WIDTH: 800,
-    SET_MAIN_DLG_HEIGHT: 400
+    SET_MAIN_DLG_HEIGHT: 400,
+    SET_THEME: THEME_DEFAULT
 }

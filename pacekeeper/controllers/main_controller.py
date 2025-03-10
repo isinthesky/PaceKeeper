@@ -12,6 +12,7 @@ from pacekeeper.services.category_service import CategoryService
 from pacekeeper.repository.entities import Log
 from pacekeeper.utils.functions import resource_path
 from pacekeeper.consts.labels import load_language_resource
+from pacekeeper.consts.styles import update_system_colors
 from icecream import ic
 
 lang_res = load_language_resource(ConfigController().get_language())
@@ -26,6 +27,12 @@ class MainController:
     def __init__(self, main_frame: 'MainFrame', config_ctrl: ConfigController):
         self.main_frame = main_frame
         self.config_ctrl = config_ctrl
+        
+        # 테마 적용
+        self.config_ctrl.apply_theme()
+        
+        # wx.App이 생성된 후 시스템 색상 업데이트
+        update_system_colors()
         
         self.category_service = CategoryService()
         self.tag_service = TagService()

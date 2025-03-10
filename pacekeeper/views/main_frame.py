@@ -7,9 +7,13 @@ from pacekeeper.views.settings_dialog import SettingsDialog
 from pacekeeper.views.log_dialog import LogDialog
 from pacekeeper.views.category_dialog import CategoryDialog
 from pacekeeper.views.break_dialog import BreakDialog
-from pacekeeper.views.controls import RecentLogsControl, TimerLabel, TextInputPanel, TagButtonsPanel
+from pacekeeper.views.controls import (
+    RecentLogsControl, TimerLabel, TextInputPanel, 
+    TagButtonsPanel, RoundButton, RoundPanel
+)
 from pacekeeper.services.tag_service import TagService
 from pacekeeper.consts.labels import load_language_resource
+from pacekeeper.consts.styles import *
 from pacekeeper.consts.settings import (
     APP_TITLE, SET_MAIN_DLG_WIDTH, SET_MAIN_DLG_HEIGHT
 )
@@ -65,11 +69,21 @@ class MainFrame(wx.Frame):
 
     def init_ui(self):
         """UI 컴포넌트 초기화 및 레이아웃 구성"""
-        self.panel = wx.Panel(self)
+        # 테마에 따라 일반 Panel 또는 RoundPanel 사용
+        if USE_ROUND_CORNERS:
+            self.panel = RoundPanel(self, bg_color=PANEL_BACKGROUND)
+        else:
+            self.panel = wx.Panel(self)
+            self.panel.SetBackgroundColour(PANEL_BACKGROUND)
+            
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        # 배경색 설정
+        self.SetBackgroundColour(PANEL_BACKGROUND)
         
         # 타이머 라벨
         self.timer_label = TimerLabel(self.panel, font_increment=20, bold=True, alignment=wx.ALIGN_CENTER)
+        self.timer_label.SetForegroundColour(TEXT_COLOR)
         self.main_sizer.Add(self.timer_label, flag=wx.EXPAND | wx.ALL, border=15)
 
         # 최근 기록 표시 영역 (콜백 on_logs_updated 설정)
@@ -92,13 +106,45 @@ class MainFrame(wx.Frame):
         self.main_sizer.Add(self.log_input_panel, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
         # 시작/중지 버튼 패널
-        self.button_panel = wx.Panel(self.panel)
+        if USE_ROUND_CORNERS:
+            self.button_panel = RoundPanel(self.panel, bg_color=PANEL_BACKGROUND)
+        else:
+            self.button_panel = wx.Panel(self.panel)
+            self.button_panel.SetBackgroundColour(PANEL_BACKGROUND)
+            
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         
         # 시작 버튼 (토글 버튼으로 Start/Stop 기능 수행)
-        self.start_button = wx.Button(self.button_panel, label=lang_res.button_labels.get('START', "START"))
-        # 일시정지 버튼
-        self.pause_button = wx.Button(self.button_panel, label=lang_res.button_labels.get('PAUSE', "PAUSE"))
+        if USE_ROUND_CORNERS:
+            self.start_button = RoundButton(
+                self.button_panel, 
+                label=lang_res.button_labels.get('START', "START"),
+                bg_color=BUTTON_BACKGROUND,
+                hover_color=BUTTON_HOVER,
+                text_color=TEXT_COLOR,
+                border_color=BUTTON_BORDER
+            )
+            
+            # 일시정지 버튼
+            self.pause_button = RoundButton(
+                self.button_panel, 
+                label=lang_res.button_labels.get('PAUSE', "PAUSE"),
+                bg_color=BUTTON_BACKGROUND,
+                hover_color=BUTTON_HOVER,
+                text_color=TEXT_COLOR,
+                border_color=BUTTON_BORDER
+            )
+        else:
+            self.start_button = wx.Button(
+                self.button_panel, 
+                label=lang_res.button_labels.get('START', "START")
+            )
+            
+            # 일시정지 버튼
+            self.pause_button = wx.Button(
+                self.button_panel, 
+                label=lang_res.button_labels.get('PAUSE', "PAUSE")
+            )
         
         # 버튼 폰트 조정
         for btn in (self.start_button, self.pause_button):
@@ -235,33 +281,59 @@ class MainFrame(wx.Frame):
                 self.break_dialog.break_label.SetLabel(time_str)
 
     def show_break_dialog(self, break_min):
+        """
+        휴식 다이얼로그를 표시합니다.
+        """
         def on_break_end():
             # 쉬는 시간 종료 후 UI 초기화
-            self.start_button.SetLabel(lang_res.button_labels.get('START', "START"))
+            self.main_controller.timer_service.stop()
+            self.main_controller.timer_service.reset()
+            self.update_timer_label("00:00")
+            self.start_button.Enable()
             self.pause_button.Disable()
-            self.log_input_panel.set_value("")
-            self.update_start_button_state()
-            self.restore_main_controls() 
-            self.update_tag_buttons()
-
-        self.break_dialog = BreakDialog(
+            
+            # 버튼 라벨 초기화
+            self.start_button.SetLabel(lang_res.button_labels.get('START', "START"))
+            
+            # 메인 컨트롤 복원
+            self.restore_main_controls()
+            
+            # 타이머 스레드 종료
+            self.main_controller.timer_service.stop_thread()
+            
+            # 로그 업데이트
+            self.main_controller.refresh_logs()
+        
+        def break_update(time_str):
+            """
+            휴식 타이머 업데이트 콜백
+            """
+            if break_dlg and not break_dlg._destroyed:
+                # 다이얼로그가 존재하고 파괴되지 않았을 때만 업데이트
+                break_dlg.update_timer(time_str)
+                
+                # 타이머가 00:00에 도달하면 휴식 종료 처리
+                if time_str == "00:00":
+                    break_dlg.on_break_finish()
+        
+        # 휴식 다이얼로그 생성 및 표시
+        break_dlg = BreakDialog(
             self, 
             self.main_controller, 
             self.config_ctrl, 
-            break_minutes=break_min, 
+            break_minutes=break_min,
             on_break_end=on_break_end
         )
-        original_update_callback = self.main_controller.timer_service.update_callback
-
-        def break_update(time_str):
-            if self.break_dialog and hasattr(self.break_dialog, "break_label"):
-                self.break_dialog.break_label.SetLabel(time_str)
-        self.main_controller.timer_service.update_callback = break_update
-
-        self.break_dialog.ShowModal()
-        self.main_controller.timer_service.update_callback = original_update_callback
-        self.break_dialog.Destroy()
-        self.break_dialog = None
+        
+        # 타이머 업데이트 콜백 설정
+        self.main_controller.timer_service.set_update_callback(break_update)
+        
+        # 타이머 시작
+        self.main_controller.timer_service.start_break(break_min)
+        
+        # 다이얼로그 모달로 표시
+        break_dlg.ShowModal()
+        break_dlg.Destroy()
 
     def on_close(self, event):
         """창 닫기 시 타이머 스레드 정리 및 앱 종료"""

@@ -9,7 +9,11 @@ from pacekeeper.consts.settings import (
     SET_CYCLES,
     SET_SOUND_VOLUME,
     SET_BREAK_COLOR,
-    SET_LANGUAGE
+    SET_LANGUAGE,
+    SET_THEME,
+    THEME_DEFAULT,
+    THEME_PINK,
+    THEME_DARK
 )
 
 lang_res = load_language_resource(ConfigController().get_language())
@@ -50,26 +54,25 @@ class ColorOptionPanel(wx.Panel):
 
 class SettingsDialog(wx.Dialog):
     def __init__(self, parent, config_controller):
-        super().__init__(parent, title=lang_res.base_labels['SETTINGS'], size=(350, 450),
-                         style=wx.DEFAULT_DIALOG_STYLE | wx.STAY_ON_TOP)
+        super().__init__(parent, title=lang_res.title_labels['SETTINGS_DIALOG_TITLE'], size=(500, 500))
         self.config = config_controller
         self.InitUI()
-        self.Center()
+        self.CenterOnParent()
 
     def InitUI(self):
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         # 고정 크기를 설정할 변수 (픽셀 단위)
-        label_width = 110  # 레이블의 고정 너비 (필요에 따라 조정)
-        ctrl_width = 200   # 선택 리스트, 슬라이더 등 컨트롤의 고정 너비 (필요에 따라 조정)
+        label_width = 150  # 레이블의 고정 너비 (필요에 따라 조정)
+        ctrl_width = 150   # 선택 리스트, 슬라이더 등 컨트롤의 고정 너비 (필요에 따라 조정)
 
         # 작업 시간: 드롭다운 리스트 (15분, 25분, 30분, 45분, 60분)
         hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        study_label = wx.StaticText(panel, label=lang_res.messages['STUDY_TIME'])
-        study_label.SetMinSize((label_width, -1))
-        hbox1.Add(study_label, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
-        self.study_time_choices = ["15", "25", "30", "45", "1"]
+        study_time_label = wx.StaticText(panel, label=lang_res.messages['STUDY_TIME'])
+        study_time_label.SetMinSize((label_width, -1))
+        hbox1.Add(study_time_label, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
+        self.study_time_choices = ["15", "25", "30", "45", "60"]
         display_study_time = [f"{choice}분" for choice in self.study_time_choices]
         self.study_time = wx.Choice(panel, choices=display_study_time)
         self.study_time.SetMinSize((ctrl_width, -1))
@@ -87,7 +90,7 @@ class SettingsDialog(wx.Dialog):
         short_break_label = wx.StaticText(panel, label=lang_res.messages['SHORT_BREAK'])
         short_break_label.SetMinSize((label_width, -1))
         hbox2.Add(short_break_label, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
-        self.short_break_choices = ["3", "5", "7", "1"]
+        self.short_break_choices = ["3", "5", "7", "10"]
         display_short_break = [f"{choice}분" for choice in self.short_break_choices]
         self.short_break = wx.Choice(panel, choices=display_short_break)
         self.short_break.SetMinSize((ctrl_width, -1))
@@ -150,21 +153,46 @@ class SettingsDialog(wx.Dialog):
         hbox5.Add(self.break_sound_volume_slider, flag=wx.ALIGN_CENTER_VERTICAL)
         vbox.Add(hbox5, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
 
-        # --- 새로 추가: 언어 설정 드롭다운 리스트 ---
+        # 테마 선택: 드롭다운 리스트 (기본 테마, 핑크 테마, 다크 테마)
+        hbox_theme = wx.BoxSizer(wx.HORIZONTAL)
+        theme_label = wx.StaticText(panel, label="테마")
+        theme_label.SetMinSize((label_width, -1))
+        hbox_theme.Add(theme_label, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
+        
+        self.theme_choices = [THEME_DEFAULT, THEME_PINK, THEME_DARK]
+        display_theme = ["기본 테마", "핑크 테마", "다크 테마"]
+        self.theme = wx.Choice(panel, choices=display_theme)
+        self.theme.SetMinSize((ctrl_width, -1))
+        
+        current_theme = self.config.get_theme()
+        if current_theme in self.theme_choices:
+            default_index = self.theme_choices.index(current_theme)
+        else:
+            default_index = 0  # 기본 테마
+        self.theme.SetSelection(default_index)
+        
+        hbox_theme.Add(self.theme, flag=wx.ALIGN_CENTER_VERTICAL)
+        vbox.Add(hbox_theme, flag=wx.EXPAND | wx.ALL, border=10)
+        
+        # 언어 선택: 드롭다운 리스트 (한국어, 영어)
         hbox_lang = wx.BoxSizer(wx.HORIZONTAL)
-        lang_label = wx.StaticText(panel, label="언어 설정:")
+        lang_label = wx.StaticText(panel, label=lang_res.messages['LANGUAGE'])
         lang_label.SetMinSize((label_width, -1))
         hbox_lang.Add(lang_label, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
+        
         self.lang_choices = ["ko", "en"]
-        self.language_choice = wx.Choice(panel, choices=self.lang_choices)
-        self.language_choice.SetMinSize((ctrl_width, -1))
-        default_language = self.config.get_setting(SET_LANGUAGE, "ko")
-        if str(default_language) in self.lang_choices:
-            default_index = self.lang_choices.index(str(default_language))
+        display_lang = ["한국어", "English"]
+        self.lang = wx.Choice(panel, choices=display_lang)
+        self.lang.SetMinSize((ctrl_width, -1))
+        
+        current_lang = self.config.get_language()
+        if current_lang in self.lang_choices:
+            default_index = self.lang_choices.index(current_lang)
         else:
-            default_index = self.lang_choices.index("ko")
-        self.language_choice.SetSelection(default_index)
-        hbox_lang.Add(self.language_choice, flag=wx.ALIGN_CENTER_VERTICAL)
+            default_index = 0  # 한국어
+        self.lang.SetSelection(default_index)
+        
+        hbox_lang.Add(self.lang, flag=wx.ALIGN_CENTER_VERTICAL)
         vbox.Add(hbox_lang, flag=wx.EXPAND | wx.ALL, border=10)
 
         # 색상 팔레트 컨트롤 추가
@@ -222,24 +250,61 @@ class SettingsDialog(wx.Dialog):
             panel.Refresh()
 
     def on_save(self, event):
-        """
-        기존 설정들과 함께 선택된 색상 및 언어도 저장합니다.
-        """
-        study_time_str = self.study_time.GetStringSelection().replace("분", "")
-        short_break_str = self.short_break.GetStringSelection().replace("분", "")
-        long_break_str = self.long_break.GetStringSelection().replace("분", "")
-        cycles_str = self.cycles.GetStringSelection().replace("회", "")
-
-        new_settings = {
-            SET_STUDY_TIME: int(study_time_str),
-            SET_SHORT_BREAK: int(short_break_str),
-            SET_LONG_BREAK: int(long_break_str),
-            SET_CYCLES: int(cycles_str),
-            SET_SOUND_VOLUME: self.break_sound_volume_slider.GetValue(),
-            SET_BREAK_COLOR: self.selected_color,
-            SET_LANGUAGE: self.language_choice.GetStringSelection()  # 언어 설정 저장
-        }
-        self.config.update_settings(new_settings)
+        """설정 저장"""
+        # 선택된 값 가져오기
+        study_time = int(self.study_time_choices[self.study_time.GetSelection()])
+        short_break = int(self.short_break_choices[self.short_break.GetSelection()])
+        long_break = int(self.long_break_choices[self.long_break.GetSelection()])
+        cycles = int(self.cycles_choices[self.cycles.GetSelection()])
+        volume = self.break_sound_volume_slider.GetValue()
+        break_color = self.selected_color
+        lang = self.lang_choices[self.lang.GetSelection()]
+        theme = self.theme_choices[self.theme.GetSelection()]
+        
+        # 설정 업데이트
+        self.config.update_settings({
+            SET_STUDY_TIME: study_time,
+            SET_SHORT_BREAK: short_break,
+            SET_LONG_BREAK: long_break,
+            SET_CYCLES: cycles,
+            SET_SOUND_VOLUME: volume,
+            SET_BREAK_COLOR: break_color,
+            SET_LANGUAGE: lang,
+            SET_THEME: theme
+        })
+        
+        # 언어 또는 테마 변경 시 재시작 필요 메시지
+        need_restart = False
+        restart_message = ""
+        
+        if lang != self.config.get_language():
+            need_restart = True
+            if lang == "ko":
+                restart_message += "언어 설정이 변경되었습니다. "
+            else:
+                restart_message += "Language setting has been changed. "
+                
+        if theme != self.config.get_theme():
+            need_restart = True
+            if lang == "ko":
+                restart_message += "테마 설정이 변경되었습니다. "
+            else:
+                restart_message += "Theme setting has been changed. "
+                
+        if need_restart:
+            if lang == "ko":
+                restart_message += "변경 사항을 적용하려면 앱을 다시 시작하세요."
+                title = "알림"
+            else:
+                restart_message += "Please restart the app to apply the changes."
+                title = "Notice"
+                
+            wx.MessageBox(
+                restart_message,
+                title,
+                wx.OK | wx.ICON_INFORMATION
+            )
+        
         self.EndModal(wx.ID_OK)
 
     def on_key_down(self, event):

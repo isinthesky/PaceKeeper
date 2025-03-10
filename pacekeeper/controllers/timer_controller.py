@@ -47,6 +47,25 @@ class TimerService:
         )
         self.timer_thread.start()
 
+    def start_break(self, break_minutes: int):
+        """휴식 타이머 시작"""
+        total_seconds = break_minutes * 60
+        self.stop()  # 이전 타이머 중지
+        
+        # 앱 상태 업데이트
+        self.config_ctrl.set_status(AppStatus.BREAK)
+        self.config_ctrl.is_running = True
+        
+        # TimerThread 생성 및 시작
+        self.timer_thread = TimerThread(
+            config_controller=self.config_ctrl,
+            update_callback=self.update_callback,
+            total_seconds=total_seconds,
+            on_finish=None,  # 휴식 타이머는 UI에서 직접 종료 처리
+            pauseable=False  # 휴식 타이머는 일시정지 불가
+        )
+        self.timer_thread.start()
+
     def stop(self):
         """타이머 중지 및 앱 상태 초기화."""
         if self.timer_thread and self.timer_thread.is_alive():
@@ -57,6 +76,19 @@ class TimerService:
         self.timer_thread = None
         self.config_ctrl.is_running = False
         self.config_ctrl.set_status(AppStatus.WAIT)
+
+    def reset(self):
+        """타이머 리셋 (상태 초기화)"""
+        self.stop()
+        # 추가적인 초기화 작업이 필요하면 여기에 구현
+
+    def stop_thread(self):
+        """타이머 스레드만 중지 (상태 변경 없음)"""
+        if self.timer_thread and self.timer_thread.is_alive():
+            self.timer_thread.stop()
+            if threading.current_thread() != self.timer_thread:
+                self.timer_thread.join(timeout=2)
+        self.timer_thread = None
 
     def pause(self):
         """타이머 일시정지."""
@@ -79,3 +111,9 @@ class TimerService:
         if self.timer_thread:
             return self.timer_thread.is_alive()
         return False
+
+    def set_update_callback(self, callback: Callable[[str], None]):
+        """타이머 업데이트 콜백 함수 설정"""
+        self.update_callback = callback
+        if self.timer_thread:
+            self.timer_thread.update_callback = callback

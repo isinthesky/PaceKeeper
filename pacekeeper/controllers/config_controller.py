@@ -4,7 +4,7 @@ from enum import Enum
 from dataclasses import dataclass
 from pacekeeper.services.setting_model import SettingsModel
 from pacekeeper.consts.labels import load_language_resource
-from pacekeeper.consts.settings import SET_LANGUAGE
+from pacekeeper.consts.settings import SET_LANGUAGE, SET_THEME, THEME_DEFAULT
 
 lang_res = load_language_resource()
 
@@ -101,3 +101,17 @@ class ConfigController:
 
     def get_cycle(self):
         return self.current_cycle
+
+    def get_theme(self) -> str:
+        """현재 설정된 테마를 반환합니다."""
+        return self.get_setting(SET_THEME, THEME_DEFAULT)
+        
+    def set_theme(self, theme: str):
+        """테마를 설정합니다."""
+        self.update_settings({SET_THEME: theme})
+        
+    def apply_theme(self):
+        """현재 테마를 적용합니다. 앱 재시작 시 호출됩니다."""
+        # 이 함수는 앱 시작 시 호출되어 테마를 적용합니다.
+        # 실제 테마 적용은 styles.py에서 이루어집니다.
+        pass

@@ -25,10 +25,10 @@
         "SUBMIT": "Submit"
     },
     "TITLE_LABELS": {
-      "MAIN_TITLE": "Pace Keeper",
-      "BREAK_DIALOG_TITLE": "Break",
-      "SETTINGS_TITLE": "Settings",
-      "LOGS_TITLE": "Logs"
+        "MAIN_TITLE": "Pace Keeper",
+        "BREAK_DIALOG_TITLE": "Break",
+        "SETTINGS_DIALOG_TITLE": "Settings",
+        "LOGS_TITLE": "Logs"
     },
     "BUTTON_LABELS": {
         "START": "&Start",
@@ -47,7 +47,8 @@
         "SOUND_VOLUME": "Sound volume:",
         "CYCLES": "Cycles:",
         "RECENT_LOGS": "Recent logs (10)",
-        "TODO_INPUT": "Input your todo (#tag format)"
+        "TODO_INPUT": "Input your todo (#tag format)",
+        "LANGUAGE": "Language"
     },
     "ERROR_MESSAGES": {
         "DEFAULT": "Error occurred: {}",
