@@ -17,8 +17,6 @@ DARK_HOVER = "#4D4D4D"  # 다크 테마 호버 색상
 DARK_BORDER = "#5D5D5D"  # 다크 테마 테두리 색상
 DARK_TEXT = "#FFFFFF"  # 다크 테마 텍스트 색상
 DARK_TEXT_SECONDARY = "#CCCCCC"  # 다크 테마 보조 텍스트 색상
-DARK_LIST_BG = "#333333"  # 다크 테마 리스트 배경
-DARK_LIST_TEXT = "#FFFFFF"  # 다크 테마 리스트 텍스트
 
 # 기본 테마 색상 정의 (하드코딩된 기본값)
 DEFAULT_BG = "#F0F0F0"  # 기본 배경색
@@ -27,12 +25,6 @@ DEFAULT_HOVER = "#D0D0D0"  # 기본 호버 색상
 DEFAULT_BORDER = "#C0C0C0"  # 기본 테두리 색상
 DEFAULT_TEXT = "#000000"  # 기본 텍스트 색상
 DEFAULT_TEXT_SECONDARY = "#666666"  # 기본 보조 텍스트 색상
-DEFAULT_LIST_BG = "#FFFFFF"  # 기본 리스트 배경
-DEFAULT_LIST_TEXT = "#000000"  # 기본 리스트 텍스트
-
-# 핑크 테마 리스트 색상
-PINK_LIST_BG = "#FFF5F7"  # 핑크 테마 리스트 배경
-PINK_LIST_TEXT = "#4A4A4A"  # 핑크 테마 리스트 텍스트
 
 # 둥근 모서리 반경
 CORNER_RADIUS = 10  # 기본 둥근 모서리 반경
@@ -50,8 +42,6 @@ THEME_STYLES = {
         "TEXT_COLOR_LIGHT": DEFAULT_TEXT_SECONDARY,
         "INPUT_BACKGROUND": "#FFFFFF",
         "INPUT_BORDER": DEFAULT_BORDER,
-        "LIST_BACKGROUND": DEFAULT_LIST_BG,
-        "LIST_TEXT_COLOR": DEFAULT_LIST_TEXT,
         "USE_ROUND_CORNERS": False,  # 기본 테마는 둥근 모서리 사용 안 함
     },
     THEME_PINK: {
@@ -63,8 +53,6 @@ THEME_STYLES = {
         "TEXT_COLOR_LIGHT": "#6E6E6E",
         "INPUT_BACKGROUND": "#FFFFFF",
         "INPUT_BORDER": PASTEL_PINK_BORDER,
-        "LIST_BACKGROUND": PINK_LIST_BG,
-        "LIST_TEXT_COLOR": PINK_LIST_TEXT,
         "USE_ROUND_CORNERS": True,  # 핑크 테마는 둥근 모서리 사용
     },
     THEME_DARK: {
@@ -76,8 +64,6 @@ THEME_STYLES = {
         "TEXT_COLOR_LIGHT": DARK_TEXT_SECONDARY,
         "INPUT_BACKGROUND": DARK_CONTROL_BG,
         "INPUT_BORDER": DARK_BORDER,
-        "LIST_BACKGROUND": DARK_LIST_BG,
-        "LIST_TEXT_COLOR": DARK_LIST_TEXT,
         "USE_ROUND_CORNERS": True,  # 다크 테마는 둥근 모서리 사용
     }
 }
@@ -100,8 +86,6 @@ TEXT_COLOR = current_style["TEXT_COLOR"]
 TEXT_COLOR_LIGHT = current_style["TEXT_COLOR_LIGHT"]
 INPUT_BACKGROUND = current_style["INPUT_BACKGROUND"]
 INPUT_BORDER = current_style["INPUT_BORDER"]
-LIST_BACKGROUND = current_style["LIST_BACKGROUND"]
-LIST_TEXT_COLOR = current_style["LIST_TEXT_COLOR"]
 USE_ROUND_CORNERS = current_style["USE_ROUND_CORNERS"]  # 둥근 모서리 사용 여부
 
 # wx.App 생성 후 시스템 색상으로 업데이트하는 함수
@@ -118,18 +102,16 @@ def update_system_colors():
     system_border = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW)
     system_text = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)
     system_text_secondary = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
-    system_list_bg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOX)
-    system_list_text = wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOXTEXT)
     
     # 기본 테마 색상 업데이트
     if current_theme == THEME_DEFAULT:
-        global PANEL_BACKGROUND, BUTTON_BACKGROUND, BUTTON_HOVER, BUTTON_BORDER, TEXT_COLOR, TEXT_COLOR_LIGHT, LIST_BACKGROUND, LIST_TEXT_COLOR
+        global PANEL_BACKGROUND, BUTTON_BACKGROUND, BUTTON_HOVER, BUTTON_BORDER, TEXT_COLOR, TEXT_COLOR_LIGHT, INPUT_BACKGROUND, INPUT_BORDER
         
         PANEL_BACKGROUND = system_bg
         BUTTON_BACKGROUND = system_ctrl_bg
         BUTTON_HOVER = system_hover
         BUTTON_BORDER = system_border
         TEXT_COLOR = system_text
-        TEXT_COLOR_LIGHT = system_text_secondary
-        LIST_BACKGROUND = system_list_bg
-        LIST_TEXT_COLOR = system_list_text 
+        TEXT_COLOR_LIGHT = system_text_secondary 
+        INPUT_BACKGROUND = system_bg
+        INPUT_BORDER = system_border

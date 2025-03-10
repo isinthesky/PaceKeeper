@@ -276,9 +276,13 @@ class MainFrame(wx.Frame):
            타이머 라벨(self.break_label) 모두 업데이트합니다.
         """
         self.timer_label.SetLabel(time_str)
+        # 명시적으로 UI 갱신
+        self.timer_label.Refresh()
+        
         if hasattr(self, "break_dialog") and self.break_dialog is not None:
             if hasattr(self.break_dialog, "break_label"):
                 self.break_dialog.break_label.SetLabel(time_str)
+                self.break_dialog.break_label.Refresh()
 
     def show_break_dialog(self, break_min):
         """
@@ -288,7 +292,12 @@ class MainFrame(wx.Frame):
             # 쉬는 시간 종료 후 UI 초기화
             self.main_controller.timer_service.stop()
             self.main_controller.timer_service.reset()
-            self.update_timer_label("00:00")
+            # 타이머 라벨 초기화 및 명시적으로 UI 업데이트
+            self.timer_label.SetLabel("00:00")
+            if hasattr(self, "break_dialog") and self.break_dialog is not None:
+                if hasattr(self.break_dialog, "break_label"):
+                    self.break_dialog.break_label.SetLabel("00:00")
+            self.timer_label.Refresh()
             self.start_button.Enable()
             self.pause_button.Disable()
             
@@ -302,12 +311,16 @@ class MainFrame(wx.Frame):
             self.main_controller.timer_service.stop_thread()
             
             # 로그 업데이트
-            self.main_controller.refresh_logs()
+            self.main_controller.refresh_recent_logs()
         
         def break_update(time_str):
             """
             휴식 타이머 업데이트 콜백
             """
+            # 메인 타이머 라벨도 함께 업데이트
+            self.timer_label.SetLabel(time_str)
+            self.timer_label.Refresh()
+            
             if break_dlg and not break_dlg._destroyed:
                 # 다이얼로그가 존재하고 파괴되지 않았을 때만 업데이트
                 break_dlg.update_timer(time_str)

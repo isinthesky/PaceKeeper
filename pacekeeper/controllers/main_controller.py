@@ -86,6 +86,8 @@ class MainController:
         # 학습 세션 상태 설정 및 타이머 종료 시 수행할 콜백 할당
         self.config_ctrl.set_status(AppStatus.STUDY)
         self.timer_service.on_finish = self.on_study_session_finished
+        # 타이머 업데이트 콜백 명시적으로 재설정
+        self.timer_service.set_update_callback(self.main_frame.update_timer_label)
 
         # 타이머 시작 (내부적으로 기존 타이머 종료 후 새 타이머 스레드 시작)
         self.timer_service.start(total_seconds)
@@ -122,15 +124,20 @@ class MainController:
 
     def start_break_session(self, break_min: int):
         """휴식 세션 시작 메소드"""
-        total_seconds = break_min * MINUTE_TO_SECOND
-
-        # 휴식 종료 후 실행될 콜백 할당
-        self.timer_service.on_finish = self.on_break_session_finished
-
-        # 타이머 시작 (휴식 타이머)
-        self.timer_service.start(total_seconds)
-        # UI 창(다이얼로그 등)은 반드시 메인 스레드에서 생성되어야 하므로 wx.CallAfter 사용
-        wx.CallAfter(self.main_frame.show_break_dialog, break_min)
+        # 휴식 시간 시작 시간 기록
+        self.break_start_time = datetime.datetime.now()
+        
+        # 휴식 시간 상태 설정 및 타이머 종료 시 수행할 콜백 할당
+        # (휴식 타이머는 UI에서 직접 종료 처리하므로 on_finish는 None)
+        self.timer_service.on_finish = None
+        # 타이머 업데이트 콜백 명시적으로 재설정
+        self.timer_service.set_update_callback(self.main_frame.update_timer_label)
+        
+        # 휴식 타이머 시작 (내부적으로 기존 타이머 종료 후 새 타이머 스레드 시작)
+        self.timer_service.start_break(break_min)
+        
+        # 휴식 다이얼로그 표시
+        self.main_frame.show_break_dialog(break_min)
 
     def on_break_session_finished(self):
         """휴식 세션 종료 후 실행될 로직"""

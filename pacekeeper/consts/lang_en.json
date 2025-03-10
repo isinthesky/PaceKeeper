@@ -48,7 +48,8 @@
         "CYCLES": "Cycles:",
         "RECENT_LOGS": "Recent logs (10)",
         "TODO_INPUT": "Input your todo (#tag format)",
-        "LANGUAGE": "Language"
+        "LANGUAGE": "Language",
+        "BREAK_MESSAGE": "Take a break for {minutes} minutes"
     },
     "ERROR_MESSAGES": {
         "DEFAULT": "Error occurred: {}",

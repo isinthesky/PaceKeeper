@@ -72,7 +72,7 @@ class SettingsDialog(wx.Dialog):
         study_time_label = wx.StaticText(panel, label=lang_res.messages['STUDY_TIME'])
         study_time_label.SetMinSize((label_width, -1))
         hbox1.Add(study_time_label, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
-        self.study_time_choices = ["15", "25", "30", "45", "60"]
+        self.study_time_choices = ["15", "25", "30", "45", "1"]
         display_study_time = [f"{choice}분" for choice in self.study_time_choices]
         self.study_time = wx.Choice(panel, choices=display_study_time)
         self.study_time.SetMinSize((ctrl_width, -1))

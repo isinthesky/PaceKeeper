@@ -52,8 +52,11 @@ class TimerService:
         total_seconds = break_minutes * 60
         self.stop()  # 이전 타이머 중지
         
-        # 앱 상태 업데이트
-        self.config_ctrl.set_status(AppStatus.BREAK)
+        # 앱 상태 업데이트: break_minutes 값에 따라 짧은 휴식과 긴 휴식으로 구분
+        if break_minutes <= 5:
+            self.config_ctrl.set_status(AppStatus.SHORT_BREAK)
+        else:
+            self.config_ctrl.set_status(AppStatus.LONG_BREAK)
         self.config_ctrl.is_running = True
         
         # TimerThread 생성 및 시작

@@ -48,9 +48,9 @@ class RecentLogsControl(wx.Panel):
         
         # 커스텀 스타일의 ListCtrl 생성
         self.list_ctrl = wx.ListCtrl(self, style=wx.LC_REPORT | wx.BORDER_NONE)
-        self.list_ctrl.SetBackgroundColour(LIST_BACKGROUND)
-        self.list_ctrl.SetForegroundColour(LIST_TEXT_COLOR)
         
+        self.list_ctrl.SetBackgroundColour(INPUT_BACKGROUND)
+        self.list_ctrl.SetForegroundColour(TEXT_COLOR)        
         # 컬럼 설정
         self.list_ctrl.InsertColumn(0, "시간", width=150)
         self.list_ctrl.InsertColumn(1, "메시지", width=390)
@@ -189,9 +189,8 @@ class RoundTextCtrl(wx.TextCtrl):
         self.corner_radius = corner_radius
         self.use_round_corners = USE_ROUND_CORNERS  # 둥근 모서리 사용 여부
         
-        # 배경색 및 텍스트 색상 설정
+        # 배경색 설정
         self.SetBackgroundColour(INPUT_BACKGROUND)
-        self.SetForegroundColour(TEXT_COLOR)
         
         # 둥근 모서리를 사용하는 경우에만 이벤트 바인딩
         if self.use_round_corners:
@@ -241,9 +240,6 @@ class TextInputPanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
         
-        # 패널 배경색 설정
-        self.SetBackgroundColour(PANEL_BACKGROUND)
-        
         self.static_box = wx.StaticBox(self, label=lang_res.messages['TODO_INPUT'])
         self.static_box.SetBackgroundColour(PANEL_BACKGROUND)
         self.static_box.SetForegroundColour(TEXT_COLOR)
@@ -256,9 +252,6 @@ class TextInputPanel(wx.Panel):
         else:
             self.input_ctrl = wx.TextCtrl(self, style=text_style)
             self.input_ctrl.SetBackgroundColour(INPUT_BACKGROUND)
-            
-        # 텍스트 색상 설정
-        self.input_ctrl.SetForegroundColour(TEXT_COLOR)
             
         self.box_sizer.Add(self.input_ctrl, flag=wx.EXPAND | wx.ALL, border=5)
 

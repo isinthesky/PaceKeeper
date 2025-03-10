@@ -47,7 +47,8 @@
     "CYCLES": "사이클 수:",
     "RECENT_LOGS": "최근 기록 10개",
     "TODO_INPUT": "할일 입력 (#tag 형식으로 입력)",
-    "LANGUAGE": "언어"
+    "LANGUAGE": "언어",
+    "BREAK_MESSAGE": "{minutes}분 동안 휴식을 취하세요."
   },
   "ERROR_MESSAGES": {
     "DEFAULT": "오류 발생: {}",
