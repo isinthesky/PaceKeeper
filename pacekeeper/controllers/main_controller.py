@@ -3,6 +3,8 @@
 import wx
 import json
 import datetime
+import os
+import sys
 from pacekeeper.controllers.config_controller import ConfigController, AppStatus
 from pacekeeper.controllers.sound_manager import SoundManager
 from pacekeeper.controllers.timer_controller import TimerService
@@ -17,7 +19,30 @@ from icecream import ic
 
 lang_res = load_language_resource(ConfigController().get_language())
 
-MINUTE_TO_SECOND = 5
+# 개발 환경과 배포 환경 구분
+def is_development_mode():
+    """
+    개발 환경인지 배포 환경인지 확인합니다.
+    poetry run start로 실행하면 개발 환경으로 간주합니다.
+    pyinstaller로 빌드된 실행 파일로 실행하면 배포 환경으로 간주합니다.
+    """
+    # 환경 변수로 개발 모드 확인
+    if os.environ.get('PACEKEEPER_DEV_MODE') == '1':
+        return True
+    
+    # frozen 속성으로 PyInstaller 빌드 여부 확인
+    if getattr(sys, 'frozen', False):
+        return False
+    
+    # 실행 명령어로 확인 (poetry run 포함 여부)
+    if 'poetry' in sys.argv[0] or 'pytest' in sys.argv[0]:
+        return True
+    
+    # 기본값은 개발 모드
+    return True
+
+# 개발 환경과 배포 환경에 따라 MINUTE_TO_SECOND 값 설정
+MINUTE_TO_SECOND = 5 if is_development_mode() else 60
 
 class MainController:
     """
@@ -27,6 +52,10 @@ class MainController:
     def __init__(self, main_frame: 'MainFrame', config_ctrl: ConfigController):
         self.main_frame = main_frame
         self.config_ctrl = config_ctrl
+        
+        # 개발/배포 모드 로그 출력
+        mode = "개발" if is_development_mode() else "배포"
+        ic(f"실행 모드: {mode}, MINUTE_TO_SECOND: {MINUTE_TO_SECOND}")
         
         # 테마 적용
         self.config_ctrl.apply_theme()

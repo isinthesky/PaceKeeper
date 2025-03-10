@@ -1,6 +1,9 @@
 import os
 from PyInstaller.utils.hooks import collect_all
 
+# 배포 모드 설정 (MINUTE_TO_SECOND = 60)
+os.environ['PACEKEEPER_DEV_MODE'] = '0'
+
 block_cipher = None
 
 # Function to collect all files in a directory

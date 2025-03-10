@@ -2,8 +2,12 @@
 # PyInstaller spec file for building the BreakTrack application
 
 # (1) 필요하면 추가로 import할 모듈들:
+import os
 # import PyInstaller.utils.hooks
 # etc.
+
+# 배포 모드 설정 (MINUTE_TO_SECOND = 60)
+os.environ['PACEKEEPER_DEV_MODE'] = '0'
 
 block_cipher = None
 
