@@ -7,5 +7,7 @@
     "sound_volume": 80,
     "break_color": "#A8E6CF",
     "language": "en",
-    "theme": "pink"
+    "main_dlg_width": 800,
+    "main_dlg_height": 500,
+    "theme": "dark"
 }

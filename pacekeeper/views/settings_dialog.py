@@ -126,7 +126,7 @@ class SettingsDialog(wx.Dialog):
         cycles_label = wx.StaticText(panel, label=lang_res.messages['CYCLES'])
         cycles_label.SetMinSize((label_width, -1))
         hbox4.Add(cycles_label, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=8)
-        self.cycles_choices = ["2", "4", "6", "8"]
+        self.cycles_choices = ["3", "4", "5", "6"]
         display_cycles = [f"{choice}회" for choice in self.cycles_choices]
         self.cycles = wx.Choice(panel, choices=display_cycles)
         self.cycles.SetMinSize((ctrl_width, -1))

@@ -1,7 +1,6 @@
 # controllers/main_controller.py
 
 import wx
-import json
 import datetime
 import os
 import sys
@@ -183,15 +182,8 @@ class MainController:
             if message in seen_messages:
                 continue
             
-            tag_text = self.tag_service.get_tag_text(log.tags)
-            tag_str = json.dumps(tag_text)
-            tag_list = tag_str.replace('[', '').replace(']', '').replace('"', '')
-            setattr(log, "tag_text", tag_list)
-            ic("tag_text", tag_list)
-            
             log_dict = log.to_dict()
-            log_dict["tag_text"] = tag_list
-            ic("log_dict", log_dict)
+            log_dict["tag_text"] = self.tag_service.get_tag_text(log.tags)
             
             unique_logs.append(log_dict)
             seen_messages.add(message)

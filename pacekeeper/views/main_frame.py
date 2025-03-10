@@ -27,7 +27,7 @@ class MainFrame(wx.Frame):
     """
     def __init__(self, parent, config_ctrl: ConfigController):
         width = config_ctrl.get_setting(SET_MAIN_DLG_WIDTH, 800)
-        height = config_ctrl.get_setting(SET_MAIN_DLG_HEIGHT, 550)
+        height = config_ctrl.get_setting(SET_MAIN_DLG_HEIGHT, 500)
         super().__init__(parent, title=APP_TITLE, size=(width, height))
         self.config_ctrl = config_ctrl
         self.tag_service = TagService()
@@ -193,9 +193,7 @@ class MainFrame(wx.Frame):
         if not hasattr(self, "tag_panel"):
             return
 
-        tags = self.tag_service.get_tags()
-        ic("update_tag_buttons", tags)
-        
+        tags = self.tag_service.get_tags()        
         self.tag_panel.update_tags(tags)
 
     def on_log_double_click(self, event):

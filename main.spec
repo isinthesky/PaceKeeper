@@ -33,10 +33,18 @@ a = Analysis(
         ('pacekeeper/assets/sounds/long_brk.wav', 'assets/sounds'),
         ('pacekeeper/assets/sounds/short_brk.wav', 'assets/sounds'),
 
+        # 언어 리소스 파일
+        ('pacekeeper/consts/lang_ko.json', 'pacekeeper/consts'),
+        ('pacekeeper/consts/lang_en.json', 'pacekeeper/consts'),
+
         # 설정 파일(config.json)  
         # (코드에서 'config.json' 을 루트 경로로 사용하므로, 
         #  빌드 후 실행 시에도 같은 위치(혹은 적절한 상대 위치)에 있도록 조정)
         ('pacekeeper/config.json', '.'),
+        
+        # 데이터베이스 파일 (없는 경우 생성됨)
+        # 기존 DB 파일이 있다면 포함, 없으면 빈 파일 생성
+        ('pacekeeper/pace_log.db', '.') if os.path.exists('pacekeeper/pace_log.db') else ('README.md', '.'),
 
         # 그 밖에 필요한 다른 파일이 있다면 이곳에 추가...
     ],
@@ -71,11 +79,9 @@ pyz = PYZ(
 
 exe = EXE(
     pyz,
-    a.scripts,       # 이 애플리케이션 실행에 필요한 스크립트
-    a.binaries,      # 바이너리
-    a.zipfiles,      # zip형식으로 넣은 라이브러리들
-    a.datas,         # 데이터
+    a.scripts,
     [],
+    exclude_binaries=True,
     name='PaceKeeper',      # 빌드 후 exe 이름 (예: pacekeeper.exe)
     debug=False,
     bootloader_ignore_signals=False,

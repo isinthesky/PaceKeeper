@@ -11,9 +11,12 @@ LONG_BREAK_SOUND = 'long_brk.wav'
 SHORT_BREAK_SOUND = 'short_brk.wav'
 
 # File paths and names
-CONFIG_FILE = 'config.json'
-LOG_FILE = 'pace_log.txt'
-DB_FILE = 'pace_log.db'
+import os
+from pacekeeper.utils.functions import resource_path
+
+CONFIG_FILE = resource_path('config.json')
+LOG_FILE = resource_path('pace_log.txt')
+DB_FILE = resource_path('pace_log.db')
 ASSETS_DIR = 'assets'
 ICONS_DIR = 'icons'
 SOUNDS_DIR = 'sounds'
@@ -78,6 +81,6 @@ DEFAULT_SETTINGS = {
     SET_BREAK_COLOR: '#FDFFB6',
     SET_LANGUAGE: 'ko',
     SET_MAIN_DLG_WIDTH: 800,
-    SET_MAIN_DLG_HEIGHT: 400,
+    SET_MAIN_DLG_HEIGHT: 500,
     SET_THEME: THEME_DEFAULT
 }

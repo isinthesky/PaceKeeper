@@ -2,13 +2,14 @@
 
 from datetime import datetime
 from typing import List, Optional
+import os
 
 from sqlalchemy import create_engine, desc, and_
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
 from pacekeeper.repository.entities import Base, Category, Log
-from pacekeeper.utils.functions import extract_tags
+from pacekeeper.utils.functions import extract_tags, resource_path
 from pacekeeper.utils.desktop_logger import DesktopLogger
 from pacekeeper.consts.settings import DB_FILE
 from pacekeeper.consts.labels import load_language_resource
@@ -18,13 +19,19 @@ lang_res = load_language_resource()
 
 # SQLite를 사용한다고 가정 (파일 기반 DB)
 DATABASE_URI = f"sqlite:///{DB_FILE}"
+
+# 데이터베이스 파일 디렉토리 확인 및 생성
+db_dir = os.path.dirname(DB_FILE)
+if db_dir and not os.path.exists(db_dir):
+    os.makedirs(db_dir)
+
 engine = create_engine(DATABASE_URI, echo=False, connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine)
 
 class LogRepository:
     def __init__(self):
         self.desktop_logger = DesktopLogger("PaceKeeper")
-        self.desktop_logger.log_system_event("LogRepository 초기화됨.")
+        self.desktop_logger.log_system_event(f"LogRepository 초기화됨. DB 경로: {DB_FILE}")
         
         # DB 및 테이블 초기화: 기본적으로 엔티티에 의해 생성
         self.initialize_database()
@@ -34,7 +41,7 @@ class LogRepository:
             Base.metadata.create_all(engine)
             self.desktop_logger.log_system_event("SQLAlchemy 기반 DB 초기화 완료")
         except SQLAlchemyError as e:
-            self.desktop_logger.log_error("SQLAlchemy DB 초기화 실패", exc_info=True)
+            self.desktop_logger.log_error(f"SQLAlchemy DB 초기화 실패: {str(e)}", exc_info=True)
             raise Exception("DB 초기화 실패") from e
     
     def get_category_by_name(self, category_name: str) -> Optional[Category]:

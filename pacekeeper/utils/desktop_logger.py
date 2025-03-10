@@ -39,11 +39,11 @@ class DesktopLogger:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
 
-        # 로그 파일은 최대 1MB 크기로 제한, 최대 7개 백업
+        # 로그 파일은 최대 10MB 크기로 제한, 최대 7개 백업
         log_file = os.path.join(self.log_dir, f"{self.app_name}.log")
         handler = logging.handlers.RotatingFileHandler(
             log_file,
-            maxBytes=1024 * 1024,  # 1MB
+            maxBytes=1024 * 1024 * 10,  # 10MB
             backupCount=7,
             encoding='utf-8'
         )

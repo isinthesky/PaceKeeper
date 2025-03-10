@@ -76,7 +76,7 @@ class RecentLogsControl(wx.Panel):
         """
         self.list_ctrl.DeleteAllItems()
         logs = logs[:limit] if logs else []
-        
+                
         for idx, row in enumerate(reversed(logs)):
             self.list_ctrl.InsertItem(idx, row["start_date"])
             self.list_ctrl.SetItem(idx, 1, row["message"])
@@ -109,8 +109,6 @@ class TagButtonsPanel(wx.Panel):
             
         categories = self.service.get_categories()
         color_set = {category.id: category for category in categories}
-        
-        ic("tags", tags)
         
         for tag in tags:
             if tag:
@@ -426,7 +424,7 @@ class RoundButton(wx.Control):
             self.pressed = False
             
             # Set minimum size
-            min_width, min_height = 80, 40
+            min_width, min_height = 80, 30
             width, height = size
             if width == -1:
                 width = min_width

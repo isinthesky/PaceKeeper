@@ -124,16 +124,12 @@ class LogDialog(wx.Dialog):
         tags = self.tag_service.get_tags()
         tag_dict = {tag.id: tag.name for tag in tags}
         
-        ic("태그 사전:", tag_dict)
-        
         for row in logs:
             idx = self.list_ctrl.InsertItem(self.list_ctrl.GetItemCount(), str(row.id))
             # 생성 일시를 올바른 필드 created_at으로 변경
             self.list_ctrl.SetItem(idx, 1, str(row.start_date))  # timestamp
             self.list_ctrl.SetItem(idx, 2, str(row.end_date))  
             self.list_ctrl.SetItem(idx, 3, str(row.message))
-            
-            ic("로그 태그:", row.tags)
             
             # 태그 ID 목록 처리
             tag_names = []
@@ -155,7 +151,6 @@ class LogDialog(wx.Dialog):
             
             # 태그 이름을 쉼표로 구분하여 표시
             tag_names_str = ", ".join(tag_names)
-            ic("태그 이름:", tag_names_str)
             self.list_ctrl.SetItem(idx, 4, tag_names_str)
 
     def on_period_button(self, event, days):

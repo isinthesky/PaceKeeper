@@ -2,6 +2,12 @@
 import wx
 import wx.adv
 import os
+import sys
+
+# 개발 모드 설정 (기본값: 개발 모드)
+if 'PACEKEEPER_DEV_MODE' not in os.environ:
+    os.environ['PACEKEEPER_DEV_MODE'] = '1'  # 개발 모드 기본값
+
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.controllers.main_controller import MainController
 from pacekeeper.views.main_frame import MainFrame

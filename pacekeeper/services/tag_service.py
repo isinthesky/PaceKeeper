@@ -15,7 +15,7 @@ class TagService:
         self.repository = TagRepository()
         self.logger.log_system_event("TagService 초기화됨.")
 
-    def get_tag_text(self, tag_ids: list[int]) -> list[str]:
+    def get_tag_text(self, tag_ids: list[int]) -> str:
         """
         태그 ID 목록을 받아 태그 이름을 문자열로 변환합니다.
         """
@@ -25,9 +25,11 @@ class TagService:
             if tag:
                 tag_texts.append(tag)
                 
-        ic("tag_texts", tag_texts)
+        result = "" 
+        for tag in tag_texts:
+            result += tag.name + ", "
           
-        return [tag.name for tag in tag_texts]
+        return result[:-2]
     
     def get_tag(self, tag_id: int) -> Optional[Tag]:
         """
