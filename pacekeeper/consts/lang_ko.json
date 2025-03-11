@@ -30,12 +30,12 @@
     "LOGS_TITLE": "기록"
   },
   "BUTTON_LABELS": {
-    "START": "시작(&A)",
-    "STOP": "중지(&T)",
-    "PAUSE": "일시정지(&P)",
-    "RESUME": "재개(&R)",
-    "SUBMIT": "제출(&S)",
-    "SEARCH": "검색(&C)"
+    "START": "시작",
+    "STOP": "중지",
+    "PAUSE": "일시정지",
+    "RESUME": "재개",
+    "SUBMIT": "제출",
+    "SEARCH": "검색"
   },
   "MESSAGES": {
     "START_BREAK": "휴식을 시작하세요!",

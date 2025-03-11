@@ -31,12 +31,12 @@
         "LOGS_TITLE": "Logs"
     },
     "BUTTON_LABELS": {
-        "START": "&Start",
-        "STOP": "S&top",
-        "PAUSE": "&Pause",
-        "RESUME": "&Resume",
-        "SUBMIT": "&Submit",
-        "SEARCH": "Sear&ch"
+        "START": "Start",
+        "STOP": "Stop",
+        "PAUSE": "Pause",
+        "RESUME": "Resume",
+        "SUBMIT": "Submit",
+        "SEARCH": "Search"
     },
     "MESSAGES": {
         "START_BREAK": "Start your break!",

@@ -76,6 +76,12 @@ class MainFrame(wx.Frame):
             self.panel = wx.Panel(self)
             self.panel.SetBackgroundColour(PANEL_BACKGROUND)
             
+        # 단축키 ID 정의 (메뉴 생성 전에 필요)
+        self.ID_START_TIMER = wx.NewId()
+        self.ID_STOP_TIMER = wx.NewId()
+        self.ID_PAUSE_TIMER = wx.NewId()
+        self.ID_RESUME_TIMER = wx.NewId()
+            
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         
         # 배경색 설정
@@ -167,12 +173,24 @@ class MainFrame(wx.Frame):
     def init_menu(self):
         """메뉴바 초기화 및 메뉴 아이템 생성"""
         menu_bar = wx.MenuBar()
+        
+        # 파일 메뉴
         file_menu = wx.Menu()
         self.settings_item = file_menu.Append(wx.ID_PREFERENCES, f"{lang_res.base_labels['SETTINGS']}\tCtrl+S")
         self.track_item = file_menu.Append(wx.ID_ANY, f"{lang_res.base_labels['LOGS']}\tCtrl+L")
         self.category_item = file_menu.Append(wx.ID_ANY, f"{lang_res.base_labels['CATEGORY']}\tCtrl+C")
         self.exit_item = file_menu.Append(wx.ID_EXIT, f"{lang_res.base_labels['EXIT']}\tCtrl+Q")
         menu_bar.Append(file_menu, lang_res.base_labels['FILE'])
+        
+        # 타이머 메뉴 추가
+        timer_menu = wx.Menu()
+        start_item = timer_menu.Append(self.ID_START_TIMER, f"{lang_res.button_labels.get('START', '시작')}\tCtrl+A")
+        stop_item = timer_menu.Append(self.ID_STOP_TIMER, f"{lang_res.button_labels.get('STOP', '중지')}\tCtrl+T")
+        timer_menu.AppendSeparator()
+        pause_item = timer_menu.Append(self.ID_PAUSE_TIMER, f"{lang_res.button_labels.get('PAUSE', '일시정지')}\tCtrl+P")
+        resume_item = timer_menu.Append(self.ID_RESUME_TIMER, f"{lang_res.button_labels.get('RESUME', '재개')}\tCtrl+R")
+        menu_bar.Append(timer_menu, lang_res.base_labels.get('TIMER', '타이머'))
+        
         self.SetMenuBar(menu_bar)
 
     def init_events(self):
@@ -185,6 +203,30 @@ class MainFrame(wx.Frame):
         self.start_button.Bind(wx.EVT_BUTTON, self.on_toggle_timer)
         self.pause_button.Bind(wx.EVT_BUTTON, self.on_pause)
         
+        # 타이머 제어를 위한 단축키 추가
+        self.setup_timer_hotkeys()
+        
+    def setup_timer_hotkeys(self):
+        """타이머 제어를 위한 단축키 설정"""
+        # 단축키 ID는 이미 init_ui에서 정의됨
+        
+        # 단축키 이벤트 바인딩
+        self.Bind(wx.EVT_MENU, self.on_start_timer, id=self.ID_START_TIMER)
+        self.Bind(wx.EVT_MENU, self.on_stop_timer, id=self.ID_STOP_TIMER)
+        self.Bind(wx.EVT_MENU, self.on_pause_timer, id=self.ID_PAUSE_TIMER)
+        self.Bind(wx.EVT_MENU, self.on_resume_timer, id=self.ID_RESUME_TIMER)
+        
+        # 단축키 테이블 생성
+        accel_tbl = wx.AcceleratorTable([
+            (wx.ACCEL_CTRL, ord('A'), self.ID_START_TIMER),  # Ctrl+A: 시작
+            (wx.ACCEL_CTRL, ord('T'), self.ID_STOP_TIMER),   # Ctrl+T: 중지
+            (wx.ACCEL_CTRL, ord('P'), self.ID_PAUSE_TIMER),  # Ctrl+P: 일시정지
+            (wx.ACCEL_CTRL, ord('R'), self.ID_RESUME_TIMER)  # Ctrl+R: 재개
+        ])
+        
+        # 단축키 테이블 설정
+        self.SetAcceleratorTable(accel_tbl)
+
     def update_tag_buttons(self):
         """
         최근 로그에서 태그를 추출하여 TagButtonsPanel을 업데이트합니다.
@@ -371,4 +413,35 @@ class MainFrame(wx.Frame):
         if re.search(r'#\w+', text):
             self.start_button.Enable()
         else:
-            self.start_button.Disable() 
+            self.start_button.Disable()
+
+    def on_start_timer(self, event):
+        """타이머 시작 단축키 핸들러 (Ctrl+A)"""
+        if not self.main_controller.timer_service.is_running():
+            self.start_button.SetLabel(lang_res.button_labels.get('STOP', "STOP"))
+            self.pause_button.Enable()
+            self.main_controller.start_study_session()
+            self.hide_main_controls()
+            self.update_start_button_state()
+    
+    def on_stop_timer(self, event):
+        """타이머 중지 단축키 핸들러 (Ctrl+T)"""
+        if self.main_controller.timer_service.is_running():
+            self.main_controller.stop_study_timer()
+            self.start_button.SetLabel(lang_res.button_labels.get('START', "START"))
+            self.pause_button.Disable()
+            self.timer_label.SetLabel("00:00")
+            self.restore_main_controls()
+            self.update_start_button_state()
+    
+    def on_pause_timer(self, event):
+        """타이머 일시정지 단축키 핸들러 (Ctrl+P)"""
+        if self.main_controller.timer_service.is_running() and not self.main_controller.timer_service.is_paused():
+            self.main_controller.toggle_pause()
+            self.pause_button.SetLabel(lang_res.button_labels.get('RESUME', "RESUME"))
+    
+    def on_resume_timer(self, event):
+        """타이머 재개 단축키 핸들러 (Ctrl+R)"""
+        if self.main_controller.timer_service.is_running() and self.main_controller.timer_service.is_paused():
+            self.main_controller.toggle_pause()
+            self.pause_button.SetLabel(lang_res.button_labels.get('PAUSE', "PAUSE")) 
