@@ -16,6 +16,9 @@ from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.styles import update_system_colors
 from icecream import ic
 
+# 배포 모드로 환경변수 설정
+os.environ['PACEKEEPER_DEV_MODE'] = '1'
+
 lang_res = load_language_resource(ConfigController().get_language())
 
 # 개발 환경과 배포 환경 구분
@@ -73,6 +76,14 @@ class MainController:
         )
         self.paused = False
         
+        # 연기된 쉬는 시간 정보를 저장하기 위한 변수
+        self.delayed_break_minutes = 0
+        self.is_break_delayed = False
+        self.delayed_log_saved = False
+        
+        # 현재 세션에서 휴식이 이미 연기되었는지 추적
+        self.break_already_delayed = False
+        
         # 앱 시작 시, 최근 로그를 UI에 업데이트합니다.
         self.refresh_recent_logs()
 
@@ -99,24 +110,44 @@ class MainController:
         user_input = self.main_frame.log_input_panel.get_value().strip()
         if user_input:
             try:
-                # 저장된 study_start_time을 create_study_log에 전달
-                self.log_service.create_study_log(user_input, study_start_time=self.study_start_time)
+                # 연기된 휴식인 경우, 로그를 중복 저장하지 않음
+                if not self.is_break_delayed or not self.delayed_log_saved:
+                    # 저장된 study_start_time을 create_study_log에 전달
+                    self.log_service.create_study_log(user_input, study_start_time=self.study_start_time)
+                    # 연기된 휴식인 경우 로그 저장 상태 표시
+                    if self.is_break_delayed:
+                        self.delayed_log_saved = True
             except Exception as e:
                 wx.MessageBox(f"로그 저장 실패: {str(e)}", "Error", wx.OK | wx.ICON_ERROR)
         
         # 로그 추가 후 최신 로그 목록을 UI에 업데이트합니다.
         self.refresh_recent_logs()
         
-        # 사이클 증가 및 휴식 시간 결정
-        cycle = self.config_ctrl.increment_cycle()
-        if cycle % self.config_ctrl.get_setting("cycles", 4) == 0:
-            break_min = self.config_ctrl.get_setting("long_break", 15)
-            self.config_ctrl.set_status(AppStatus.LONG_BREAK)
-            self.sound_manager.play_sound(resource_path("assets/sounds/long_brk.wav"))
+        # 연기된 휴식인 경우, 저장된 휴식 시간 사용
+        if self.is_break_delayed:
+            break_min = self.delayed_break_minutes
+            self.is_break_delayed = False
+            self.delayed_log_saved = False
+            self.delayed_break_minutes = 0
+            
+            # 휴식 상태 설정 및 소리 재생
+            if break_min <= 5:
+                self.config_ctrl.set_status(AppStatus.SHORT_BREAK)
+                self.sound_manager.play_sound(resource_path("assets/sounds/short_brk.wav"))
+            else:
+                self.config_ctrl.set_status(AppStatus.LONG_BREAK)
+                self.sound_manager.play_sound(resource_path("assets/sounds/long_brk.wav"))
         else:
-            break_min = self.config_ctrl.get_setting("short_break", 5)
-            self.config_ctrl.set_status(AppStatus.SHORT_BREAK)
-            self.sound_manager.play_sound(resource_path("assets/sounds/short_brk.wav"))
+            # 일반적인 경우: 사이클 증가 및 휴식 시간 결정
+            cycle = self.config_ctrl.increment_cycle()
+            if cycle % self.config_ctrl.get_setting("cycles", 4) == 0:
+                break_min = self.config_ctrl.get_setting("long_break", 15)
+                self.config_ctrl.set_status(AppStatus.LONG_BREAK)
+                self.sound_manager.play_sound(resource_path("assets/sounds/long_brk.wav"))
+            else:
+                break_min = self.config_ctrl.get_setting("short_break", 5)
+                self.config_ctrl.set_status(AppStatus.SHORT_BREAK)
+                self.sound_manager.play_sound(resource_path("assets/sounds/short_brk.wav"))
             
         # 휴식 세션 시작 (UI 생성은 메인 스레드에서 관리)
         wx.CallAfter(self.start_break_session, break_min)
@@ -135,12 +166,48 @@ class MainController:
         # 휴식 타이머 시작 (내부적으로 기존 타이머 종료 후 새 타이머 스레드 시작)
         self.timer_service.start_break(break_min)
         
-        # 휴식 다이얼로그 표시
-        self.main_frame.show_break_dialog(break_min)
+        # 휴식 다이얼로그 표시 (휴식이 이미 연기되었는지 여부를 전달)
+        self.main_frame.show_break_dialog(break_min, self.break_already_delayed)
 
     def on_break_session_finished(self):
         """휴식 세션 종료 후 실행될 로직"""
         self.timer_service.stop()
+
+    def delay_break(self, delay_minutes: int, break_minutes: int):
+        """
+        휴식 시간을 지정된 시간만큼 연기하고 학습 타이머를 다시 시작
+        
+        매개변수:
+            delay_minutes: 연기할 시간(분)
+            break_minutes: 저장할 휴식 시간(분)
+        """
+        # 휴식 정보 저장
+        self.delayed_break_minutes = break_minutes
+        self.is_break_delayed = True
+        self.delayed_log_saved = False
+        
+        # 휴식이 연기되었음을 표시
+        self.break_already_delayed = True
+        
+        # 타이머 중지 및 상태 초기화
+        self.timer_service.stop()
+        
+        # 지연 타이머 시작
+        self.study_start_time = datetime.datetime.now()
+        total_seconds = delay_minutes * MINUTE_TO_SECOND
+        
+        # 학습 세션 상태 설정 및 타이머 콜백 할당
+        self.config_ctrl.set_status(AppStatus.STUDY)
+        self.timer_service.on_finish = self.on_study_session_finished
+        
+        # 타이머 업데이트 콜백 설정
+        self.timer_service.set_update_callback(self.main_frame.update_timer_label)
+        
+        # 타이머 시작
+        self.timer_service.start(total_seconds)
+        
+        # 메인 컨트롤 숨기기 (타이머 UI만 표시)
+        self.main_frame.hide_main_controls()
 
     def toggle_pause(self):
         """일시정지/재개 토글 메서드"""
@@ -154,8 +221,13 @@ class MainController:
     def stop_study_timer(self):
         """공부 타이머 중단 메서드"""
         self.timer_service.stop()
+        # 연기된 휴식 정보 초기화
+        self.is_break_delayed = False
+        self.delayed_break_minutes = 0
+        self.delayed_log_saved = False
+        self.break_already_delayed = False
         # 추가로 UI 갱신이나 상태 초기화 작업이 필요하면 이곳에 구현합니다.
-        
+
     def cleanup(self):
         """앱 종료 시 모든 리소스 정리"""
         # 타이머 서비스 중지

@@ -324,9 +324,13 @@ class MainFrame(wx.Frame):
                 self.break_dialog.break_label.SetLabel(time_str)
                 self.break_dialog.break_label.Refresh()
 
-    def show_break_dialog(self, break_min):
+    def show_break_dialog(self, break_min, already_delayed=False):
         """
         휴식 다이얼로그를 표시합니다.
+        
+        매개변수:
+            break_min: 휴식 시간(분)
+            already_delayed: 이미 휴식이 연기되었는지 여부
         """
         def on_break_end():
             # 쉬는 시간 종료 후 UI 초기화
@@ -375,7 +379,8 @@ class MainFrame(wx.Frame):
             self.main_controller, 
             self.config_ctrl, 
             break_minutes=break_min,
-            on_break_end=on_break_end
+            on_break_end=on_break_end,
+            already_delayed=already_delayed
         )
         
         # 타이머 업데이트 콜백 설정
@@ -392,6 +397,12 @@ class MainFrame(wx.Frame):
         """창 닫기 시 타이머 스레드 정리 및 앱 종료"""
         # 타이머 서비스 중지 및 리소스 정리
         self.main_controller.cleanup()
+        
+        # 연기된 휴식 상태 초기화
+        if hasattr(self.main_controller, 'is_break_delayed'):
+            self.main_controller.is_break_delayed = False
+            self.main_controller.delayed_break_minutes = 0
+            self.main_controller.delayed_log_saved = False
         
         # 앱 종료를 위해 프레임 파괴 및 메인 루프 종료
         self.Destroy()

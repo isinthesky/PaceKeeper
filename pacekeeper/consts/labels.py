@@ -28,10 +28,12 @@ def load_language_resource(language: str = "ko") -> LanguageResource:
     except Exception as e:
         raise RuntimeError(f"언어 리소스 로드 실패: {e}")
 
-    return LanguageResource(
+    d = LanguageResource(
         base_labels=data.get("BASE_LABELS", {}),
         title_labels=data.get("TITLE_LABELS", {}),
         button_labels=data.get("BUTTON_LABELS", {}),
         messages=data.get("MESSAGES", {}),
         error_messages=data.get("ERROR_MESSAGES", {})
     )
+
+    return d

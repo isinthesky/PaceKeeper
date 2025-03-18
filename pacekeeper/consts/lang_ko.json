@@ -35,7 +35,10 @@
     "PAUSE": "일시정지",
     "RESUME": "재개",
     "SUBMIT": "제출",
-    "SEARCH": "검색"
+    "SEARCH": "검색",
+    "DELAY_1MIN": "1분 뒤에 쉬기",
+    "DELAY_2MIN": "2분 뒤에 쉬기",
+    "CLOSE_BREAK": "휴식 닫기"
   },
   "MESSAGES": {
     "START_BREAK": "휴식을 시작하세요!",

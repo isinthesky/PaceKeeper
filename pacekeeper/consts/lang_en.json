@@ -36,7 +36,10 @@
         "PAUSE": "Pause",
         "RESUME": "Resume",
         "SUBMIT": "Submit",
-        "SEARCH": "Search"
+        "SEARCH": "Search",
+        "DELAY_1MIN": "Break in 1 min",
+        "DELAY_2MIN": "Break in 2 min",
+        "CLOSE_BREAK": "Close Break"
     },
     "MESSAGES": {
         "START_BREAK": "Start your break!",
