@@ -8,7 +8,6 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets', 'assets'),
-        ('config.json', '.'),
         ('pacekeeper/consts/lang_ko.json', 'pacekeeper/consts'),
         ('pacekeeper/consts/lang_en.json', 'pacekeeper/consts'),
     ],
@@ -53,3 +52,12 @@ coll = COLLECT(
     upx_exclude=[],
     name='PaceKeeper',
 )
+
+# DB 파일 (pace_log.db)과 설정 파일 (config.json)을 번들에서 제외하고 
+# 외부에 저장하기 위한 컴파일 전략:
+# PaceKeeper 코드는 이미 resource_path 함수를 통해 
+# 운영체제별 적절한 사용자 디렉토리에 이 파일들을 저장합니다.
+# 
+# - Windows: %APPDATA%\PaceKeeper\
+# - macOS: ~/Library/Application Support/PaceKeeper/
+# - Linux: ~/.pacekeeper/

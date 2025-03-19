@@ -62,7 +62,7 @@ poetry run start
 ## 앱 빌드하기
 
 ```bash
-pyinstaller main.spec
+pyinstaller PaceKeeper.spec -y
 ```
 빌드된 실행 파일은 `dist` 디렉토리에서 찾을 수 있습니다.
 
