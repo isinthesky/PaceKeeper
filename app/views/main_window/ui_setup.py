@@ -5,11 +5,10 @@ UI 관련 초기화 및 설정 메서드 모음
 
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                              QMenu, QMenuBar, QStatusBar, QLabel, QToolBar, 
-                             QSystemTrayIcon, QSplitter)
+                             QSystemTrayIcon, QSplitter, QPushButton)
 from PyQt6.QtCore import Qt, QCoreApplication
 from PyQt6.QtGui import QAction
 
-from app.views.timer_widget_responsive import TimerWidget
 from app.views.log_widget import LogListWidget
 from app.views.tag_widget import TagButtonsWidget
 from app.views.text_input_widget import TextInputWidget
@@ -34,9 +33,39 @@ def setup_ui(self):
     self.mainLayout.setContentsMargins(10, 10, 10, 10)
     self.mainLayout.setSpacing(10)
     
-    # 타이머 위젯
-    self.timerWidget = TimerWidget()
-    self.mainLayout.addWidget(self.timerWidget)
+    # 타이머 표시 레이블 (최상단에 배치)
+    self.timerLabel = QLabel("25:00")
+    self.timerLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    self.timerLabel.setObjectName("timerLabel")
+    self.timerLabel.setStyleSheet("font-size: 48px; font-weight: bold; color: #333;")
+    self.mainLayout.addWidget(self.timerLabel)
+    
+    # 타이머 버튼 컨테이너 (미니 모드용)
+    self.miniButtonContainer = QWidget()
+    self.miniButtonLayout = QHBoxLayout(self.miniButtonContainer)
+    
+    # 시작/중지 버튼
+    self.startButton = QPushButton("START")
+    self.startButton.setObjectName("startButton")
+    self.startButton.setMinimumWidth(100)
+    self.startButton.clicked.connect(self.toggleTimer)
+    
+    # 일시정지/재개 버튼
+    self.pauseButton = QPushButton("PAUSE")
+    self.pauseButton.setObjectName("pauseButton")
+    self.pauseButton.setMinimumWidth(100)
+    self.pauseButton.setEnabled(False)
+    self.pauseButton.clicked.connect(self.togglePause)
+    
+    # 버튼 추가
+    self.miniButtonLayout.addStretch(1)
+    self.miniButtonLayout.addWidget(self.startButton)
+    self.miniButtonLayout.addWidget(self.pauseButton)
+    self.miniButtonLayout.addStretch(1)
+    
+    # 미니 버튼 컨테이너는 처음에는 숨김
+    self.miniButtonContainer.hide()
+    self.mainLayout.addWidget(self.miniButtonContainer)
     
     # 스플리터 (로그, 태그, 입력 영역)
     self.contentSplitter = QSplitter(Qt.Orientation.Vertical)
@@ -58,11 +87,36 @@ def setup_ui(self):
     self.textInputWidget = TextInputWidget()
     self.inputLayout.addWidget(self.textInputWidget)
     
+    # 타이머 버튼 영역 (일반 모드용)
+    timerButtonLayout = QHBoxLayout()
+    
+    # 시작/중지 버튼 (일반 모드용)
+    normalStartButton = QPushButton("START")
+    normalStartButton.setObjectName("normalStartButton")
+    normalStartButton.setMinimumWidth(100)
+    normalStartButton.clicked.connect(self.toggleTimer)
+    
+    # 일시정지/재개 버튼 (일반 모드용)
+    normalPauseButton = QPushButton("PAUSE")
+    normalPauseButton.setObjectName("normalPauseButton")
+    normalPauseButton.setMinimumWidth(100)
+    normalPauseButton.setEnabled(False)
+    normalPauseButton.clicked.connect(self.togglePause)
+    
+    # 버튼 추가
+    timerButtonLayout.addStretch(1)
+    timerButtonLayout.addWidget(normalStartButton)
+    timerButtonLayout.addWidget(normalPauseButton)
+    timerButtonLayout.addStretch(1)
+    
+    # 버튼 레이아웃 추가
+    self.inputLayout.addLayout(timerButtonLayout)
+    
     self.contentSplitter.addWidget(self.inputContainer)
     
     # 스플리터 비율 설정
     self.contentSplitter.setStretchFactor(0, 3)  # 로그 영역
-    self.contentSplitter.setStretchFactor(1, 1)  # 입력 영역
+    self.contentSplitter.setStretchFactor(1, 2)  # 입력 영역
     
     self.mainLayout.addWidget(self.contentSplitter)
     

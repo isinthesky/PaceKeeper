@@ -16,11 +16,11 @@ from app.views.styles.advanced_theme_manager import AdvancedThemeManager
 # 리팩토링된 모듈 임포트
 from app.views.main_window.ui_setup import setup_ui, setup_tray_icon
 from app.views.main_window.event_handlers import (
-    connect_signals, on_timer_start, on_timer_pause, on_timer_stop,
-    on_timer_state_changed, on_session_started, on_session_paused,
-    on_session_resumed, on_session_stopped, on_session_finished,
-    on_text_submitted, on_tag_selected, on_log_selected,
-    on_tray_icon_activated, on_exit_from_tray, close_event
+    connect_signals, on_timer_start, on_timer_pause, on_timer_state_changed,
+    on_session_started, on_session_paused, on_session_resumed,
+    on_session_stopped, on_session_finished, on_text_submitted,
+    on_tag_selected, on_log_selected, on_tray_icon_activated,
+    on_exit_from_tray, close_event
 )
 from app.views.main_window.actions import (
     toggle_timer, toggle_pause, open_settings, open_log_dialog,
@@ -71,7 +71,6 @@ class MainWindow(QMainWindow):
         # 이벤트 핸들러 메서드 바인딩
         self.onTimerStart = lambda: on_timer_start(self)
         self.onTimerPause = lambda: on_timer_pause(self)
-        self.onTimerStop = lambda: on_timer_stop(self)
         self.onTimerStateChanged = lambda state: on_timer_state_changed(self, state)
         self.onSessionStarted = lambda session_type: on_session_started(self, session_type)
         self.onSessionPaused = lambda: on_session_paused(self)
@@ -278,3 +277,30 @@ class MainWindow(QMainWindow):
             # 더블 클릭 시 창 보이기
             self.showNormal()
             self.activateWindow()
+
+    def updateTimerDisplay(self, timeStr):
+        """
+        타이머 표시 업데이트
+        
+        Args:
+            timeStr: 표시할 시간 문자열
+        """
+        self.timerLabel.setText(timeStr)
+            
+    def _restore_normal_ui(self):
+        """일반 모드 UI로 복원"""
+        # 미니 버튼 컨테이너 숨기기
+        self.miniButtonContainer.hide()
+        
+        # 일반 UI 요소 복원
+        self.contentSplitter.show()
+        self.menuBar.show()
+        self.toolBar.show()
+        self.statusBar.show()
+        
+        # 창 크기 복원
+        self.setFixedSize(16777215, 16777215)  # 고정 크기 제거 (QWIDGETSIZE_MAX)
+        self.resize(
+            self.config.get("main_dlg_width", 800),
+            self.config.get("main_dlg_height", 500)
+        )

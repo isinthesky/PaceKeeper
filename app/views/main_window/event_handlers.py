@@ -13,13 +13,8 @@ from app.utils.constants import TimerState, SessionType
 
 def connect_signals(self):
     """시그널 연결"""
-    # 타이머 위젯 시그널
-    self.timerWidget.timerStarted.connect(self.onTimerStart)
-    self.timerWidget.timerPaused.connect(self.onTimerPause)
-    self.timerWidget.timerStopped.connect(self.onTimerStop)
-    
     # 타이머 컨트롤러 시그널
-    self.timer_controller.timerUpdated.connect(self.timerWidget.updateTimer)
+    self.timer_controller.timerUpdated.connect(self.updateTimerDisplay)
     self.timer_controller.timerStateChanged.connect(self.onTimerStateChanged)
     self.timer_controller.sessionFinished.connect(self.onSessionFinished)
     
@@ -41,36 +36,58 @@ def connect_signals(self):
 
 
 def on_timer_start(self):
-    """타이머 시작 이벤트 핸들러"""
+    """타이머 시작/중지 이벤트 핸들러"""
     # 현재 입력된 텍스트 가져오기
     current_text = self.textInputWidget.text()
     
-    # 텍스트가 있으면 로그 등록
-    if current_text and current_text.strip():
-        # 현재 시간으로 로그 생성
-        start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # 로그 생성
-        self.log_service.create_log(
-            message=current_text,
-            start_date=start_date
-        )
-        
-        # 최근 로그 업데이트
-        self.updateRecentLogs()
+    # 현재 타이머 상태 확인
+    timer_state = self.timer_controller.get_state()
     
-    # 세션 시작
-    self.main_controller.start_session()
+    if timer_state in [TimerState.IDLE, TimerState.FINISHED]:
+        # 시작 모드
+        # 텍스트가 있으면 로그 등록
+        if current_text and current_text.strip():
+            # 현재 시간으로 로그 생성
+            start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # 로그 생성
+            self.log_service.create_log(
+                message=current_text,
+                start_date=start_date
+            )
+            
+            # 최근 로그 업데이트
+            self.updateRecentLogs()
+        
+        # 버튼 텍스트 변경
+        self.startButton.setText("STOP")
+        self.pauseButton.setEnabled(True)
+        
+        # 세션 시작
+        self.main_controller.start_session()
+    else:
+        # 중지 모드
+        # 버튼 텍스트 변경
+        self.startButton.setText("START")
+        self.pauseButton.setEnabled(False)
+        self.pauseButton.setText("PAUSE")
+        
+        # 세션 중지
+        self.main_controller.stop_session()
 
 
 def on_timer_pause(self):
-    """타이머 일시정지 이벤트 핸들러"""
+    """타이머 일시정지/재개 이벤트 핸들러"""
+    # 현재 타이머 상태에 따라 버튼 텍스트 변경
+    timer_state = self.timer_controller.get_state()
+    
+    if timer_state == TimerState.RUNNING:
+        self.pauseButton.setText("RESUME")
+    else:
+        self.pauseButton.setText("PAUSE")
+    
+    # 일시정지/재개 토글
     self.main_controller.toggle_pause()
-
-
-def on_timer_stop(self):
-    """타이머 중지 이벤트 핸들러"""
-    self.main_controller.stop_session()
 
 
 def on_timer_state_changed(self, state):
@@ -90,6 +107,22 @@ def on_session_started(self, session_type):
     Args:
         session_type: 세션 타입
     """
+    # 집중 모드 UI로 전환 (타이머와 버튼만 표시)
+    if session_type == SessionType.POMODORO:
+        # 불필요한 UI 요소 숨기기
+        self.contentSplitter.hide()
+        self.menuBar.hide()
+        self.toolBar.hide()
+        self.statusBar.hide()
+        
+        # 타이머 레이블과 미니 버튼 컨테이너 표시
+        self.timerLabel.show()
+        self.miniButtonContainer.show()
+        
+        # 창 크기 최소화
+        self.setFixedSize(300, 150)
+        
+    # UI 상태 업데이트
     self.updateUI()
 
 
@@ -105,6 +138,10 @@ def on_session_resumed(self):
 
 def on_session_stopped(self):
     """세션 중지 이벤트 핸들러"""
+    # 일반 모드 UI로 복원
+    self._restore_normal_ui()
+    
+    # UI 상태 업데이트
     self.updateUI()
 
 
@@ -115,6 +152,10 @@ def on_session_finished(self, session_type):
     Args:
         session_type: 세션 타입
     """
+    # 뽀모도로 세션이 완료되면 일반 모드 UI로 복원
+    if session_type == SessionType.POMODORO:
+        self._restore_normal_ui()
+    
     self.updateUI()
     
     # 뽀모도로 세션이 완료되면 휴식 대화상자 표시
@@ -231,3 +272,13 @@ def close_event(self, event: QCloseEvent):
         else:
             # 이벤트 무시 (창 닫기 취소)
             event.ignore()
+
+
+def updateTimerDisplay(self, timeStr):
+    """
+    타이머 표시 업데이트
+    
+    Args:
+        timeStr: 표시할 시간 문자열
+    """
+    self.timerLabel.setText(timeStr)
