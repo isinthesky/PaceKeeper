@@ -1,8 +1,8 @@
 .PHONY: help setup venv install run run-prod clean add remove designer
 
 # 기본 변수 설정
-PYTHON := python3
-PIP := pip3
+PYTHON := python3.12
+PIP := python3.12 -m pip
 PROJECT_DIR := $(shell pwd)
 VENV_DIR := $(PROJECT_DIR)/venv
 PYTHONPATH := $(PROJECT_DIR)
@@ -43,7 +43,7 @@ run: venv
 	@echo "PaceKeeper 애플리케이션 실행 중..."
 	@. $(VENV_DIR)/bin/activate && \
 	export PYTHONPATH=$(PYTHONPATH) && \
-	python main.py
+	python app/main_responsive.py
 
 # 캐시 및 임시 파일 정리
 clean:
@@ -83,13 +83,6 @@ remove: venv
 	@echo "$(filter-out $@,$(MAKECMDGOALS)) 라이브러리 제거 완료!"
 	@grep -v "^$(filter-out $@,$(MAKECMDGOALS))$$" "$(PROJECT_DIR)/requirements.txt" > "$(PROJECT_DIR)/requirements.txt.tmp" && \
 	mv "$(PROJECT_DIR)/requirements.txt.tmp" "$(PROJECT_DIR)/requirements.txt"
-
-
-# PyQt6 및 관련 도구 설치
-qt-setup: venv
-	@echo "PyQt6 및 관련 패키지 설치 중..."
-	@. $(VENV_DIR)/bin/activate && $(PIP) install PyQt6 PyQt6-Qt6 PyQt6-sip PyQt6-tools
-	@echo "PyQt6 및 관련 패키지 설치 완료!"
 
 # 빌드 (PyInstaller 사용)
 build: venv
