@@ -102,6 +102,8 @@ class SettingsDialog(QDialog):
         # 테마 설정 그룹
         themeGroup = QGroupBox("테마")
         themeLayout = QFormLayout(themeGroup)
+
+        print(self.theme_manager.get_available_themes())
         
         # 테마 콤보박스
         self.themeComboBox = QComboBox()

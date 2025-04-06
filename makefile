@@ -87,7 +87,7 @@ remove: venv
 # 빌드 (PyInstaller 사용)
 build: venv
 	@echo "애플리케이션 빌드 중..."
-	@. $(VENV_DIR)/bin/activate && pyinstaller PaceKeeper-Qt.spec
+	@. $(VENV_DIR)/bin/activate && pyinstaller PaceKeeper.spec
 	@echo "빌드 완료! dist/ 폴더에서 실행 파일을 확인하세요."
 
 # 빌드 스펙 파일 생성

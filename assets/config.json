@@ -8,5 +8,6 @@
     "break_color": "#FDFFB6",
     "language": "ko",
     "main_dlg_width": 800,
-    "main_dlg_height": 500
+    "main_dlg_height": 500,
+    "theme": "default"
 }

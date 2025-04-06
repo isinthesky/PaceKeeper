@@ -3,13 +3,12 @@
 block_cipher = None
 
 a = Analysis(
-    ['pacekeeper/main.py'],
+    ['app/main_responsive.py'],
     pathex=[],
     binaries=[],
     datas=[
         ('assets', 'assets'),
-        ('pacekeeper/consts/lang_ko.json', 'pacekeeper/consts'),
-        ('pacekeeper/consts/lang_en.json', 'pacekeeper/consts'),
+        ('config.json', '.'),
     ],
     hiddenimports=[],
     hookspath=[],
