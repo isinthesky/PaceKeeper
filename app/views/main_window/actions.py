@@ -13,23 +13,6 @@ from app.views.dialogs.tag_dialog import TagDialog
 from app.views.dialogs.break_dialog import BreakDialog
 
 
-def toggle_timer(self):
-    """타이머 시작/중지 토글"""
-    timer_state = self.timer_controller.get_state()
-    
-    if timer_state in [TimerState.IDLE, TimerState.FINISHED]:
-        # 타이머 시작
-        self.main_controller.start_session()
-    else:
-        # 타이머 중지
-        self.main_controller.stop_session()
-
-
-def toggle_pause(self):
-    """타이머 일시정지/재개 토글"""
-    self.main_controller.toggle_pause()
-
-
 def open_settings(self):
     """설정 대화상자 열기"""
     settings_dialog = SettingsDialog(self, self.config, self.theme_manager)

@@ -303,7 +303,7 @@ class SettingsDialog(QDialog):
         
         # UI 설정
         self.showSecondsCheckBox.setChecked(self.config.get("show_seconds", True))
-        self.minimizeToTrayCheckBox.setChecked(self.config.get("minimize_to_tray", True))
+        self.minimizeToTrayCheckBox.setChecked(self.config.get("minimize_to_tray", False))
         self.windowWidthSpinBox.setValue(self.config.get("main_dlg_width", 800))
         self.windowHeightSpinBox.setValue(self.config.get("main_dlg_height", 500))
         

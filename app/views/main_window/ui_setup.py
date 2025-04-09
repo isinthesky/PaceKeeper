@@ -215,7 +215,12 @@ def setup_tray_icon(self):
     
     # 메뉴 설정
     self.trayIcon.setContextMenu(trayMenu)
-    self.trayIcon.activated.connect(self.onTrayIconActivated)
+    
+    # 더블 클릭 시 창 열기 시그널 연결
+    try:
+        self.trayIcon.activated.connect(self.onTrayIconActivated)
+    except Exception as e:
+        print(f"Warning: Failed to connect tray icon activated signal: {e}")
     
     # 트레이 아이콘 표시
     self.trayIcon.show()

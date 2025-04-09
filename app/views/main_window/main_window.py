@@ -16,6 +16,7 @@ from app.domain.tag.tag_service import TagService
 from app.domain.category.category_service import CategoryService
 from app.views.styles.advanced_theme_manager import AdvancedThemeManager
 from app.utils.constants import TimerState, SessionType # TimerState 임포트
+from icecream import ic
 
 # 리팩토링된 모듈 임포트
 from app.views.main_window.ui_setup import setup_ui, setup_tray_icon
@@ -229,6 +230,11 @@ class MainWindow(QMainWindow):
         from app.views.dialogs.break_dialog import BreakDialog
         from app.utils.constants import SessionType
         
+        # 창을 표시하고 포커스를 가져오기 위해 창을 활성화
+        self.setVisible(True)
+        self.activateWindow()
+        self.raise_()
+        
         break_dialog = BreakDialog(self, session_type)
         
         # 휴식 시작 시그널 연결
@@ -241,7 +247,11 @@ class MainWindow(QMainWindow):
             lambda: self.main_controller.start_session(SessionType.POMODORO)
         )
         
-        # 대화상자 표시
+        # 대화상자가 표시되도록 반드시 시스템 트레이에서 창을 표시
+        if self.isHidden():
+            self.showNormal()
+        
+        # 대화상자 표시 (모달로 실행)
         break_dialog.exec()
         
     def showStats(self):
@@ -376,7 +386,6 @@ class MainWindow(QMainWindow):
             self.startStopAction.setEnabled(True)
             self.pauseResumeAction.setText("일시정지")
             self.pauseResumeAction.setEnabled(False)
-        # 필요시 다른 상태에 대한 처리 추가
 
         # 3. 트레이 액션 업데이트
         if state == TimerState.RUNNING:
@@ -389,12 +398,8 @@ class MainWindow(QMainWindow):
             self.trayStartStopAction.setEnabled(True)
             self.trayPauseResumeAction.setText("재개")
             self.trayPauseResumeAction.setEnabled(True)
-        elif state in [TimerState.IDLE, TimerState.FINISHED, TimerState.BREAK]: # BREAK 상태 처리 추가 필요 시
+        elif state in [TimerState.IDLE, TimerState.FINISHED, TimerState.BREAK]:
             self.trayStartStopAction.setText("시작")
             self.trayStartStopAction.setEnabled(True)
             self.trayPauseResumeAction.setText("일시정지")
             self.trayPauseResumeAction.setEnabled(False)
-        # 필요시 다른 상태에 대한 처리 추가
-
-        # 4. 상태바 업데이트 (선택 사항)
-        # self.statusLabel.setText(f"상태: {state.name}, 시간: {time_str}")

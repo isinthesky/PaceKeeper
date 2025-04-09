@@ -11,6 +11,7 @@ from app.views.dialogs.log_dialog import LogDialog
 from app.views.dialogs.category_dialog import CategoryDialog
 from app.views.dialogs.tag_dialog import TagDialog
 from app.views.dialogs.break_dialog import BreakDialog
+from icecream import ic
 
 def openSettings(self):
     """설정 대화상자 열기"""
@@ -118,6 +119,7 @@ def closeEvent(self, event: QCloseEvent):
     Args:
         event: 닫기 이벤트
     """
+    
     if self.config.get("minimize_to_tray", True):
         # 트레이로 최소화
         event.ignore()

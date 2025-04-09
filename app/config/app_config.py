@@ -47,7 +47,7 @@ class AppConfig(QObject):
             "main_dlg_width": 800,
             "main_dlg_height": 500,
             "show_seconds": True,
-            "minimize_to_tray": True,
+            "minimize_to_tray": False,
             
             # 알림 설정
             "notifications_enabled": True,

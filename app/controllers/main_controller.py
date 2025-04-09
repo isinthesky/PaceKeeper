@@ -269,23 +269,15 @@ class MainController(QObject):
             if self.current_log_text:
                 self._save_log(self.current_log_text, duration)
         
-        # 자동 시작 설정에 따라 다음 세션 시작
-        next_session = None
+        # 자동 시작 설정 확인 및 저장 (실제 시작은 BreakDialog에서 처리)
         if session_type == SessionType.POMODORO:
             # 뽀모도로 세션 후에는 휴식
-            if self.should_auto_start_break:
-                if self.pomodoro_count % self.config.get("long_break_interval", 4) == 0:
-                    next_session = SessionType.LONG_BREAK
-                else:
-                    next_session = SessionType.SHORT_BREAK
+            self.should_auto_start_break = self.config.get("auto_start_breaks", True)
         else:
             # 휴식 세션 후에는 뽀모도로
-            if self.should_auto_start_pomodoro:
-                next_session = SessionType.POMODORO
+            self.should_auto_start_pomodoro = self.config.get("auto_start_pomodoros", False)
         
-        # 다음 세션 자동 시작
-        if next_session:
-            self.start_session(next_session, self.current_category_id)
+        # 참고: 다음 세션 자동 시작 코드 제거함 - BreakDialog가 표시되고 나서 시작되도록 함
         
         # 시그널 발생
         self.sessionFinished.emit(session_type)

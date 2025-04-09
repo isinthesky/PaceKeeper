@@ -13,7 +13,7 @@
     "main_dlg_width": 800,
     "main_dlg_height": 500,
     "show_seconds": true,
-    "minimize_to_tray": true,
+    "minimize_to_tray": false,
     "notifications_enabled": true,
     "notification_sound": true,
     "short_break": 5,

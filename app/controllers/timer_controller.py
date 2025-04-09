@@ -44,7 +44,7 @@ class TimerController(QObject):
             minutes: 분 단위 시간
             session_type: 세션 타입
         """
-        self.totalSeconds = minutes * 60
+        self.totalSeconds = minutes * 10
         self.remainingSeconds = self.totalSeconds
         self.startTime = datetime.now()
         self.pauseTime = None
