@@ -6,14 +6,16 @@ PaceKeeper Qt - Timer Widget (Responsive)
 from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy
 from PyQt6.QtCore import pyqtSignal, Qt, QSize
 
+from app.utils.constants import TimerState # TimerState 임포트 추가
+
 
 class TimerWidget(QWidget):
     """타이머 위젯 클래스 (반응형)"""
     
     # 사용자 정의 시그널
-    timerStarted = pyqtSignal()
-    timerPaused = pyqtSignal()
-    timerStopped = pyqtSignal()
+    startRequested = pyqtSignal()
+    pauseRequested = pyqtSignal()
+    # timerStopped 시그널은 startRequested로 통합 (토글 방식)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -21,10 +23,11 @@ class TimerWidget(QWidget):
     
     def setupUI(self):
         """UI 초기화"""
-        # 메인 레이아웃
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 10, 10, 10)  # 여백 설정
-        self.layout.setSpacing(8)  # 컴포넌트 간 간격
+        # 메인 레이아웃 생성 및 설정
+        layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)  # 여백 설정
+        layout.setSpacing(8)  # 컴포넌트 간 간격
+        self.setLayout(layout) # 위젯에 레이아웃 설정
         
         # 타이머 표시 레이블
         self.timerLabel = QLabel("25:00")
@@ -64,31 +67,39 @@ class TimerWidget(QWidget):
         self.buttonLayout.addStretch(1)  # 오른쪽 여백 (가변)
         
         # 메인 레이아웃에 위젯 추가
-        self.layout.addWidget(self.timerLabel)
-        self.layout.addLayout(self.buttonLayout)
+        layout.addWidget(self.timerLabel)
+        layout.addLayout(self.buttonLayout)
     
     def onStartClicked(self):
-        """시작/정지 버튼 클릭 이벤트 핸들러"""
-        if self.startButton.text() == "START":
-            self.startButton.setText("STOP")
-            self.pauseButton.setEnabled(True)
-            self.timerStarted.emit()
-        else:
-            self.startButton.setText("START")
-            self.pauseButton.setEnabled(False)
-            self.pauseButton.setText("PAUSE")
-            self.timerStopped.emit()
+        """시작/정지 버튼 클릭 시그널 발생"""
+        self.startRequested.emit()
     
     def onPauseClicked(self):
-        """일시정지/재개 버튼 클릭 이벤트 핸들러"""
-        if self.pauseButton.text() == "PAUSE":
-            self.pauseButton.setText("RESUME")
-        else:
+        """일시정지/재개 버튼 클릭 시그널 발생"""
+        # 버튼이 활성화 상태일 때만 시그널 발생
+        if self.pauseButton.isEnabled():
+            self.pauseRequested.emit()
+
+    def setTimerState(self, state, timeStr):
+        """타이머 상태에 따라 위젯 UI 업데이트"""
+        self.timerLabel.setText(timeStr)
+
+        if state == TimerState.RUNNING:
+            self.startButton.setText("STOP")
             self.pauseButton.setText("PAUSE")
-        self.timerPaused.emit()
-    
+            self.pauseButton.setEnabled(True)
+        elif state == TimerState.PAUSED:
+            self.startButton.setText("STOP") # 중지 가능한 상태 유지
+            self.pauseButton.setText("RESUME")
+            self.pauseButton.setEnabled(True)
+        elif state in [TimerState.IDLE, TimerState.FINISHED, TimerState.BREAK]: # IDLE, FINISHED, BREAK 상태 추가
+            self.startButton.setText("START")
+            self.pauseButton.setText("PAUSE")
+            self.pauseButton.setEnabled(False)
+        # 필요시 다른 상태에 대한 처리 추가
+
     def updateTimer(self, timeStr):
-        """타이머 시간 업데이트"""
+        """타이머 시간만 업데이트 (기존 메서드 유지 또는 setTimerState로 통합 가능)"""
         self.timerLabel.setText(timeStr)
     
     def resizeEvent(self, event):

@@ -79,13 +79,15 @@ class MainController(QObject):
         self.category_service.categoriesChanged.connect(self._on_categories_changed)
     
     def start_session(self, session_type: Optional[SessionType] = None, 
-                     category_id: Optional[int] = None):
+                     category_id: Optional[int] = None,
+                     message: Optional[str] = None):
         """
         세션 시작
         
         Args:
             session_type: 세션 타입 (None이면 기본값 사용)
             category_id: 카테고리 ID
+            message: 로그 메시지 (뽀모도로 세션 시작 시 사용)
         """
         # 세션 타입 결정
         if session_type is None:
@@ -114,6 +116,20 @@ class MainController(QObject):
             minutes = self.config.get("study_time", 25)
             if self.current_session_type == SessionType.POMODORO:
                 self.pomodoro_count += 1
+            
+            # 뽀모도로 세션 시작 시 로그 생성 (message가 있을 경우)
+            if message and message.strip():
+                start_date_str = self.session_start_time.strftime("%Y-%m-%d %H:%M:%S")
+                # 로그 생성 (tags는 자동으로 추출되거나 별도 관리 필요)
+                # log_service.create_log는 logCreated 시그널을 발생시키므로 직접 호출
+                self.log_service.create_log(
+                    message=message,
+                    start_date=start_date_str
+                    # category_id 는 현재 LogEntity에서 관리하지 않음
+                    # tags 는 LogService 내부에서 추출하거나, UI에서 전달받는 방식 고려
+                )
+                # 생성된 로그 정보를 내부 상태에 둘 필요는 없을 수 있음 (UI는 시그널로 업데이트)
+                # self.current_log_text = message # 필요 시 주석 해제
         elif session_type == SessionType.SHORT_BREAK:
             minutes = self.config.get("break_time", 5)
         elif session_type == SessionType.LONG_BREAK:
@@ -292,15 +308,25 @@ class MainController(QObject):
             message: 로그 메시지
             duration: 지속 시간 (초)
         """
+        if not message or not message.strip() or not self.session_start_time:
+            return
+        
+        # 로그 생성 (LogService.create_log 사용)
+        # duration 정보는 현재 LogEntity에 저장되지 않음
+        start_date_str = self.session_start_time.strftime("%Y-%m-%d %H:%M:%S")
+        
         try:
-            # 로그 생성
-            log_entry = self.log_service.create_log(
+            # tags는 LogService 내부에서 추출하거나 None 전달
+            self.log_service.create_log(
                 message=message,
-                category_id=self.current_category_id,
-                start_time=self.session_start_time,
-                duration=duration
+                start_date=start_date_str,
+                # category_id 는 현재 LogEntity에서 관리하지 않음
+                # end_date는 필요 시 계산하여 전달
             )
-            return log_entry
-        except Exception as e:
+            
+            # 로그 생성 성공 후 내부 상태 초기화?
+            self.current_log_text = "" # 여기서는 초기화하지 않고 호출하는 쪽에서 관리
+            
+        except ValueError as e:
+            # 로그 생성 실패 처리 (예: 로깅)
             print(f"로그 저장 실패: {e}")
-            return None

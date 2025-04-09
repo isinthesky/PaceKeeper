@@ -59,33 +59,16 @@ def on_timer_start(self):
             # 최근 로그 업데이트
             self.updateRecentLogs()
         
-        # 버튼 텍스트 변경
-        self.startButton.setText("STOP")
-        self.pauseButton.setEnabled(True)
-        
         # 세션 시작
         self.main_controller.start_session()
     else:
         # 중지 모드
-        # 버튼 텍스트 변경
-        self.startButton.setText("START")
-        self.pauseButton.setEnabled(False)
-        self.pauseButton.setText("PAUSE")
-        
         # 세션 중지
         self.main_controller.stop_session()
 
 
 def on_timer_pause(self):
     """타이머 일시정지/재개 이벤트 핸들러"""
-    # 현재 타이머 상태에 따라 버튼 텍스트 변경
-    timer_state = self.timer_controller.get_state()
-    
-    if timer_state == TimerState.RUNNING:
-        self.pauseButton.setText("RESUME")
-    else:
-        self.pauseButton.setText("PAUSE")
-    
     # 일시정지/재개 토글
     self.main_controller.toggle_pause()
 
@@ -107,7 +90,7 @@ def on_session_started(self, session_type):
     Args:
         session_type: 세션 타입
     """
-    # 집중 모드 UI로 전환 (타이머와 버튼만 표시)
+    # 집중 모드 UI로 전환 (타이머 위젯만 표시)
     if session_type == SessionType.POMODORO:
         # 불필요한 UI 요소 숨기기
         self.contentSplitter.hide()
@@ -115,9 +98,12 @@ def on_session_started(self, session_type):
         self.toolBar.hide()
         self.statusBar.hide()
         
-        # 타이머 레이블과 미니 버튼 컨테이너 표시
-        self.timerLabel.show()
-        self.miniButtonContainer.show()
+        # 타이머 위젯은 이미 표시되어 있으므로 별도로 처리할 필요 없음
+        # 필요하다면 타이머 위젯을 집중 모드로 설정
+        if hasattr(self, 'timerWidget'):
+            # 타이머 위젯이 집중 모드 메서드를 제공한다면 사용
+            # self.timerWidget.setFocusMode(True)
+            pass
         
         # 창 크기 최소화
         self.setFixedSize(300, 150)
@@ -139,7 +125,27 @@ def on_session_resumed(self):
 def on_session_stopped(self):
     """세션 중지 이벤트 핸들러"""
     # 일반 모드 UI로 복원
-    self._restore_normal_ui()
+    # MainWindow 클래스의 _restore_normal_ui 메서드가 있다면 사용
+    if hasattr(self, '_restore_normal_ui'):
+        self._restore_normal_ui()
+    else:
+        # MainWindow 클래스에 메서드가 없는 경우 여기서 직접 처리
+        if hasattr(self, 'timerWidget'):
+            # 타이머 위젯이 일반 모드 메서드를 제공한다면 사용
+            pass
+            
+        # 일반 UI 요소 복원
+        self.contentSplitter.show()
+        self.menuBar.show()
+        self.toolBar.show()
+        self.statusBar.show()
+        
+        # 창 크기 복원
+        self.setFixedSize(16777215, 16777215)  # 고정 크기 제거 (QWIDGETSIZE_MAX)
+        self.resize(
+            self.config.get("main_dlg_width", 800),
+            self.config.get("main_dlg_height", 500)
+        )
     
     # UI 상태 업데이트
     self.updateUI()
@@ -154,7 +160,27 @@ def on_session_finished(self, session_type):
     """
     # 뽀모도로 세션이 완료되면 일반 모드 UI로 복원
     if session_type == SessionType.POMODORO:
-        self._restore_normal_ui()
+        # MainWindow 클래스의 _restore_normal_ui 메서드가 있다면 사용
+        if hasattr(self, '_restore_normal_ui'):
+            self._restore_normal_ui()
+        else:
+            # MainWindow 클래스에 메서드가 없는 경우 여기서 직접 처리
+            if hasattr(self, 'timerWidget'):
+                # 타이머 위젯이 일반 모드 메서드를 제공한다면 사용
+                pass
+                
+            # 일반 UI 요소 복원
+            self.contentSplitter.show()
+            self.menuBar.show()
+            self.toolBar.show()
+            self.statusBar.show()
+            
+            # 창 크기 복원
+            self.setFixedSize(16777215, 16777215)  # 고정 크기 제거 (QWIDGETSIZE_MAX)
+            self.resize(
+                self.config.get("main_dlg_width", 800),
+                self.config.get("main_dlg_height", 500)
+            )
     
     self.updateUI()
     
@@ -241,37 +267,32 @@ def close_event(self, event: QCloseEvent):
         event: 닫기 이벤트
     """
     if self.config.get("minimize_to_tray", True):
-        # 트레이로 최소화
-        event.ignore()
-        self.hide()
-        
-        # 트레이 메시지 표시
-        self.trayIcon.showMessage(
-            "PaceKeeper",
-            "PaceKeeper가 트레이로 최소화되었습니다.",
-            QSystemTrayIcon.MessageIcon.Information,
-            2000
-        )
+        # 트레이로 최소화 설정이 켜져 있으면:
+        event.ignore()  # 기본 닫기 동작(종료)을 무시하고
+        self.hide()     # 창을 숨깁니다.
+
+        # 트레이 메시지 표시 (아이콘 보이는 경우)
+        if hasattr(self, 'trayIcon') and self.trayIcon and self.trayIcon.isVisible():
+             self.trayIcon.showMessage(
+                 "PaceKeeper",
+                 "앱이 시스템 트레이에서 계속 실행 중입니다.",
+                 QSystemTrayIcon.MessageIcon.Information,
+                 2000
+             )
     else:
-        # 종료 확인
-        from PyQt6.QtWidgets import QMessageBox
-        reply = QMessageBox.question(
-            self,
-            "종료 확인",
-            "PaceKeeper를 종료하시겠습니까?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
-        
-        if reply == QMessageBox.StandardButton.Yes:
-            # 타이머 중지
-            self.main_controller.stop_session()
-            
-            # 이벤트 수락 (창 닫기)
-            event.accept()
-        else:
-            # 이벤트 무시 (창 닫기 취소)
-            event.ignore()
+        # 트레이로 최소화 설정이 꺼져 있으면:
+        # 실행 중인 세션이 있다면 중지
+        if self.timer_controller.get_state() != TimerState.IDLE:
+             self.main_controller.stop_session() # 세션 중지
+
+        # 트레이 아이콘 정리
+        if hasattr(self, 'trayIcon') and self.trayIcon:
+            self.trayIcon.hide()
+            self.trayIcon.setVisible(False) # 명시적으로 보이지 않게 설정
+            # self.trayIcon = None # 참조 제거 시도 (필요 시 주석 해제)
+
+        # event.accept() # accept는 quit() 전에 필수는 아님
+        QCoreApplication.quit() # 애플리케이션 이벤트 루프 종료
 
 
 def updateTimerDisplay(self, timeStr):
@@ -281,4 +302,6 @@ def updateTimerDisplay(self, timeStr):
     Args:
         timeStr: 표시할 시간 문자열
     """
-    self.timerLabel.setText(timeStr)
+    # timerWidget을 통해 업데이트
+    if hasattr(self, 'timerWidget'):
+        self.timerWidget.updateTimer(timeStr)

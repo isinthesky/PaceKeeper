@@ -12,6 +12,7 @@ class TimerState(Enum):
     RUNNING = auto()
     PAUSED = auto()
     FINISHED = auto()
+    BREAK = auto()
 
 
 class SessionType(Enum):

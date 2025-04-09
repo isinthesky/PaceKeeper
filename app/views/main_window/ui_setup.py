@@ -12,6 +12,7 @@ from PyQt6.QtGui import QAction
 from app.views.log_widget import LogListWidget
 from app.views.tag_widget import TagButtonsWidget
 from app.views.text_input_widget import TextInputWidget
+from app.views.timer_widget_responsive import TimerWidget
 from app.utils.constants import TimerState, SessionType
 
 
@@ -33,39 +34,9 @@ def setup_ui(self):
     self.mainLayout.setContentsMargins(10, 10, 10, 10)
     self.mainLayout.setSpacing(10)
     
-    # 타이머 표시 레이블 (최상단에 배치)
-    self.timerLabel = QLabel("25:00")
-    self.timerLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    self.timerLabel.setObjectName("timerLabel")
-    self.timerLabel.setStyleSheet("font-size: 48px; font-weight: bold; color: #333;")
-    self.mainLayout.addWidget(self.timerLabel)
-    
-    # 타이머 버튼 컨테이너 (미니 모드용)
-    self.miniButtonContainer = QWidget()
-    self.miniButtonLayout = QHBoxLayout(self.miniButtonContainer)
-    
-    # 시작/중지 버튼
-    self.startButton = QPushButton("START")
-    self.startButton.setObjectName("startButton")
-    self.startButton.setMinimumWidth(100)
-    self.startButton.clicked.connect(self.toggleTimer)
-    
-    # 일시정지/재개 버튼
-    self.pauseButton = QPushButton("PAUSE")
-    self.pauseButton.setObjectName("pauseButton")
-    self.pauseButton.setMinimumWidth(100)
-    self.pauseButton.setEnabled(False)
-    self.pauseButton.clicked.connect(self.togglePause)
-    
-    # 버튼 추가
-    self.miniButtonLayout.addStretch(1)
-    self.miniButtonLayout.addWidget(self.startButton)
-    self.miniButtonLayout.addWidget(self.pauseButton)
-    self.miniButtonLayout.addStretch(1)
-    
-    # 미니 버튼 컨테이너는 처음에는 숨김
-    self.miniButtonContainer.hide()
-    self.mainLayout.addWidget(self.miniButtonContainer)
+    # 타이머 위젯 (새로 추가)
+    self.timerWidget = TimerWidget()
+    self.mainLayout.addWidget(self.timerWidget)
     
     # 스플리터 (로그, 태그, 입력 영역)
     self.contentSplitter = QSplitter(Qt.Orientation.Vertical)
@@ -86,31 +57,6 @@ def setup_ui(self):
     # 텍스트 입력 위젯
     self.textInputWidget = TextInputWidget()
     self.inputLayout.addWidget(self.textInputWidget)
-    
-    # 타이머 버튼 영역 (일반 모드용)
-    timerButtonLayout = QHBoxLayout()
-    
-    # 시작/중지 버튼 (일반 모드용)
-    normalStartButton = QPushButton("START")
-    normalStartButton.setObjectName("normalStartButton")
-    normalStartButton.setMinimumWidth(100)
-    normalStartButton.clicked.connect(self.toggleTimer)
-    
-    # 일시정지/재개 버튼 (일반 모드용)
-    normalPauseButton = QPushButton("PAUSE")
-    normalPauseButton.setObjectName("normalPauseButton")
-    normalPauseButton.setMinimumWidth(100)
-    normalPauseButton.setEnabled(False)
-    normalPauseButton.clicked.connect(self.togglePause)
-    
-    # 버튼 추가
-    timerButtonLayout.addStretch(1)
-    timerButtonLayout.addWidget(normalStartButton)
-    timerButtonLayout.addWidget(normalPauseButton)
-    timerButtonLayout.addStretch(1)
-    
-    # 버튼 레이아웃 추가
-    self.inputLayout.addLayout(timerButtonLayout)
     
     self.contentSplitter.addWidget(self.inputContainer)
     
@@ -211,12 +157,12 @@ def setup_tool_bar(self):
     
     # 시작/중지 액션
     self.startStopAction = QAction("시작", self)
-    self.startStopAction.triggered.connect(self.toggleTimer)
+    self.startStopAction.triggered.connect(self._handle_timer_toggle_request)
     self.toolBar.addAction(self.startStopAction)
     
     # 일시정지/재개 액션
     self.pauseResumeAction = QAction("일시정지", self)
-    self.pauseResumeAction.triggered.connect(self.togglePause)
+    self.pauseResumeAction.triggered.connect(self._handle_timer_pause_toggle_request)
     self.pauseResumeAction.setEnabled(False)  # 초기에는 비활성화
     self.toolBar.addAction(self.pauseResumeAction)
     
@@ -251,12 +197,12 @@ def setup_tray_icon(self):
     
     # 시작/중지 액션
     self.trayStartStopAction = QAction("시작", self)
-    self.trayStartStopAction.triggered.connect(self.toggleTimer)
+    self.trayStartStopAction.triggered.connect(self._handle_timer_toggle_request)
     trayMenu.addAction(self.trayStartStopAction)
     
     # 일시정지/재개 액션
     self.trayPauseResumeAction = QAction("일시정지", self)
-    self.trayPauseResumeAction.triggered.connect(self.togglePause)
+    self.trayPauseResumeAction.triggered.connect(self._handle_timer_pause_toggle_request)
     self.trayPauseResumeAction.setEnabled(False)  # 초기에는 비활성화
     trayMenu.addAction(self.trayPauseResumeAction)
     

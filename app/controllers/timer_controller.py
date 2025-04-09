@@ -14,9 +14,9 @@ class TimerController(QObject):
     """타이머 컨트롤러 클래스"""
     
     # 시그널 정의
-    timerUpdated = pyqtSignal(str)  # 포맷팅된 시간 (예: "25:00")
+    # timerUpdated 시그널은 timerStateChanged로 통합
     timerTick = pyqtSignal(int)     # 남은 시간 (초)
-    timerStateChanged = pyqtSignal(TimerState)  # 타이머 상태
+    timerStateChanged = pyqtSignal(TimerState, str)  # 타이머 상태와 포맷된 시간 문자열
     sessionFinished = pyqtSignal(SessionType)   # 세션 타입
     
     def __init__(self):
@@ -53,9 +53,6 @@ class TimerController(QObject):
         # 상태 변경 및 타이머 시작
         self._set_state(TimerState.RUNNING)
         self.timer.start()
-        
-        # 시간 표시 업데이트
-        self._update_display()
     
     def pause(self):
         """타이머 일시정지"""
@@ -79,11 +76,10 @@ class TimerController(QObject):
     def stop(self):
         """타이머 중지"""
         self.timer.stop()
-        self.remainingSeconds = 0
+        self.remainingSeconds = 0 # 상태 설정 전에 남은 시간 0으로
         self.startTime = None
         self.pauseTime = None
         self._set_state(TimerState.IDLE)
-        self._update_display()
     
     def get_remaining_time(self) -> int:
         """
@@ -170,14 +166,11 @@ class TimerController(QObject):
             self.sessionFinished.emit(self.sessionType)
     
     def _update_display(self):
-        """타이머 표시 업데이트"""
-        # 시간 형식 변환 (MM:SS)
-        minutes = self.remainingSeconds // 60
-        seconds = self.remainingSeconds % 60
-        time_str = f"{minutes:02d}:{seconds:02d}"
+        """타이머 표시 업데이트 (시간만 업데이트 시)"""
+        time_str = self._get_formatted_time_str(self.remainingSeconds)
         
-        # 시그널 발생
-        self.timerUpdated.emit(time_str)
+        # 시그널 발생 (상태는 그대로, 시간만 업데이트)
+        self.timerStateChanged.emit(self.state, time_str)
         self.timerTick.emit(self.remainingSeconds)
     
     def _set_state(self, state: TimerState):
@@ -189,4 +182,13 @@ class TimerController(QObject):
         """
         if self.state != state:
             self.state = state
-            self.timerStateChanged.emit(state)
+            # 상태 변경 시에도 현재 시간 문자열과 함께 시그널 발생
+            time_str = self._get_formatted_time_str(self.remainingSeconds)
+            self.timerStateChanged.emit(state, time_str)
+
+    def _get_formatted_time_str(self, total_seconds: int) -> str:
+        """초를 MM:SS 형식 문자열로 변환"""
+        total_seconds = max(0, total_seconds) # 음수 방지
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        return f"{minutes:02d}:{seconds:02d}"

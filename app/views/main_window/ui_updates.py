@@ -11,48 +11,35 @@ def update_ui(self):
     # 타이머 상태에 따른 UI 업데이트
     timer_state = self.timer_controller.get_state()
     
-    # 일반 모드 버튼 찾기
-    normalStartButton = self.findChild(QPushButton, "normalStartButton")
-    normalPauseButton = self.findChild(QPushButton, "normalPauseButton")
+    # 타이머 위젯 업데이트 - 시간 문자열 생성
+    time_str = "25:00"  # 기본값
+    if hasattr(self.timer_controller, "get_remaining_time"):
+        remaining_seconds = self.timer_controller.get_remaining_time()
+        minutes = remaining_seconds // 60
+        seconds = remaining_seconds % 60
+        time_str = f"{minutes:02d}:{seconds:02d}"
     
+    # TimerWidget을 통해 타이머 상태 업데이트
+    if hasattr(self, 'timerWidget') and hasattr(self.timerWidget, 'setTimerState'):
+        self.timerWidget.setTimerState(timer_state, time_str)
+    
+    # 툴바 및 트레이 액션 업데이트
     if timer_state == TimerState.IDLE:
         # 타이머 정지 상태
-        self.startButton.setText("START")
         self.startStopAction.setText("시작")
         self.trayStartStopAction.setText("시작")
-        
-        self.pauseButton.setEnabled(False)
         self.pauseResumeAction.setEnabled(False)
         self.trayPauseResumeAction.setEnabled(False)
-        
-        # 일반 모드 버튼 상태 업데이트
-        if normalStartButton:
-            normalStartButton.setText("START")
-        if normalPauseButton:
-            normalPauseButton.setEnabled(False)
-            
         self.statusLabel.setText("준비")
     
     elif timer_state == TimerState.RUNNING:
         # 타이머 실행 상태
-        self.startButton.setText("STOP")
         self.startStopAction.setText("중지")
         self.trayStartStopAction.setText("중지")
-        
-        self.pauseButton.setText("PAUSE")
         self.pauseResumeAction.setText("일시정지")
         self.trayPauseResumeAction.setText("일시정지")
-        
-        self.pauseButton.setEnabled(True)
         self.pauseResumeAction.setEnabled(True)
         self.trayPauseResumeAction.setEnabled(True)
-        
-        # 일반 모드 버튼 상태 업데이트
-        if normalStartButton:
-            normalStartButton.setText("STOP")
-        if normalPauseButton:
-            normalPauseButton.setEnabled(True)
-            normalPauseButton.setText("PAUSE")
         
         session_type = self.timer_controller.get_session_type()
         session_name = "집중" if session_type == SessionType.POMODORO else "휴식"
@@ -60,25 +47,12 @@ def update_ui(self):
     
     elif timer_state == TimerState.PAUSED:
         # 타이머 일시정지 상태
-        self.startButton.setText("STOP")
         self.startStopAction.setText("중지")
         self.trayStartStopAction.setText("중지")
-        
-        self.pauseButton.setText("RESUME")
         self.pauseResumeAction.setText("재개")
         self.trayPauseResumeAction.setText("재개")
-        
-        self.pauseButton.setEnabled(True)
         self.pauseResumeAction.setEnabled(True)
         self.trayPauseResumeAction.setEnabled(True)
-        
-        # 일반 모드 버튼 상태 업데이트
-        if normalStartButton:
-            normalStartButton.setText("STOP")
-        if normalPauseButton:
-            normalPauseButton.setEnabled(True)
-            normalPauseButton.setText("RESUME")
-        
         self.statusLabel.setText("일시정지됨")
     
     elif timer_state == TimerState.FINISHED:
@@ -87,13 +61,6 @@ def update_ui(self):
         self.trayStartStopAction.setText("시작")
         self.pauseResumeAction.setEnabled(False)
         self.trayPauseResumeAction.setEnabled(False)
-        
-        # 일반 모드 버튼 상태 업데이트
-        if normalStartButton:
-            normalStartButton.setText("START")
-        if normalPauseButton:
-            normalPauseButton.setEnabled(False)
-            
         self.statusLabel.setText("세션 종료")
     
     # 최근 로그 업데이트

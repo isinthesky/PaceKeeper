@@ -20,19 +20,29 @@ from app.domain.category.category_service import CategoryService
 class LogDialog(QDialog):
     """로그 조회 대화상자 클래스"""
     
-    def __init__(self, parent=None, log_service=None, category_service=None):
+    def __init__(self, parent=None, controller_or_service=None, category_service=None):
         """
         로그 대화상자 초기화
         
         Args:
             parent: 부모 위젯
-            log_service: 로그 서비스 인스턴스
+            controller_or_service: 메인 컨트롤러 또는 로그 서비스 인스턴스
             category_service: 카테고리 서비스 인스턴스
         """
         super().__init__(parent)
         
-        self.log_service = log_service or LogService()
-        self.category_service = category_service or CategoryService()
+        from app.controllers.main_controller import MainController
+        
+        # 컨트롤러 또는 서비스 구분
+        if isinstance(controller_or_service, MainController):
+            self.controller = controller_or_service
+            self.log_service = self.controller.log_service
+            self.category_service = self.controller.category_service
+        else:
+            # 이전 방식 지원 (후박성)
+            self.controller = None
+            self.log_service = controller_or_service or LogService()
+            self.category_service = category_service or CategoryService()
         
         # 현재 필터 설정
         self.current_filter = {
@@ -173,7 +183,14 @@ class LogDialog(QDialog):
             self.categoryComboBox.removeItem(1)
         
         # 카테고리 조회
-        categories = self.category_service.get_all_categories()
+        categories = []
+        
+        if hasattr(self.category_service, 'get_all_categories'):
+            # CategoryService의 메서드 사용
+            categories = self.category_service.get_all_categories()
+        elif self.controller and hasattr(self.controller, 'category_service') and hasattr(self.controller.category_service, 'get_all_categories'):
+            # 컨트롤러를 통해 접근
+            categories = self.controller.category_service.get_all_categories()
         
         # 콤보박스에 추가
         for category in categories:
@@ -185,8 +202,15 @@ class LogDialog(QDialog):
         self.logTable.setRowCount(0)
         
         # 필터 적용하여 로그 조회
-        # 실제 구현에서는 로그 서비스의 search 메서드 등으로 대체
-        logs = self.log_service.get_all_logs(limit=100)
+        logs = []
+        
+        # 현재 필터와 서비스/컨트롤러에 맞게 로그 가져오기
+        if hasattr(self.log_service, 'get_all_logs'):
+            # LogService의 메서드 사용
+            logs = self.log_service.get_all_logs(limit=100)
+        elif self.controller and hasattr(self.controller, 'log_service') and hasattr(self.controller.log_service, 'get_all_logs'):
+            # 컨트롤러를 통해 접근
+            logs = self.controller.log_service.get_all_logs(limit=100)
         
         # 테이블에 추가
         for log in logs:
@@ -297,7 +321,10 @@ class LogDialog(QDialog):
         
         if reply == QMessageBox.StandardButton.Yes:
             # 로그 삭제
-            self.log_service.delete_log(log.id)
+            if hasattr(self.log_service, 'delete_log'):
+                self.log_service.delete_log(log.id)
+            elif self.controller and hasattr(self.controller.log_service, 'delete_log'):
+                self.controller.log_service.delete_log(log.id)
             
             # 로그 목록 다시 로드
             self.loadLogs()
