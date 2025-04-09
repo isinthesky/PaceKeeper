@@ -19,6 +19,7 @@ help:
 	@echo "  make clean         : 생성된 캐시 및 임시 파일 정리"
 	@echo "  make add 패키지명    : 특정 패키지 설치"
 	@echo "  make remove 패키지명 : 특정 패키지 제거"
+	@echo "  make format        : 코드 포맷팅"
 
 # 전체 설정 (가상 환경 + 의존성 설치)
 setup: venv install
@@ -96,6 +97,17 @@ spec: venv
 	@. $(VENV_DIR)/bin/activate && \
 	pyi-makespec main.py --name PaceKeeper-Qt --windowed --add-data "resources:resources" --add-data "assets:assets"
 	@echo "빌드 스펙 파일 생성 완료!"
+
+
+# 코드 포맷팅
+format: venv
+	@echo "코드 포맷팅 중..."
+	@. $(VENV_DIR)/bin/activate && \
+	export PYTHONPATH=$(PYTHONPATH) && \
+	$(PIP) install black isort && \
+	black app tests && \
+	isort app tests
+	@echo "코드 포맷팅 완료!"
 
 %:
 	@:

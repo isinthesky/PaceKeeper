@@ -4,4 +4,4 @@
 
 from app.domain.log.log_entity import LogEntity
 
-__all__ = ['LogEntity'] 
+__all__ = ["LogEntity"]

@@ -2,16 +2,17 @@
 PaceKeeper Qt - 메인 윈도우 클래스의 추가 메서드 (분리 파일)
 """
 
-from PyQt6.QtWidgets import QMessageBox, QSystemTrayIcon
+from icecream import ic
 from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtWidgets import QMessageBox, QSystemTrayIcon
 
 from app.utils.constants import SessionType
-from app.views.dialogs.settings_dialog import SettingsDialog
-from app.views.dialogs.log_dialog import LogDialog
-from app.views.dialogs.category_dialog import CategoryDialog
-from app.views.dialogs.tag_dialog import TagDialog
 from app.views.dialogs.break_dialog import BreakDialog
-from icecream import ic
+from app.views.dialogs.category_dialog import CategoryDialog
+from app.views.dialogs.log_dialog import LogDialog
+from app.views.dialogs.settings_dialog import SettingsDialog
+from app.views.dialogs.tag_dialog import TagDialog
+
 
 def openSettings(self):
     """설정 대화상자 열기"""
@@ -21,53 +22,59 @@ def openSettings(self):
         # 설정이 변경되면 UI 업데이트
         self.updateUI()
 
+
 def openLogDialog(self):
     """로그 대화상자 열기"""
     log_dialog = LogDialog(self, self.log_service, self.category_service)
     log_dialog.exec()
-    
+
     # 대화상자가 닫힌 후 최근 로그 업데이트
     self.updateRecentLogs()
+
 
 def openCategoryDialog(self):
     """카테고리 대화상자 열기"""
     category_dialog = CategoryDialog(self, self.category_service)
     category_dialog.exec()
 
+
 def openTagDialog(self):
     """태그 대화상자 열기"""
     tag_dialog = TagDialog(self, self.tag_service)
     tag_dialog.exec()
-    
+
     # 대화상자가 닫힌 후 태그 목록 업데이트
     self.updateTags()
+
 
 def showBreakDialog(self, session_type):
     """
     휴식 대화상자 표시
-    
+
     Args:
         session_type: 세션 타입 (SHORT_BREAK 또는 LONG_BREAK)
     """
     break_dialog = BreakDialog(self, session_type)
-    
+
     # 휴식 시작 시그널 연결
     break_dialog.startBreakRequested.connect(
         lambda: self.main_controller.start_session(session_type)
     )
-    
+
     # 휴식 건너뛰기 시그널 연결
     break_dialog.skipBreakRequested.connect(
         lambda: self.main_controller.start_session(SessionType.POMODORO)
     )
-    
+
     # 대화상자 표시
     break_dialog.exec()
+
 
 def showStats(self):
     """통계 보기"""
     # 실제 구현에서는 통계 대화상자 생성 및 표시
     QMessageBox.information(self, "통계", "통계 기능은 개발 중입니다.")
+
 
 def showHelp(self):
     """도움말 표시"""
@@ -101,6 +108,7 @@ def showHelp(self):
     """
     QMessageBox.information(self, "PaceKeeper 도움말", help_text)
 
+
 def showAbout(self):
     """정보 대화상자 표시"""
     about_text = """
@@ -112,25 +120,26 @@ def showAbout(self):
     """
     QMessageBox.about(self, "PaceKeeper 정보", about_text)
 
+
 def closeEvent(self, event: QCloseEvent):
     """
     창 닫기 이벤트 처리
-    
+
     Args:
         event: 닫기 이벤트
     """
-    
+
     if self.config.get("minimize_to_tray", True):
         # 트레이로 최소화
         event.ignore()
         self.hide()
-        
+
         # 트레이 메시지 표시
         self.trayIcon.showMessage(
             "PaceKeeper",
             "PaceKeeper가 트레이로 최소화되었습니다.",
             QSystemTrayIcon.MessageIcon.Information,
-            2000
+            2000,
         )
     else:
         # 종료 확인
@@ -139,13 +148,13 @@ def closeEvent(self, event: QCloseEvent):
             "종료 확인",
             "PaceKeeper를 종료하시겠습니까?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
-        
+
         if reply == QMessageBox.StandardButton.Yes:
             # 타이머 중지
             self.main_controller.stop_session()
-            
+
             # 이벤트 수락 (창 닫기)
             event.accept()
         else:

@@ -8,6 +8,7 @@ from enum import Enum, auto
 
 class TimerState(Enum):
     """타이머 상태 열거형"""
+
     IDLE = auto()
     RUNNING = auto()
     PAUSED = auto()
@@ -17,6 +18,7 @@ class TimerState(Enum):
 
 class SessionType(Enum):
     """세션 타입 열거형"""
+
     POMODORO = auto()
     SHORT_BREAK = auto()
     LONG_BREAK = auto()

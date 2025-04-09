@@ -4,18 +4,19 @@ PaceKeeper Qt - 태그 엔티티 모델
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 @dataclass
 class TagEntity:
     """태그 데이터 클래스"""
+
     id: Optional[int] = None
     name: str = ""
     description: str = ""
-    category_id: int = 0
+    category_id: Optional[int] = None
     state: int = 1
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """태그를 사전 형태로 변환"""
         return {
@@ -23,16 +24,16 @@ class TagEntity:
             "name": self.name,
             "description": self.description,
             "category_id": self.category_id,
-            "state": self.state
+            "state": self.state,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TagEntity':
+    def from_dict(cls, data: Dict[str, Any]) -> "TagEntity":
         """사전 데이터로부터 태그 객체 생성"""
         return cls(
             id=data.get("id"),
             name=data.get("name", ""),
             description=data.get("description", ""),
-            category_id=data.get("category_id", 0),
-            state=data.get("state", 1)
-        ) 
+            category_id=data.get("category_id"),
+            state=data.get("state", 1),
+        )

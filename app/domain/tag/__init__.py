@@ -4,4 +4,4 @@
 
 from app.domain.tag.tag_entity import TagEntity
 
-__all__ = ['TagEntity'] 
+__all__ = ["TagEntity"]

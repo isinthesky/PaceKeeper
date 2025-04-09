@@ -64,7 +64,7 @@ def merge_and_output(directory: str, output_directory: str):
 
 # Example usage
 if __name__ == "__main__":
-    source_directory = "./breaktrack"
+    source_directory = "./app"
     output_directory = "./output"
 
     os.makedirs(output_directory, exist_ok=True)  # Ensure output directory exists

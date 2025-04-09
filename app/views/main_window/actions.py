@@ -5,12 +5,12 @@ PaceKeeper Qt - 메인 윈도우 액션
 
 from PyQt6.QtWidgets import QMessageBox
 
-from app.utils.constants import TimerState, SessionType
-from app.views.dialogs.settings_dialog import SettingsDialog
-from app.views.dialogs.log_dialog import LogDialog
-from app.views.dialogs.category_dialog import CategoryDialog
-from app.views.dialogs.tag_dialog import TagDialog
+from app.utils.constants import SessionType, TimerState
 from app.views.dialogs.break_dialog import BreakDialog
+from app.views.dialogs.category_dialog import CategoryDialog
+from app.views.dialogs.log_dialog import LogDialog
+from app.views.dialogs.settings_dialog import SettingsDialog
+from app.views.dialogs.tag_dialog import TagDialog
 
 
 def open_settings(self):
@@ -26,7 +26,7 @@ def open_log_dialog(self):
     """로그 대화상자 열기"""
     log_dialog = LogDialog(self, self.log_service, self.category_service)
     log_dialog.exec()
-    
+
     # 대화상자가 닫힌 후 최근 로그 업데이트
     self.updateRecentLogs()
 
@@ -41,7 +41,7 @@ def open_tag_dialog(self):
     """태그 대화상자 열기"""
     tag_dialog = TagDialog(self, self.tag_service)
     tag_dialog.exec()
-    
+
     # 대화상자가 닫힌 후 태그 목록 업데이트
     self.updateTags()
 
@@ -49,22 +49,22 @@ def open_tag_dialog(self):
 def show_break_dialog(self, session_type):
     """
     휴식 대화상자 표시
-    
+
     Args:
         session_type: 세션 타입 (SHORT_BREAK 또는 LONG_BREAK)
     """
     break_dialog = BreakDialog(self, session_type)
-    
+
     # 휴식 시작 시그널 연결
     break_dialog.startBreakRequested.connect(
         lambda: self.main_controller.start_session(session_type)
     )
-    
+
     # 휴식 건너뛰기 시그널 연결
     break_dialog.skipBreakRequested.connect(
         lambda: self.main_controller.start_session(SessionType.POMODORO)
     )
-    
+
     # 대화상자 표시
     break_dialog.exec()
 

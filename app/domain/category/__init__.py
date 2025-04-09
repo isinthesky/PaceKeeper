@@ -4,4 +4,4 @@
 
 from app.domain.category.category_entity import CategoryEntity
 
-__all__ = ['CategoryEntity'] 
+__all__ = ["CategoryEntity"]
