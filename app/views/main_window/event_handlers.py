@@ -266,33 +266,59 @@ def close_event(self, event: QCloseEvent):
     Args:
         event: 닫기 이벤트
     """
-    if self.config.get("minimize_to_tray", True):
-        # 트레이로 최소화 설정이 켜져 있으면:
-        event.ignore()  # 기본 닫기 동작(종료)을 무시하고
-        self.hide()     # 창을 숨깁니다.
+    try:
+        if self.config.get("minimize_to_tray", True):
+            # 트레이로 최소화 설정이 켜져 있으면:
+            event.ignore()  # 기본 닫기 동작(종료)을 무시하고
+            self.hide()     # 창을 숨깁니다.
 
-        # 트레이 메시지 표시 (아이콘 보이는 경우)
-        if hasattr(self, 'trayIcon') and self.trayIcon and self.trayIcon.isVisible():
-             self.trayIcon.showMessage(
-                 "PaceKeeper",
-                 "앱이 시스템 트레이에서 계속 실행 중입니다.",
-                 QSystemTrayIcon.MessageIcon.Information,
-                 2000
-             )
-    else:
-        # 트레이로 최소화 설정이 꺼져 있으면:
-        # 실행 중인 세션이 있다면 중지
-        if self.timer_controller.get_state() != TimerState.IDLE:
-             self.main_controller.stop_session() # 세션 중지
+            # 트레이 메시지 표시 (아이콘 보이는 경우)
+            if hasattr(self, 'trayIcon') and self.trayIcon and self.trayIcon.isVisible():
+                try:
+                    self.trayIcon.showMessage(
+                        "PaceKeeper",
+                        "앱이 시스템 트레이에서 계속 실행 중입니다.",
+                        QSystemTrayIcon.MessageIcon.Information,
+                        2000
+                    )
+                except Exception as e:
+                    print(f"Warning: Failed to show tray message: {e}")
+        else:
+            # 트레이로 최소화 설정이 꺼져 있으면 종료 처리
+            try:
+                # 세션 중지 시도
+                if hasattr(self, 'timer_controller') and self.timer_controller:
+                    try:
+                        timer_state = self.timer_controller.get_state()
+                        if timer_state != TimerState.IDLE:
+                            self.main_controller.stop_session() # 세션 중지
+                    except Exception as e:
+                        print(f"Warning: Failed to stop session: {e}")
+            except Exception as e:
+                print(f"Warning: Could not check timer state: {e}")
 
-        # 트레이 아이콘 정리
-        if hasattr(self, 'trayIcon') and self.trayIcon:
-            self.trayIcon.hide()
-            self.trayIcon.setVisible(False) # 명시적으로 보이지 않게 설정
-            # self.trayIcon = None # 참조 제거 시도 (필요 시 주석 해제)
+            try:
+                # 트레이 아이콘 정리
+                if hasattr(self, 'trayIcon') and self.trayIcon:
+                    try:
+                        self.trayIcon.hide()
+                        self.trayIcon.setVisible(False) # 명시적으로 보이지 않게 설정
+                    except Exception as e:
+                        print(f"Warning: Failed to hide tray icon: {e}")
+                    
+                    # 참조 제거
+                    self.trayIcon = None
+            except Exception as e:
+                print(f"Warning: Failed to clean up tray icon: {e}")
 
-        # event.accept() # accept는 quit() 전에 필수는 아님
-        QCoreApplication.quit() # 애플리케이션 이벤트 루프 종료
+            # event 수락 후 종료 처리
+            event.accept()
+            QCoreApplication.quit() # 애플리케이션 이벤트 루프 종료
+    except Exception as e:
+        print(f"Critical error during application closing: {e}")
+        # 어떤 상황에서도 프로그램이 종료되도록 함
+        event.accept()
+        QCoreApplication.quit()
 
 
 def updateTimerDisplay(self, timeStr):
