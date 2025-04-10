@@ -27,8 +27,13 @@ def resource_path(relative_path):
     """
     try:
         # PyInstaller로 빌드된 경우
-        base_path = sys._MEIPASS
-    except AttributeError:
+        # Pylance 경고 무시: 이 속성은 PyInstaller 실행 시에만 존재함
+        # type: ignore
+        base_path = getattr(sys, '_MEIPASS', None)
+        if base_path is None:
+            # 일반 실행인 경우
+            base_path = os.path.abspath(".")
+    except Exception:
         # 일반 실행인 경우
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)

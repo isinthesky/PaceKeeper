@@ -5,14 +5,10 @@ PaceKeeper Qt - 메인 윈도우 이벤트 핸들러
 
 import atexit
 import os
-import signal
 import sys
 import threading
 import time
 import traceback
-from datetime import datetime
-
-from icecream import ic
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QSystemTrayIcon

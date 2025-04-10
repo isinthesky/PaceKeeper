@@ -56,9 +56,8 @@ class BreakDialog(QDialog):
         # 시그널 연결
         self.connectSignals()
 
-        # 모달 설정 - 모달 상태로 변경하여 화면의 80% 크기로 크게 표시
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        # 최초 기본 설정
+        # 주의: actions.py에서 변경될 수 있음
 
     def setupUI(self):
         """UI 초기화"""

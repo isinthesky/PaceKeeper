@@ -69,11 +69,13 @@ def open_tag_dialog(self):
 
 def show_break_dialog(self, session_type):
     """
-    휴식 대화상자 표시
+    휴식 대화상자 표시 (WindowModal 방식으로)
 
     Args:
         session_type: 세션 타입 (SHORT_BREAK 또는 LONG_BREAK)
     """
+    from PyQt6.QtCore import Qt
+    
     theme_manager = AdvancedThemeManager.get_instance(app=self.app_instance)
     
     break_dialog = BreakDialog(self, session_type, theme_manager, self.config)
@@ -87,9 +89,23 @@ def show_break_dialog(self, session_type):
     break_dialog.skipBreakRequested.connect(
         lambda: self.main_controller.start_session(SessionType.POMODORO)
     )
-
-    # 대화상자 표시 - exec() 사용하여 모달 방식으로 표시
-    break_dialog.exec()
+    
+    # WindowModal 방식으로 설정 (부모 윈도우만 차단)
+    break_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+    
+    # 항상 위에 표시
+    break_dialog.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint)
+    
+    # 부모 윈도우 중앙에 위치시키기
+    if self.window():
+        geometry = self.window().geometry()
+        center = geometry.center()
+        dialog_rect = break_dialog.geometry()
+        dialog_rect.moveCenter(center)
+        break_dialog.setGeometry(dialog_rect)
+    
+    # 대화상자 표시 - show() 사용 (비차단 모달 방식)
+    break_dialog.show()
 
 
 def show_stats(self):
