@@ -19,76 +19,6 @@ from PyQt6.QtWidgets import QSystemTrayIcon
 
 from app.utils.constants import SessionType, TimerState
 
-
-def connect_signals(self):
-    """시그널 연결"""
-    # 타이머 컨트롤러 시그널
-    self.timer_controller.timerUpdated.connect(self.updateTimerDisplay)
-    self.timer_controller.timerStateChanged.connect(self.onTimerStateChanged)
-    self.timer_controller.sessionFinished.connect(self.onSessionFinished)
-
-    # 메인 컨트롤러 시그널
-    self.main_controller.sessionStarted.connect(self.onSessionStarted)
-    self.main_controller.sessionPaused.connect(self.onSessionPaused)
-    self.main_controller.sessionResumed.connect(self.onSessionResumed)
-    self.main_controller.sessionStopped.connect(self.onSessionStopped)
-    self.main_controller.sessionFinished.connect(self.onSessionFinished)
-
-    # 텍스트 입력 위젯 시그널
-    self.textInputWidget.textSubmitted.connect(self.onTextSubmitted)
-
-    # 태그 위젯 시그널
-    self.tagButtonsWidget.tagSelected.connect(self.onTagSelected)
-
-    # 로그 위젯 시그널
-    self.logListWidget.logSelected.connect(self.onLogSelected)
-
-
-def on_timer_start(self):
-    """타이머 시작/중지 이벤트 핸들러"""
-    # 현재 입력된 텍스트 가져오기
-    current_text = self.textInputWidget.text()
-
-    # 현재 타이머 상태 확인
-    timer_state = self.timer_controller.get_state()
-
-    if timer_state in [TimerState.IDLE, TimerState.FINISHED]:
-        # 시작 모드
-        # 텍스트가 있으면 로그 등록
-        if current_text and current_text.strip():
-            # 현재 시간으로 로그 생성
-            start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            # 로그 생성
-            self.log_service.create_log(message=current_text, start_date=start_date)
-
-            # 최근 로그 업데이트
-            self.updateRecentLogs()
-
-        # 세션 시작
-        self.main_controller.start_session()
-    else:
-        # 중지 모드
-        # 세션 중지
-        self.main_controller.stop_session()
-
-
-def on_timer_pause(self):
-    """타이머 일시정지/재개 이벤트 핸들러"""
-    # 일시정지/재개 토글
-    self.main_controller.toggle_pause()
-
-
-def on_timer_state_changed(self, state):
-    """
-    타이머 상태 변경 이벤트 핸들러
-
-    Args:
-        state: 타이머 상태
-    """
-    self.updateUI()
-
-
 def on_session_started(self, session_type):
     """
     세션 시작 이벤트 핸들러
@@ -206,7 +136,8 @@ def on_session_finished(self, session_type):
         )
 
         # 휴식 대화상자 표시
-        self.showBreakDialog(next_session_type)
+        # 메서드 이름 변경: showBreakDialog → show_break_dialog
+        self.show_break_dialog(next_session_type)
 
     except Exception as e:
         # 예외 발생 시 로그 기록 및 안전한 처리
@@ -248,9 +179,13 @@ def on_tag_selected(self, tag_name):
     # 현재 입력 텍스트에 태그 추가
     current_text = self.textInputWidget.text()
     if current_text:
-        self.textInputWidget.setPlainText(f"{current_text} #{tag_name}")
+        # setText 메서드를 사용하여 태그 추가
+        if not current_text.endswith(" "):
+            current_text += " "
+        self.textInputWidget.textInput.setText(f"{current_text}#{tag_name}")
     else:
-        self.textInputWidget.setPlainText(f"#{tag_name}")
+        # 비어있을 경우 태그만 추가
+        self.textInputWidget.textInput.setText(f"#{tag_name}")
 
 
 def on_log_selected(self, log_text):
@@ -261,7 +196,12 @@ def on_log_selected(self, log_text):
         log_text: 선택된 로그 텍스트
     """
     # 로그 텍스트를 입력 필드에 설정
-    self.textInputWidget.setPlainText(log_text)
+    if hasattr(self.textInputWidget, "textInput"):
+        self.textInputWidget.textInput.setText(log_text)
+    elif hasattr(self.textInputWidget, "setText"):
+        self.textInputWidget.setText(log_text)
+    else:
+        print(f"[ERROR] TextInputWidget에 적절한 setText 메서드가 없습니다.")
 
 
 def on_tray_icon_activated(self, reason):
@@ -587,15 +527,3 @@ def close_event(self, event: QCloseEvent):
                 os._exit(1)
             except:
                 sys.exit(1)
-
-
-def updateTimerDisplay(self, timeStr):
-    """
-    타이머 표시 업데이트
-
-    Args:
-        timeStr: 표시할 시간 문자열
-    """
-    # timerWidget을 통해 업데이트
-    if hasattr(self, "timerWidget"):
-        self.timerWidget.updateTimer(timeStr)

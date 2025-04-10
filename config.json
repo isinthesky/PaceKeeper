@@ -16,6 +16,7 @@
     "minimize_to_tray": false,
     "notifications_enabled": true,
     "notification_sound": true,
+    "break_dialog_color": "#FFADAD",
     "short_break": 5,
     "long_break": 15,
     "cycles": 4,

@@ -16,6 +16,8 @@ class TagEntity:
     description: str = ""
     category_id: Optional[int] = None
     state: int = 1
+    # 카테고리 색상을 저장할 속성 추가
+    category_color: str = "#FFFFFF"
 
     def to_dict(self) -> Dict[str, Any]:
         """태그를 사전 형태로 변환"""
@@ -25,6 +27,7 @@ class TagEntity:
             "description": self.description,
             "category_id": self.category_id,
             "state": self.state,
+            "category_color": self.category_color,
         }
 
     @classmethod
@@ -36,4 +39,5 @@ class TagEntity:
             description=data.get("description", ""),
             category_id=data.get("category_id"),
             state=data.get("state", 1),
+            category_color=data.get("category_color", "#FFFFFF"),
         )

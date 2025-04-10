@@ -57,3 +57,20 @@ class TextInputWidget(QWidget):
     def clear(self):
         """입력 필드 내용 지우기"""
         self.textInput.clear()
+        
+    def setText(self, text):
+        """입력 필드에 텍스트 설정
+        
+        Args:
+            text: 설정할 텍스트
+        """
+        self.textInput.setText(text)
+        
+    # 호환성을 위한 메서드 (setPlainText -> setText 매핑)
+    def setPlainText(self, text):
+        """입력 필드에 텍스트 설정 (호환성 메서드)
+        
+        Args:
+            text: 설정할 텍스트
+        """
+        self.setText(text)

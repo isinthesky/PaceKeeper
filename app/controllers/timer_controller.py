@@ -4,10 +4,7 @@ PaceKeeper Qt - 타이머 컨트롤러
 """
 
 from datetime import datetime, timedelta
-from typing import Callable, Optional
-
-from PyQt6.QtCore import QDateTime, QObject, QTimer, pyqtSignal
-
+from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 from app.utils.constants import SessionType, TimerState
 
 
@@ -165,7 +162,11 @@ class TimerController(QObject):
         # 타이머 완료 확인
         if self.remainingSeconds <= 0:
             self.timer.stop()
-            self._set_state(TimerState.FINISHED)
+            # POMODORO 세션이 완료된 경우 BREAK 상태로 변경(휴식 세션은 FINISHED 상태 유지)
+            if self.sessionType == SessionType.POMODORO:
+                self._set_state(TimerState.BREAK)
+            else:
+                self._set_state(TimerState.FINISHED)
             self.sessionFinished.emit(self.sessionType)
 
     def _update_display(self):

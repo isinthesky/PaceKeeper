@@ -248,9 +248,19 @@ class MainController(QObject):
         Returns:
             태그 객체 목록
         """
-        # 태그 서비스에서 최근 태그를 가져올 수 있는 메서드가 있다면 그것을 호출
-        # 여기서는 현재 모든 태그를 리턴
-        return self.tag_service.get_all_tags()[:limit]
+        # 태그에 카테고리 색상 정보 추가
+        tags = self.tag_service.get_all_tags()[:limit]
+        categories = self.category_service.get_all_categories()
+        
+        # 카테고리 ID로 카테고리 색상 맥핑
+        category_colors = {cat.id: cat.color for cat in categories if cat.id is not None}
+        
+        # 태그에 카테고리 색상 추가
+        for tag in tags:
+            if tag.category_id and tag.category_id in category_colors:
+                tag.category_color = category_colors[tag.category_id]
+        
+        return tags
 
     def get_all_categories(self) -> List[CategoryEntity]:
         """

@@ -58,9 +58,15 @@ class TagButtonsWidget(QWidget):
         button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         button.clicked.connect(lambda: self.onTagClicked(tagName))
 
+        # 태그 버튼 스타일 지정
+        style = ""
+        
         if color:
-            button.setStyleSheet(f"background-color: {color};")
-
+            # 색상이 지정되었다면 배경색으로 설정
+            text_color = "#FFFFFF" if self._is_dark_color(color) else "#000000"
+            style = f"background-color: {color}; color: {text_color}; border: none; border-radius: 5px; padding: 3px 8px;"
+        
+        button.setStyleSheet(style)
         self.scrollLayout.addWidget(button)
         return button
 
@@ -94,6 +100,38 @@ class TagButtonsWidget(QWidget):
         for tag in tags:
             # TagEntity에서 필요한 정보 추출
             tag_name = tag.name if hasattr(tag, "name") else str(tag)
-            # 색상이 있으면 적용
-            color = tag.color if hasattr(tag, "color") else None
+            
+            # 카테고리 색상 사용
+            color = tag.category_color if hasattr(tag, "category_color") else None
             self.addTag(tag_name, color)
+            
+    def _is_dark_color(self, hex_color):
+        """
+        색상이 어두운지 확인
+        
+        Args:
+            hex_color: HEX 색상 문자열 (#RRGGBB)
+            
+        Returns:
+            어두운 색상이면 True, 밝은 색상이면 False
+        """
+        # # 제거
+        hex_color = hex_color.lstrip('#')
+        
+        # 기본값
+        if len(hex_color) != 6:
+            return False
+            
+        # RGB 값 추출
+        try:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+            
+            # 색상의 밝기 계산 (YIQ 공식)
+            brightness = (r * 299 + g * 587 + b * 114) / 1000
+            
+            # 128보다 작으면 어두운 색상
+            return brightness < 128
+        except ValueError:
+            return False

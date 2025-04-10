@@ -1,8 +1,3 @@
-"""
-PaceKeeper Qt - 애플리케이션 설정 관리
-설정 값 로드, 저장 및 기본값 관리
-"""
-
 import json
 import os
 
@@ -10,7 +5,10 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 
 class AppConfig(QObject):
-    """애플리케이션 설정 관리 클래스"""
+    """애플리케이션 설정 관리 클래스 (싱글톤 패턴 적용)"""
+
+    # 싱글톤 인스턴스 저장용
+    _instance = None
 
     # 설정 변경 시 발생하는 시그널
     settingChanged = pyqtSignal(str, object)
@@ -51,6 +49,8 @@ class AppConfig(QObject):
             # 알림 설정
             "notifications_enabled": True,
             "notification_sound": True,
+            # 휴식 대화상자 설정
+            "break_dialog_color": "#A8E6CF",  # 기본 휴식 색상 (연한 녹색)
         }
 
         # 설정 로드

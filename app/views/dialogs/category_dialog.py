@@ -20,7 +20,7 @@ from app.views.styles.update_dialogs import (apply_theme_change,
 class CategoryDialog(QDialog):
     """카테고리 관리 대화상자 클래스 - 개선된 UI"""
 
-    def __init__(self, parent=None, controller_or_service=None, theme_manager=None):
+    def __init__(self, parent=None, theme_manager=None):
         """
         카테고리 대화상자 초기화
 
@@ -37,13 +37,7 @@ class CategoryDialog(QDialog):
         # 컨트롤러 또는 서비스 구분
         from app.controllers.main_controller import MainController
 
-        if isinstance(controller_or_service, MainController):
-            self.controller = controller_or_service
-            self.category_service = self.controller.category_service
-        else:
-            # 이전 방식 지원 (후박성)
-            self.controller = None
-            self.category_service = controller_or_service or CategoryService()
+        self.category_service = CategoryService()
 
         # 단일 테마 관리자 인스턴스 사용
         self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()

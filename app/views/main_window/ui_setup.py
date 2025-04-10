@@ -8,12 +8,12 @@ import sys
 
 from icecream import ic
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import (QHBoxLayout, QLabel, QMenu, QMenuBar, QSplitter,
-                             QStatusBar, QSystemTrayIcon, QToolBar, QVBoxLayout,
-                             QWidget)
-
-from app.utils.constants import SessionType, TimerState
+from PyQt6.QtGui import QAction, QIcon, QPixmap, QPainter, QColor
+from PyQt6.QtWidgets import (
+    QLabel, QMenu, QMenuBar, QSplitter,
+    QStatusBar, QSystemTrayIcon, QToolBar, QVBoxLayout,
+    QWidget
+)
 from app.views.log_widget import LogListWidget
 from app.views.tag_widget import TagButtonsWidget
 from app.views.text_input_widget import TextInputWidget
@@ -141,7 +141,8 @@ def setup_menu_bar(self):
     # 설정 액션
     settingsAction = QAction("설정(&S)...", self)
     # 단축키 제거
-    settingsAction.triggered.connect(self.openSettings)
+    # 메서드 이름 변경: openSettings → open_settings
+    settingsAction.triggered.connect(lambda: self.open_settings())
     fileMenu.addAction(settingsAction)
 
     fileMenu.addSeparator()
@@ -159,17 +160,20 @@ def setup_menu_bar(self):
     # 로그 보기 액션
     viewLogsAction = QAction("로그 관리(&L)...", self)
     viewLogsAction.setShortcut("Ctrl+L")
-    viewLogsAction.triggered.connect(self.openLogDialog)
+    # 메서드 이름 변경: openLogDialog → open_log_dialog
+    viewLogsAction.triggered.connect(lambda: self.open_log_dialog())
     viewMenu.addAction(viewLogsAction)
 
     # 카테고리 관리 액션
     manageCategoriesAction = QAction("카테고리 관리(&C)...", self)
-    manageCategoriesAction.triggered.connect(self.openCategoryDialog)
+    # 메서드 이름 변경: openCategoryDialog → open_category_dialog
+    manageCategoriesAction.triggered.connect(lambda: self.open_category_dialog())
     viewMenu.addAction(manageCategoriesAction)
 
     # 태그 관리 액션
     manageTagsAction = QAction("태그 관리(&T)...", self)
-    manageTagsAction.triggered.connect(self.openTagDialog)
+    # 메서드 이름 변경: openTagDialog → open_tag_dialog
+    manageTagsAction.triggered.connect(lambda: self.open_tag_dialog())
     viewMenu.addAction(manageTagsAction)
 
     # 테마 메뉴
@@ -194,14 +198,16 @@ def setup_menu_bar(self):
     # 도움말 액션
     helpAction = QAction("도움말(&H)", self)
     helpAction.setShortcut("F1")
-    helpAction.triggered.connect(self.showHelp)
+    # 메서드 이름 변경: showHelp → show_help
+    helpAction.triggered.connect(lambda: self.show_help())
     helpMenu.addAction(helpAction)
 
     helpMenu.addSeparator()
 
     # 정보 액션
     aboutAction = QAction("PaceKeeper 정보(&A)", self)
-    aboutAction.triggered.connect(self.showAbout)
+    # 메서드 이름 변경: showAbout → show_about
+    aboutAction.triggered.connect(lambda: self.show_about())
     helpMenu.addAction(aboutAction)
 
 
@@ -226,12 +232,14 @@ def setup_tool_bar(self):
 
     # 로그 액션
     self.logAction = QAction("로그", self)
-    self.logAction.triggered.connect(self.openLogDialog)
+    # 메서드 이름 변경: openLogDialog → open_log_dialog
+    self.logAction.triggered.connect(lambda: self.open_log_dialog())
     self.toolBar.addAction(self.logAction)
 
     # 통계 액션
     self.statsAction = QAction("통계", self)
-    self.statsAction.triggered.connect(self.showStats)
+    # 메서드 이름 변경: showStats → show_stats
+    self.statsAction.triggered.connect(lambda: self.show_stats())
     self.toolBar.addAction(self.statsAction)
 
 
@@ -250,7 +258,6 @@ def setup_tray_icon(self):
         # 아이콘이 없으면 fallback 아이콘 생성
         fallback_icon = QIcon()
         # 바탕 픽셀을 몇 개 추가하여 기본 아이콘 생성
-        from PyQt6.QtGui import QPixmap, QPainter, QColor
         pixmap = QPixmap(32, 32)
         pixmap.fill(QColor(0, 120, 212))  # 기본 파란색
         fallback_icon = QIcon(pixmap)

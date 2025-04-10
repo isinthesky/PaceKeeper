@@ -21,7 +21,7 @@ class BreakDialog(QDialog):
     skipBreakRequested = pyqtSignal()  # 휴식 건너뛰기 요청
 
     def __init__(
-        self, parent=None, session_type=SessionType.SHORT_BREAK, theme_manager=None
+        self, parent=None, session_type=SessionType.SHORT_BREAK, theme_manager=None, app_config=None
     ):
         """
         휴식 알림 대화상자 초기화
@@ -36,6 +36,12 @@ class BreakDialog(QDialog):
         self.session_type = session_type
         self.auto_start_timer = None
         self.countdown_seconds = 10  # 자동 시작 카운트다운 초
+        self.config = app_config
+        
+        # 휴식 색상 설정 가져오기 (기본값: 연한 녹색)
+        self.break_color = "#A8E6CF"
+        if self.config:
+            self.break_color = self.config.get("break_dialog_color", "#A8E6CF")
 
         # 테마 관리자 초기화 (단일 인스턴스 사용)
         self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()
@@ -50,7 +56,7 @@ class BreakDialog(QDialog):
         # 시그널 연결
         self.connectSignals()
 
-        # 모달리스 설정
+        # 모달 설정 - 모달 상태로 변경하여 화면의 80% 크기로 크게 표시
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
@@ -61,7 +67,17 @@ class BreakDialog(QDialog):
             "긴 휴식" if self.session_type == SessionType.LONG_BREAK else "짧은 휴식"
         )
         self.setWindowTitle(f"{break_type} 시간")
-        self.resize(400, 300)
+        
+        # 화면 크기의 80%로 대화상자 크기 설정
+        desktop = QApplication.primaryScreen().availableGeometry()
+        width = int(desktop.width() * 0.8)
+        height = int(desktop.height() * 0.8)
+        self.resize(width, height)
+        
+        # 화면 중앙에 위치시키기
+        x = (desktop.width() - width) // 2
+        y = (desktop.height() - height) // 2
+        self.move(x, y)
 
         # 메인 레이아웃
         main_layout = QVBoxLayout(self)
@@ -144,31 +160,59 @@ class BreakDialog(QDialog):
 
     def applyStyle(self):
         """스타일 적용"""
-        # 기본 색상 설정
-        break_color = "#4caf50"  # 녹색 (휴식)
-        if self.session_type == SessionType.LONG_BREAK:
-            break_color = "#2196f3"  # 파란색 (긴 휴식)
-
+        # 사용자가 설정한 배경 색상 적용
+        background_color = self.break_color
+        
+        # 글자 색상 (배경이 어두우면 흰색, 배경이 밝으면 검은색)
+        color_obj = QColor(background_color)
+        r, g, b = color_obj.red(), color_obj.green(), color_obj.blue()
+        brightness = (r * 299 + g * 587 + b * 114) / 1000
+        text_color = "#FFFFFF" if brightness < 128 else "#000000"
+        
+        # 대화상자 자체 배경 색상 설정
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {background_color};
+            }}
+            QLabel {{
+                color: {text_color};
+            }}
+            QGroupBox {{
+                border: 2px solid {text_color};
+                border-radius: 5px;
+                margin-top: 10px;
+                color: {text_color};
+                font-weight: bold;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 5px;
+            }}
+        """)
+        
         # 타이틀 색상 설정
         palette = self.messageLabel.palette()
-        palette.setColor(QPalette.ColorRole.WindowText, QColor(break_color))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(text_color))
         self.messageLabel.setPalette(palette)
 
-        # 시작 버튼 스타일
+        # 시작 버튼 스타일 - 배경과 대비되는 색상
+        button_color = text_color
         self.startButton.setStyleSheet(
             f"""
             QPushButton {{
-                background-color: {break_color};
-                color: white;
+                background-color: {button_color};
+                color: {background_color};
                 border: none;
                 border-radius: 5px;
                 padding: 8px 15px;
+                font-weight: bold;
             }}
             QPushButton:hover {{
-                background-color: {QColor(break_color).lighter(110).name()};
+                background-color: {QColor(button_color).lighter(110).name()};
             }}
             QPushButton:pressed {{
-                background-color: {QColor(break_color).darker(110).name()};
+                background-color: {QColor(button_color).darker(110).name()};
             }}
         """
         )

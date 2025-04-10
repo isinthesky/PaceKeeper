@@ -26,8 +26,6 @@ class LogDialog(QDialog):
     def __init__(
         self,
         parent=None,
-        controller_or_service=None,
-        category_service=None,
         theme_manager=None,
     ):
         """
@@ -44,16 +42,8 @@ class LogDialog(QDialog):
 
         from app.controllers.main_controller import MainController
 
-        # 컨트롤러 또는 서비스 구분
-        if isinstance(controller_or_service, MainController):
-            self.controller = controller_or_service
-            self.log_service = self.controller.log_service
-            self.category_service = self.controller.category_service
-        else:
-            # 이전 방식 지원 (후박성)
-            self.controller = None
-            self.log_service = controller_or_service or LogService()
-            self.category_service = category_service or CategoryService()
+        self.log_service = LogService()
+        self.category_service = CategoryService()
 
         # 현재 필터 설정
         self.current_filter = {
@@ -64,7 +54,7 @@ class LogDialog(QDialog):
         }
 
         # 테마 관리자 초기화 (단일 인스턴스 사용)
-        self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()
+        self.theme_manager = theme_manager
         if self.theme_manager:
             self.theme_manager.register_widget(self)
             # 테마 변경 시그널 연결

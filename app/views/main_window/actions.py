@@ -3,7 +3,7 @@ PaceKeeper Qt - 메인 윈도우 액션
 사용자 액션 및 명령 처리 메서드 모음
 """
 
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from app.utils.constants import SessionType
 from app.views.dialogs.break_dialog import BreakDialog
@@ -11,17 +11,18 @@ from app.views.dialogs.category_dialog import CategoryDialog
 from app.views.dialogs.log_dialog import LogDialog
 from app.views.dialogs.settings_dialog import SettingsDialog
 from app.views.dialogs.tag_dialog import TagDialog
+from app.views.styles.advanced_theme_manager import AdvancedThemeManager
 
 
 def open_settings(self):
     """설정 대화상자 열기"""
     # 테마 관리자의 단일 인스턴스 사용
-    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
-
-    settings_dialog = SettingsDialog(
-        self, self.config, AdvancedThemeManager.get_instance()
-    )
+    theme_manager = AdvancedThemeManager.get_instance(app=self.app_instance)
+    
+    settings_dialog = SettingsDialog(self, app_config=self.config, theme_manager=theme_manager)
+    settings_dialog.settingsChanged.connect(self.on_settings_changed)
     result = settings_dialog.exec()
+    
     if result:
         # 설정이 변경되면 UI 업데이트
         self.updateUI()
@@ -29,10 +30,12 @@ def open_settings(self):
 
 def open_log_dialog(self):
     """로그 대화상자 열기"""
-    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
-
-    theme_manager = AdvancedThemeManager.get_instance()
-    log_dialog = LogDialog(self, self.log_service, self.category_service, theme_manager)
+    theme_manager = AdvancedThemeManager.get_instance(app=self.app_instance)
+        
+    log_dialog = LogDialog(
+        self,
+        theme_manager=theme_manager,
+    )
     log_dialog.exec()
 
     # 대화상자가 닫힌 후 최근 로그 업데이트
@@ -41,19 +44,23 @@ def open_log_dialog(self):
 
 def open_category_dialog(self):
     """카테고리 대화상자 열기"""
-    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
-
-    theme_manager = AdvancedThemeManager.get_instance()
-    category_dialog = CategoryDialog(self, self.category_service, theme_manager)
+    theme_manager = AdvancedThemeManager.get_instance(app=self.app_instance)
+        
+    category_dialog = CategoryDialog(
+        self,
+        theme_manager=theme_manager
+    )
     category_dialog.exec()
 
 
 def open_tag_dialog(self):
     """태그 대화상자 열기"""
-    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
-
-    theme_manager = AdvancedThemeManager.get_instance()
-    tag_dialog = TagDialog(self, self.tag_service, self.category_service, theme_manager)
+    theme_manager = AdvancedThemeManager.get_instance(app=self.app_instance)
+    
+    tag_dialog = TagDialog(
+        self, 
+        theme_manager=theme_manager
+    )
     tag_dialog.exec()
 
     # 대화상자가 닫힌 후 태그 목록 업데이트
@@ -67,10 +74,9 @@ def show_break_dialog(self, session_type):
     Args:
         session_type: 세션 타입 (SHORT_BREAK 또는 LONG_BREAK)
     """
-    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
-
-    theme_manager = AdvancedThemeManager.get_instance()
-    break_dialog = BreakDialog(self, session_type, theme_manager)
+    theme_manager = AdvancedThemeManager.get_instance(app=self.app_instance)
+    
+    break_dialog = BreakDialog(self, session_type, theme_manager, self.config)
 
     # 휴식 시작 시그널 연결
     break_dialog.startBreakRequested.connect(
@@ -82,7 +88,7 @@ def show_break_dialog(self, session_type):
         lambda: self.main_controller.start_session(SessionType.POMODORO)
     )
 
-    # 대화상자 표시
+    # 대화상자 표시 - exec() 사용하여 모달 방식으로 표시
     break_dialog.exec()
 
 
@@ -135,3 +141,45 @@ def show_about(self):
     <p>Qt 프레임워크 기반 마이그레이션 완료 버전</p>
     """
     QMessageBox.about(self, "PaceKeeper 정보", about_text)
+
+
+# 이벤트 핸들러는 원래 파일에서 이동
+def on_settings_changed(self, settings):
+    """
+    설정 변경 이벤트 핸들러
+
+    Args:
+        settings: 변경된 설정 값
+    """
+    # UI 관련 설정 적용
+    if "show_seconds" in settings:
+        # showSeconds 메서드 호출 전 유효성 검사
+        if hasattr(self.timerWidget, "showSeconds"):
+            self.timerWidget.showSeconds(settings["show_seconds"])
+
+    # 테마 관련 설정 변경 시 테마 적용
+    if "theme" in settings and hasattr(self, "theme_manager"):
+        # 테마 관리자 및 인스턴스 유효성 확인
+        app = None
+        if hasattr(self, "app_instance") and self.app_instance:
+            app = self.app_instance
+        else:
+            app = QApplication.instance()
+        
+        if app:
+            self.theme_manager.apply_theme(app, settings["theme"])
+        else:
+            # QApplication 인스턴스 없을 때는 테마 그만 적용
+            style_content = self.theme_manager.get_theme_style(settings["theme"])
+            if style_content:
+                self.setStyleSheet(style_content)
+
+    # 창 크기 관련 설정 적용
+    if "main_dlg_width" in settings and "main_dlg_height" in settings:
+        self.resize(settings["main_dlg_width"], settings["main_dlg_height"])
+
+        # 반응형 스타일 다시 적용
+        if hasattr(self, "responsive_style_manager"):
+            self.responsive_style_manager.apply_responsive_style(
+                self, settings["main_dlg_width"]
+            )

@@ -1,18 +1,19 @@
+
 """
-PaceKeeper Qt - 설정 대화상자 (개선된 버전)
-애플리케이션 설정 관리 UI
+PaceKeeper Qt - 설정 대화상자 (개선된 버전)애플리케이션 설정 관리 UI
 """
 
+from typing import Optional
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QColor, QMouseEvent
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
-                             QFileDialog, QFormLayout, QFrame, QGroupBox,
-                             QHBoxLayout, QLabel, QPushButton, QSlider,
-                             QSpinBox, QTabWidget, QVBoxLayout, QWidget)
-
+                              QFormLayout, QGroupBox, QHBoxLayout,
+                              QPushButton, QSlider, QSpinBox, QTabWidget,
+                              QVBoxLayout, QWidget, QColorDialog, QGridLayout, QLabel,
+                              QFrame)
 from app.config.app_config import AppConfig
 from app.views.styles.advanced_theme_manager import AdvancedThemeManager
-from app.views.styles.update_dialogs import (apply_theme_change,
-                                             set_object_names)
+from app.views.styles.update_dialogs import set_object_names
 
 
 class SettingsDialog(QDialog):
@@ -21,13 +22,13 @@ class SettingsDialog(QDialog):
     # 시그널 정의
     settingsChanged = pyqtSignal(dict)  # 변경된 설정 값
 
-    def __init__(self, parent=None, controller_or_app_config=None, theme_manager=None):
+    def __init__(self, parent=None, app_config: Optional[AppConfig] = None, theme_manager=None):
         """
         설정 대화상자 초기화
 
         Args:
             parent: 부모 위젯
-            controller_or_app_config: 메인 컨트롤러 또는 앱 설정 인스턴스
+            app_config: 앱 설정 인스턴스
             theme_manager: 테마 관리자 인스턴스
         """
         super().__init__(parent)
@@ -35,16 +36,7 @@ class SettingsDialog(QDialog):
         # 객체 이름 설정 - Qt 스타일시트 선택자용
         self.setObjectName("SettingsDialog")
 
-        # 컨트롤러 또는 설정 관리자 구분
-        from app.controllers.main_controller import MainController
-
-        if isinstance(controller_or_app_config, MainController):
-            self.controller = controller_or_app_config
-            self.config = self.controller.app_config
-        else:
-            # 이전 방식 지원 (후방 호환성)
-            self.controller = None
-            self.config = controller_or_app_config or AppConfig()
+        self.config: AppConfig = app_config
 
         # 단일 테마 관리자 인스턴스 사용
         self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()
@@ -55,6 +47,17 @@ class SettingsDialog(QDialog):
             # 테마 변경 시그널 연결
             self.theme_manager.themeChanged.connect(self.on_theme_changed)
 
+        # 기본 휴식 색상 설정
+        self.break_colors = [
+            "#FFD6A5", "#FDFFB6",
+            "#FFADAD", "#A8E6CF",
+            "#D4A5FF", "#A2D2FF",
+            "#B8E0D2", "#F8EDEB",
+            "#BEE1E6", "#FFC8DD"
+        ]
+        # 현재 선택된 휴식 테마 색상
+        self.selected_break_color = "#A8E6CF"
+        
         # 초기 설정 값 저장 (취소 시 복원용)
         self.original_settings = {}
         self.current_settings = {}
@@ -387,6 +390,9 @@ class SettingsDialog(QDialog):
         layout.addStretch(1)
 
         self.tabWidget.addTab(self.uiTab, "UI")
+        
+        # 휴식 대화상자 색상 탭 추가
+        self.setupBreakColorTab()
 
     def loadSettings(self):
         """설정 값 로드"""
@@ -451,6 +457,21 @@ class SettingsDialog(QDialog):
             )
             self.windowWidthSpinBox.setValue(self.config.get("main_dlg_width", 800))
             self.windowHeightSpinBox.setValue(self.config.get("main_dlg_height", 500))
+            
+            # 휴식 대화상자 색상 설정 가져오기
+            self.selected_break_color = self.config.get("break_dialog_color", "#A8E6CF")
+            if hasattr(self, "colorPreview") and self.colorPreview:
+                self.colorPreview.setStyleSheet(f"background-color: {self.selected_break_color}; border: 2px solid #000;")
+            if hasattr(self, "colorValueLabel") and self.colorValueLabel:
+                self.colorValueLabel.setText(self.selected_break_color)
+            
+            # 현재 선택된 색상에 해당하는 프레임 강조
+            if hasattr(self, "colorFrames"):
+                for cf, c in self.colorFrames:
+                    if c == self.selected_break_color:
+                        cf.setStyleSheet(f"background-color: {c}; border: 3px solid #000;")
+                    else:
+                        cf.setStyleSheet(f"background-color: {c}; border: 2px solid #ccc;")
 
             # 원본 설정 저장
             self.original_settings = {
@@ -471,6 +492,7 @@ class SettingsDialog(QDialog):
                 "minimize_to_tray": self.minimizeToTrayCheckBox.isChecked(),
                 "main_dlg_width": self.windowWidthSpinBox.value(),
                 "main_dlg_height": self.windowHeightSpinBox.value(),
+                "break_dialog_color": self.selected_break_color,
             }
         except Exception as e:
             print(f"[DEBUG] 설정 로드 중 오류 발생: {e}")
@@ -499,6 +521,7 @@ class SettingsDialog(QDialog):
                 "minimize_to_tray": self.minimizeToTrayCheckBox.isChecked(),
                 "main_dlg_width": self.windowWidthSpinBox.value(),
                 "main_dlg_height": self.windowHeightSpinBox.value(),
+                "break_dialog_color": self.selected_break_color,
             }
 
             # 설정 저장
@@ -513,6 +536,113 @@ class SettingsDialog(QDialog):
         except Exception as e:
             print(f"[DEBUG] 설정 저장 중 오류 발생: {e}")
 
+    def setupBreakColorTab(self):
+        """휴식 대화상자 색상 설정 탭 초기화"""
+        self.breakColorTab = QWidget()
+        self.breakColorTab.setObjectName("breakColorTab")
+        layout = QVBoxLayout(self.breakColorTab)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
+        
+        # 휴식 색상 설정 그룹
+        colorGroup = QGroupBox("휴식 대화상자 색상")
+        colorGroup.setObjectName("colorGroup")
+        colorLayout = QVBoxLayout(colorGroup)
+        colorLayout.setContentsMargins(20, 25, 20, 15)
+        colorLayout.setSpacing(10)
+        
+        # 설명 레이블
+        description = QLabel("휴식 대화상자의 배경 색상을 선택하세요. \n눈이 편안한 색상을 선택하면 휴식 시간을 더 잘 활용할 수 있습니다.")
+        description.setWordWrap(True)
+        colorLayout.addWidget(description)
+        
+        # 색상 선택 그리드
+        gridLayout = QGridLayout()
+        gridLayout.setSpacing(10)
+        
+        # 색상 버튼 그룹
+        self.colorFrames = []
+        
+        # 색상 지정을 위한 클릭 가능한 프레임 추가
+        for i, color in enumerate(self.break_colors):
+            row, col = divmod(i, 5)  # 5개씩 한 행에 배치
+            colorFrame = QFrame()
+            colorFrame.setObjectName(f"colorFrame_{i}")
+            colorFrame.setStyleSheet(f"background-color: {color}; border: 2px solid #ccc;")
+            colorFrame.setMinimumSize(50, 50)
+            colorFrame.setCursor(Qt.CursorShape.PointingHandCursor)  # 커서 변경
+            colorFrame.setFrameShape(QFrame.Shape.Box)
+            colorFrame.setFrameShadow(QFrame.Shadow.Raised)
+            # 대신 이벤트 처리를 위한 클래스 속성을 추가
+            colorFrame.frame_data = (colorFrame, color)
+            colorFrame.installEventFilter(self)
+            self.colorFrames.append((colorFrame, color))
+            gridLayout.addWidget(colorFrame, row, col)
+        
+        colorLayout.addLayout(gridLayout)
+        
+        # 상세 색상 선택 버튼
+        customColorBtn = QPushButton("상세 색상 선택...")
+        customColorBtn.setObjectName("customColorBtn")
+        customColorBtn.clicked.connect(self.onCustomColorClicked)
+        colorLayout.addWidget(customColorBtn)
+        
+        # 현재 선택된 색상 표시
+        previewLayout = QHBoxLayout()
+        previewLayout.setSpacing(10)
+        
+        previewLabel = QLabel("현재 색상:")
+        previewLayout.addWidget(previewLabel)
+        
+        self.colorPreview = QFrame()
+        self.colorPreview.setObjectName("colorPreview")
+        self.colorPreview.setStyleSheet(f"background-color: {self.selected_break_color}; border: 2px solid #000;")
+        self.colorPreview.setMinimumSize(100, 40)
+        self.colorPreview.setFrameShape(QFrame.Shape.Box)
+        self.colorPreview.setFrameShadow(QFrame.Shadow.Sunken)
+        previewLayout.addWidget(self.colorPreview)
+        
+        self.colorValueLabel = QLabel(self.selected_break_color)
+        previewLayout.addWidget(self.colorValueLabel)
+        previewLayout.addStretch(1)
+        
+        colorLayout.addLayout(previewLayout)
+        
+        layout.addWidget(colorGroup)
+        layout.addStretch(1)
+        
+        self.tabWidget.addTab(self.breakColorTab, "휴식 색상")
+    
+    def onColorFrameClicked(self, frame, color):
+        """색상 프레임 클릭 이벤트 핸들러"""
+        # 색상 프레임 변경 - 현재 선택된 것만 테두리 강조
+        for cf, c in self.colorFrames:
+            if cf == frame:
+                cf.setStyleSheet(f"background-color: {color}; border: 3px solid #000;")
+            else:
+                cf.setStyleSheet(f"background-color: {c}; border: 2px solid #ccc;")
+        
+        # 현재 선택된 색상 업데이트
+        self.selected_break_color = color
+        self.colorPreview.setStyleSheet(f"background-color: {color}; border: 2px solid #000;")
+        self.colorValueLabel.setText(color)
+    
+    def onCustomColorClicked(self):
+        """상세 색상 선택 대화상자 표시"""
+        color = QColorDialog.getColor(QColor(self.selected_break_color), self, "휴식 대화상자 색상 선택")
+        
+        if color.isValid():
+            # 색상을 16진수 색상 코드로 변환
+            color_hex = color.name().upper()
+            
+            # 선택된 색상 업데이트
+            self.selected_break_color = color_hex
+            self.colorPreview.setStyleSheet(f"background-color: {color_hex}; border: 2px solid #000;")
+            self.colorValueLabel.setText(color_hex)
+            
+            # 기존 색상 프레임의 테두리 초기화
+            for cf, c in self.colorFrames:
+                cf.setStyleSheet(f"background-color: {c}; border: 2px solid #ccc;")
     @pyqtSlot(str)
     def on_theme_changed(self, theme_name):
         """
@@ -602,6 +732,14 @@ class SettingsDialog(QDialog):
         # 다이얼로그 닫기
         super().accept()
 
+    def eventFilter(self, obj, event):
+        """이벤트 필터 - 색상 프레임 클릭 처리"""
+        if hasattr(obj, 'frame_data') and event.type() == event.Type.MouseButtonRelease:
+            cf, c = obj.frame_data
+            self.onColorFrameClicked(cf, c)
+            return True
+        return super().eventFilter(obj, event)
+        
     def reject(self):
         """취소 버튼 클릭 이벤트 처리"""
         # 원래 테마로 복원
