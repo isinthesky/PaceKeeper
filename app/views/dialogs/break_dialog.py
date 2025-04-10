@@ -5,11 +5,12 @@ PaceKeeper Qt - 휴식 알림 대화상자
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QColor, QFont, QPalette
-from PyQt6.QtWidgets import (QDialog, QGroupBox, QHBoxLayout, QLabel,
-                             QProgressBar, QPushButton, QSizePolicy,
+from PyQt6.QtWidgets import (QApplication, QDialog, QGroupBox, QHBoxLayout,
+                             QLabel, QProgressBar, QPushButton, QSizePolicy,
                              QSpacerItem, QVBoxLayout)
 
 from app.utils.constants import SessionType
+from app.views.styles.advanced_theme_manager import AdvancedThemeManager
 
 
 class BreakDialog(QDialog):
@@ -19,19 +20,29 @@ class BreakDialog(QDialog):
     startBreakRequested = pyqtSignal()  # 휴식 시작 요청
     skipBreakRequested = pyqtSignal()  # 휴식 건너뛰기 요청
 
-    def __init__(self, parent=None, session_type=SessionType.SHORT_BREAK):
+    def __init__(
+        self, parent=None, session_type=SessionType.SHORT_BREAK, theme_manager=None
+    ):
         """
         휴식 알림 대화상자 초기화
 
         Args:
             parent: 부모 위젯
             session_type: 세션 타입 (SHORT_BREAK 또는 LONG_BREAK)
+            theme_manager: 테마 관리자 인스턴스
         """
         super().__init__(parent)
 
         self.session_type = session_type
         self.auto_start_timer = None
         self.countdown_seconds = 10  # 자동 시작 카운트다운 초
+
+        # 테마 관리자 초기화 (단일 인스턴스 사용)
+        self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()
+        if self.theme_manager:
+            self.theme_manager.register_widget(self)
+            # 테마 변경 시그널 연결
+            self.theme_manager.themeChanged.connect(self.on_theme_changed)
 
         # UI 초기화
         self.setupUI()
@@ -53,8 +64,8 @@ class BreakDialog(QDialog):
         self.resize(400, 300)
 
         # 메인 레이아웃
-        self.layout = QVBoxLayout(self)
-        self.layout.setSpacing(15)
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(15)
 
         # 메시지 레이블
         self.messageLabel = QLabel(
@@ -113,16 +124,16 @@ class BreakDialog(QDialog):
         self.buttonLayout.addStretch()
 
         # 메인 레이아웃에 위젯 추가
-        self.layout.addSpacerItem(
+        main_layout.addSpacerItem(
             QSpacerItem(
                 20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
             )
         )
-        self.layout.addWidget(self.messageLabel)
-        self.layout.addWidget(self.descriptionLabel)
-        self.layout.addWidget(self.progressGroup)
-        self.layout.addLayout(self.buttonLayout)
-        self.layout.addSpacerItem(
+        main_layout.addWidget(self.messageLabel)
+        main_layout.addWidget(self.descriptionLabel)
+        main_layout.addWidget(self.progressGroup)
+        main_layout.addLayout(self.buttonLayout)
+        main_layout.addSpacerItem(
             QSpacerItem(
                 20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
             )
@@ -180,10 +191,43 @@ class BreakDialog(QDialog):
     def closeEvent(self, event):
         """대화상자 닫기 이벤트"""
         # 타이머 정리
-        if self.auto_start_timer and self.auto_start_timer.isActive():
+        if (
+            hasattr(self, "auto_start_timer")
+            and self.auto_start_timer is not None
+            and self.auto_start_timer.isActive()
+        ):
             self.auto_start_timer.stop()
 
+        # 테마 관리자 정리
+        if hasattr(self, "theme_manager") and self.theme_manager is not None:
+            try:
+                # 테마 변경 시그널 연결 해제
+                self.theme_manager.themeChanged.disconnect(self.on_theme_changed)
+                self.theme_manager.unregister_widget(self)
+            except (RuntimeError, TypeError):
+                # disconnect 오류 무시(이미 연결 해제됐거나 유효하지 않은 경우)
+                pass
+
         super().closeEvent(event)
+
+    @pyqtSlot(str)
+    def on_theme_changed(self, theme_name):
+        """
+        테마 변경 시그널을 처리하는 슬롯
+
+        Args:
+            theme_name: 변경된 테마 이름
+        """
+        # QApplication.instance()를 통해 테마 적용
+        app = QApplication.instance()
+        if app:
+            # 현재 테마를 가져와 필요한 작업 수행
+            style_content = self.theme_manager.get_theme_style(theme_name)
+            if style_content:
+                self.setStyleSheet(style_content)
+
+        # 휴식 대화상자의 경우 테마 변경 시 스타일 재적용이 필요할 수 있음
+        self.applyStyle()
 
     @pyqtSlot()
     def updateCountdown(self):
@@ -196,7 +240,8 @@ class BreakDialog(QDialog):
 
         if self.countdown_seconds <= 0:
             # 타이머 정지
-            self.auto_start_timer.stop()
+            if hasattr(self, "auto_start_timer") and self.auto_start_timer is not None:
+                self.auto_start_timer.stop()
 
             # 휴식 시작
             self.onStartBreak()
@@ -205,7 +250,11 @@ class BreakDialog(QDialog):
     def onStartBreak(self):
         """휴식 시작 버튼 이벤트 핸들러"""
         # 타이머 정지
-        if self.auto_start_timer and self.auto_start_timer.isActive():
+        if (
+            hasattr(self, "auto_start_timer")
+            and self.auto_start_timer is not None
+            and self.auto_start_timer.isActive()
+        ):
             self.auto_start_timer.stop()
 
         # 시그널 발생
@@ -218,7 +267,11 @@ class BreakDialog(QDialog):
     def onSkipBreak(self):
         """휴식 건너뛰기 버튼 이벤트 핸들러"""
         # 타이머 정지
-        if self.auto_start_timer and self.auto_start_timer.isActive():
+        if (
+            hasattr(self, "auto_start_timer")
+            and self.auto_start_timer is not None
+            and self.auto_start_timer.isActive()
+        ):
             self.auto_start_timer.stop()
 
         # 시그널 발생

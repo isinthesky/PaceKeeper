@@ -1,5 +1,5 @@
 """
-PaceKeeper Qt - 로그 대화상자
+PaceKeeper Qt - 로그 대화상자 (개선된 버전)
 로그 조회 및 관리 UI
 """
 
@@ -8,20 +8,28 @@ from datetime import datetime, timedelta
 from PyQt6.QtCore import QDate, Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit,
-                             QDialog, QFormLayout, QGroupBox, QHBoxLayout,
-                             QHeaderView, QLabel, QLineEdit, QMessageBox,
-                             QPushButton, QTableWidget, QTableWidgetItem,
-                             QToolBar, QVBoxLayout, QWidget)
+                             QDialog, QFormLayout, QFrame, QGridLayout,
+                             QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+                             QLineEdit, QMessageBox, QPushButton, QSizePolicy,
+                             QTableWidget, QTableWidgetItem, QToolBar,
+                             QVBoxLayout, QWidget)
 
 from app.domain.category.category_service import CategoryService
 from app.domain.log.log_entity import LogEntity
 from app.domain.log.log_service import LogService
+from app.views.styles.advanced_theme_manager import AdvancedThemeManager
 
 
 class LogDialog(QDialog):
-    """로그 조회 대화상자 클래스"""
+    """로그 조회 대화상자 클래스 - 개선된 UI"""
 
-    def __init__(self, parent=None, controller_or_service=None, category_service=None):
+    def __init__(
+        self,
+        parent=None,
+        controller_or_service=None,
+        category_service=None,
+        theme_manager=None,
+    ):
         """
         로그 대화상자 초기화
 
@@ -29,8 +37,10 @@ class LogDialog(QDialog):
             parent: 부모 위젯
             controller_or_service: 메인 컨트롤러 또는 로그 서비스 인스턴스
             category_service: 카테고리 서비스 인스턴스
+            theme_manager: 테마 관리자 인스턴스
         """
         super().__init__(parent)
+        self.setObjectName("logDialog")
 
         from app.controllers.main_controller import MainController
 
@@ -53,6 +63,13 @@ class LogDialog(QDialog):
             "category_id": None,
         }
 
+        # 테마 관리자 초기화 (단일 인스턴스 사용)
+        self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()
+        if self.theme_manager:
+            self.theme_manager.register_widget(self)
+            # 테마 변경 시그널 연결
+            self.theme_manager.themeChanged.connect(self.on_theme_changed)
+
         # UI 초기화
         self.setupUI()
 
@@ -66,104 +83,185 @@ class LogDialog(QDialog):
         self.connectSignals()
 
     def setupUI(self):
-        """UI 초기화"""
+        """로그 관리 UI 초기화 - 개선된 버전"""
         # 창 제목 및 크기 설정
         self.setWindowTitle("로그 관리")
-        self.resize(800, 600)
+        self.resize(900, 650)  # 더 넓게 조정
 
         # 메인 레이아웃
-        self.layout = QVBoxLayout(self)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(15, 15, 15, 15)
+        self.main_layout.setSpacing(15)
 
-        # 필터 영역
-        self.filterGroup = QGroupBox("필터")
-        self.filterLayout = QFormLayout(self.filterGroup)
+        # 상단 컨트롤 영역 (필터 + 툴바) - 카드 스타일 적용
+        topArea = QWidget()
+        topArea.setObjectName("topArea")
+        # 직접 스타일시트 사용하는 부분 제거
+        topLayout = QVBoxLayout(topArea)
+        topLayout.setContentsMargins(15, 15, 15, 15)
+        topLayout.setSpacing(10)
 
-        # 검색어 입력
+        # 필터 제목
+        filterTitle = QLabel("검색 필터")
+        filterTitle.setObjectName("filterTitle")
+        topLayout.addWidget(filterTitle)
+
+        # 필터 영역 - 그리드 레이아웃으로 개선
+        filterLayout = QGridLayout()
+        filterLayout.setContentsMargins(0, 5, 0, 5)
+        filterLayout.setHorizontalSpacing(15)
+        filterLayout.setVerticalSpacing(10)
+
+        # 검색어 입력 - 첫 번째 행
+        searchLabel = QLabel("검색:")
         self.searchInput = QLineEdit()
+        self.searchInput.setObjectName("searchInput")
+        self.searchInput.setMinimumHeight(32)
         self.searchInput.setPlaceholderText("검색어 입력...")
-        self.filterLayout.addRow("검색:", self.searchInput)
+        filterLayout.addWidget(searchLabel, 0, 0)
+        filterLayout.addWidget(self.searchInput, 0, 1, 1, 3)  # 3칸 차지
 
-        # 날짜 범위 선택
-        self.dateFilterLayout = QHBoxLayout()
+        # 날짜 범위 선택 - 두 번째 행
+        dateLabel = QLabel("기간:")
+
+        dateLayout = QHBoxLayout()
+        dateLayout.setSpacing(8)
 
         self.fromDateEdit = QDateEdit()
+        self.fromDateEdit.setObjectName("fromDateEdit")
         self.fromDateEdit.setCalendarPopup(True)
         self.fromDateEdit.setDate(QDate.currentDate().addDays(-30))
-
+        self.fromDateEdit.setMinimumHeight(32)
+        
+        dateRangeLabel = QLabel("~")
+        
         self.toDateEdit = QDateEdit()
+        self.toDateEdit.setObjectName("toDateEdit")
         self.toDateEdit.setCalendarPopup(True)
         self.toDateEdit.setDate(QDate.currentDate())
+        self.toDateEdit.setMinimumHeight(32)
 
-        self.dateFilterLayout.addWidget(self.fromDateEdit)
-        self.dateFilterLayout.addWidget(QLabel("~"))
-        self.dateFilterLayout.addWidget(self.toDateEdit)
+        dateLayout.addWidget(self.fromDateEdit)
+        dateLayout.addWidget(dateRangeLabel)
+        dateLayout.addWidget(self.toDateEdit)
 
-        self.filterLayout.addRow("기간:", self.dateFilterLayout)
+        filterLayout.addWidget(dateLabel, 1, 0)
+        filterLayout.addLayout(dateLayout, 1, 1)
 
-        # 카테고리 선택
+        # 카테고리 선택 - 두 번째 행, 오른쪽
+        categoryLabel = QLabel("카테고리:")
         self.categoryComboBox = QComboBox()
+        self.categoryComboBox.setObjectName("categoryComboBox")
+        self.categoryComboBox.setMinimumHeight(32)
         self.categoryComboBox.addItem("모든 카테고리", None)
-        self.filterLayout.addRow("카테고리:", self.categoryComboBox)
+        filterLayout.addWidget(categoryLabel, 1, 2)
+        filterLayout.addWidget(self.categoryComboBox, 1, 3)
 
-        # 필터 적용 버튼
-        self.filterButtonLayout = QHBoxLayout()
-        self.applyFilterButton = QPushButton("필터 적용")
+        # 필터 버튼 - 세 번째 행
+        filterButtonLayout = QHBoxLayout()
+        filterButtonLayout.setSpacing(10)
+
         self.resetFilterButton = QPushButton("필터 초기화")
-        self.filterButtonLayout.addWidget(self.applyFilterButton)
-        self.filterButtonLayout.addWidget(self.resetFilterButton)
-        self.filterLayout.addRow("", self.filterButtonLayout)
+        self.resetFilterButton.setObjectName("resetFilterButton")
+        self.resetFilterButton.setMinimumWidth(120)
+        self.resetFilterButton.setMinimumHeight(32)
 
-        self.layout.addWidget(self.filterGroup)
+        self.applyFilterButton = QPushButton("필터 적용")
+        self.applyFilterButton.setObjectName("applyFilterButton")
+        self.applyFilterButton.setMinimumWidth(120)
+        self.applyFilterButton.setMinimumHeight(32)
+        self.applyFilterButton.setDefault(True)
 
-        # 툴바 추가
-        self.toolbar = QToolBar()
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        filterButtonLayout.addStretch(1)
+        filterButtonLayout.addWidget(self.resetFilterButton)
+        filterButtonLayout.addWidget(self.applyFilterButton)
 
-        # 로그 편집 액션
-        self.editAction = QAction("편집", self)
-        self.toolbar.addAction(self.editAction)
+        filterLayout.addLayout(
+            filterButtonLayout, 2, 0, 1, 4, Qt.AlignmentFlag.AlignRight
+        )
 
-        # 로그 삭제 액션
-        self.deleteAction = QAction("삭제", self)
-        self.toolbar.addAction(self.deleteAction)
+        topLayout.addLayout(filterLayout)
 
         # 구분선 추가
-        self.toolbar.addSeparator()
+        line = QFrame()
+        line.setObjectName("separatorLine")
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        topLayout.addWidget(line)
 
-        # 통계 보기 액션
-        self.statsAction = QAction("통계", self)
-        self.toolbar.addAction(self.statsAction)
+        # 툴바 추가 - 현대적인 스타일
+        toolbarLayout = QHBoxLayout()
+        toolbarLayout.setContentsMargins(0, 5, 0, 0)
 
-        # 내보내기 액션
-        self.exportAction = QAction("내보내기", self)
-        self.toolbar.addAction(self.exportAction)
+        # 로그 편집 버튼
+        self.editButton = QPushButton("편집")
+        self.editButton.setObjectName("editButton")
+        self.editButton.setMinimumHeight(32)
 
-        self.layout.addWidget(self.toolbar)
+        # 로그 삭제 버튼
+        self.deleteButton = QPushButton("삭제")
+        self.deleteButton.setObjectName("deleteButton")
+        self.deleteButton.setMinimumHeight(32)
 
-        # 로그 테이블
+        # 구분을 위한 스페이서
+        toolbarLayout.addWidget(self.editButton)
+        toolbarLayout.addWidget(self.deleteButton)
+        toolbarLayout.addStretch(1)
+
+        # 통계 버튼
+        self.statsButton = QPushButton("통계")
+        self.statsButton.setObjectName("statsButton")
+        self.statsButton.setMinimumHeight(32)
+
+        # 내보내기 버튼
+        self.exportButton = QPushButton("내보내기")
+        self.exportButton.setObjectName("exportButton")
+        self.exportButton.setMinimumHeight(32)
+
+        toolbarLayout.addWidget(self.statsButton)
+        toolbarLayout.addWidget(self.exportButton)
+
+        topLayout.addLayout(toolbarLayout)
+
+        self.main_layout.addWidget(topArea)
+
+        # 로그 테이블 - 개선된 디자인
         self.logTable = QTableWidget()
+        self.logTable.setObjectName("logTable")
+        
         self.logTable.setColumnCount(6)
         self.logTable.setHorizontalHeaderLabels(
-            ["날짜", "시간", "내용", "태그", "카테고리", "소요 시간"]
+        ["날짜", "시간", "내용", "태그", "카테고리", "소요 시간"]
         )
-        self.logTable.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.ResizeToContents
-        )
-        self.logTable.horizontalHeader().setSectionResizeMode(
-            2, QHeaderView.ResizeMode.Stretch
-        )  # 내용 컬럼 늘리기
+
+        # 헤더 스타일 및 크기 조정 - Pylance 타입 체크 오류 수정
+        header = self.logTable.horizontalHeader()
+        if header is not None:  # None 체크 추가
+            header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(
+                2, QHeaderView.ResizeMode.Stretch
+            )  # 내용 컬럼 늘리기
+            header.setStretchLastSection(False)
+
+        # 테이블 선택 동작 설정
         self.logTable.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.logTable.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.logTable.setAlternatingRowColors(True)  # 행 간 교차 색상
 
-        self.layout.addWidget(self.logTable)
+        self.main_layout.addWidget(self.logTable)
 
         # 닫기 버튼
         self.buttonLayout = QHBoxLayout()
+        self.buttonLayout.setContentsMargins(0, 10, 0, 0)
         self.buttonLayout.addStretch()
-        self.closeButton = QPushButton("닫기")
-        self.buttonLayout.addWidget(self.closeButton)
 
-        self.layout.addLayout(self.buttonLayout)
+        self.closeButton = QPushButton("닫기")
+        self.closeButton.setObjectName("closeButton")
+        self.closeButton.setMinimumWidth(100)
+        self.closeButton.setMinimumHeight(36)
+
+        self.buttonLayout.addWidget(self.closeButton)
+        self.main_layout.addLayout(self.buttonLayout)
 
     def connectSignals(self):
         """시그널 연결"""
@@ -172,10 +270,10 @@ class LogDialog(QDialog):
         self.resetFilterButton.clicked.connect(self.onResetFilter)
 
         # 툴바 액션 관련
-        self.editAction.triggered.connect(self.onEditLog)
-        self.deleteAction.triggered.connect(self.onDeleteLog)
-        self.statsAction.triggered.connect(self.onShowStats)
-        self.exportAction.triggered.connect(self.onExportLogs)
+        self.editButton.clicked.connect(self.onEditLog)
+        self.deleteButton.clicked.connect(self.onDeleteLog)
+        self.statsButton.clicked.connect(self.onShowStats)
+        self.exportButton.clicked.connect(self.onExportLogs)
 
         # 로그 테이블 관련
         self.logTable.itemDoubleClicked.connect(self.onLogDoubleClicked)
@@ -259,9 +357,9 @@ class LogDialog(QDialog):
 
             # 로그 데이터 저장
             for col in range(6):
-                self.logTable.item(row_position, col).setData(
-                    Qt.ItemDataRole.UserRole, log
-                )
+                item = self.logTable.item(row_position, col)
+                if item is not None:  # None 값 검사 추가
+                    item.setData(Qt.ItemDataRole.UserRole, log)
 
             # 카테고리에 따른 색상 설정 (현재 LogEntity에는 category 속성이 없음)
             # 나중에 category 속성이 추가되면 아래 주석을 해제하세요
@@ -389,3 +487,33 @@ class LogDialog(QDialog):
             f"종료 시간: {log.end_date}\n"
             f"태그: {log.tags}",
         )
+
+    @pyqtSlot(str)
+    def on_theme_changed(self, theme_name):
+        """
+        테마 변경 시그널을 처리하는 슬롯
+
+        Args:
+            theme_name: 변경된 테마 이름
+        """
+        # 현재 테마 가져와 적용
+        if self.theme_manager:
+            style_content = self.theme_manager.get_theme_style(theme_name)
+            if style_content:
+                print(f"[DEBUG] 로그 다이얼로그에 테마 적용: {theme_name}")
+                self.setStyleSheet(style_content)
+                
+                # 모든 자식 위젯에도 스타일시트 적용
+                for widget in self.findChildren(QWidget):
+                    widget.setStyleSheet("")
+                    
+                # 테마 적용 후 갱신
+                self.update()
+
+    def closeEvent(self, event):
+        """창 닫기 이벤트 처리"""
+        if hasattr(self, "theme_manager") and self.theme_manager:
+            # 테마 변경 시그널 연결 해제
+            self.theme_manager.themeChanged.disconnect(self.on_theme_changed)
+            self.theme_manager.unregister_widget(self)
+        super().closeEvent(event)

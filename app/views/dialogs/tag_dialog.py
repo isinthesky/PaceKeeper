@@ -1,22 +1,24 @@
 """
-PaceKeeper Qt - 태그 대화상자
+PaceKeeper Qt - 태그 대화상자 (개선된 버전)
 태그 관리 UI
 """
 
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QBrush, QColor
-from PyQt6.QtWidgets import (QComboBox, QDialog, QFormLayout, QHBoxLayout,
-                             QLabel, QLineEdit, QListWidget, QListWidgetItem,
-                             QMessageBox, QPushButton, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QApplication, QComboBox, QDialog, QFormLayout,
+                             QHBoxLayout, QLabel, QLineEdit, QListWidget,
+                             QListWidgetItem, QMessageBox, QPushButton,
+                             QVBoxLayout, QWidget)
 
 from app.domain.category.category_service import CategoryService
 from app.domain.tag.tag_entity import TagEntity
 from app.domain.tag.tag_service import TagService
 from app.views.styles.advanced_theme_manager import AdvancedThemeManager
+from app.views.styles.update_dialogs import set_object_names, apply_theme_change
 
 
 class TagDialog(QDialog):
-    """태그 관리 대화상자 클래스"""
+    """태그 관리 대화상자 클래스 - 개선된 UI"""
 
     def __init__(
         self, parent=None, tag_service=None, category_service=None, theme_manager=None
@@ -34,14 +36,20 @@ class TagDialog(QDialog):
 
         self.tag_service = tag_service or TagService()
         self.category_service = category_service or CategoryService()
-        self.theme_manager = theme_manager or AdvancedThemeManager()
+        # 단일 테마 관리자 인스턴스 사용
+        self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()
         self.current_tag = None
         self.categories = {}
 
         if self.theme_manager:
             self.theme_manager.register_widget(self)
+            # 테마 변경 시그널 연결
+            self.theme_manager.themeChanged.connect(self.on_theme_changed)
 
         self.setupUI()
+        
+        # 다이얼로그의 모든 객체에 이름 설정
+        set_object_names(self)
 
         self.loadCategories()
 
@@ -50,59 +58,180 @@ class TagDialog(QDialog):
         self.connectSignals()
 
     def setupUI(self):
-        """UI 초기화"""
+        """태그 관리 UI 초기화 - 개선된 버전"""
         self.setWindowTitle("태그 관리")
-        self.resize(450, 350)
+        self.resize(600, 450)  # 더 넓게 조정
 
+        # 메인 레이아웃
         self.main_layout = QHBoxLayout(self)
+        self.main_layout.setContentsMargins(15, 15, 15, 15)
+        self.main_layout.setSpacing(15)
 
+        # 왼쪽 패널 (태그 목록) - 카드 스타일 적용
         self.leftPanel = QWidget()
+        self.leftPanel.setStyleSheet(
+            """
+            QWidget {
+                background-color: palette(base);
+                border-radius: 6px;
+                border: 1px solid palette(mid);
+            }
+        """
+        )
         self.leftLayout = QVBoxLayout(self.leftPanel)
+        self.leftLayout.setContentsMargins(15, 15, 15, 15)
+        self.leftLayout.setSpacing(10)
 
+        # 태그 목록 헤더 - 더 강조된 스타일
         self.listLabel = QLabel("태그 목록")
+        self.listLabel.setStyleSheet(
+            """
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: palette(text);
+            }
+        """
+        )
         self.leftLayout.addWidget(self.listLabel)
 
+        # 태그 목록 위젯 - 개선된 스타일
         self.tagList = QListWidget()
         self.tagList.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        self.tagList.setStyleSheet(
+            """
+            QListWidget {
+                background-color: palette(base);
+                border-radius: 4px;
+                border: 1px solid palette(mid);
+                padding: 5px;
+            }
+            QListWidget::item {
+                border-radius: 4px;
+                padding: 8px;
+                margin: 2px 0;
+            }
+            QListWidget::item:selected {
+                background-color: palette(highlight);
+                color: palette(highlighted-text);
+            }
+        """
+        )
         self.leftLayout.addWidget(self.tagList)
 
+        # 버튼 레이아웃 - 현대적인 버튼
         self.buttonLayout = QHBoxLayout()
+        self.buttonLayout.setSpacing(10)
 
+        # 추가, 삭제 버튼
         self.addButton = QPushButton("추가")
+        self.addButton.setMinimumWidth(80)
+        self.addButton.setMinimumHeight(32)
+
         self.removeButton = QPushButton("삭제")
+        self.removeButton.setMinimumWidth(80)
+        self.removeButton.setMinimumHeight(32)
 
         self.buttonLayout.addWidget(self.addButton)
         self.buttonLayout.addWidget(self.removeButton)
         self.leftLayout.addLayout(self.buttonLayout)
 
+        # 오른쪽 패널 (태그 편집) - 카드 스타일 적용
         self.rightPanel = QWidget()
+        self.rightPanel.setStyleSheet(
+            """
+            QWidget {
+                background-color: palette(base);
+                border-radius: 6px;
+                border: 1px solid palette(mid);
+            }
+        """
+        )
         self.rightLayout = QVBoxLayout(self.rightPanel)
+        self.rightLayout.setContentsMargins(20, 15, 20, 15)
+        self.rightLayout.setSpacing(15)
 
+        # 태그 편집 헤더
         self.editLabel = QLabel("태그 편집")
+        self.editLabel.setStyleSheet(
+            """
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: palette(text);
+            }
+        """
+        )
         self.rightLayout.addWidget(self.editLabel)
 
+        # 태그 편집 폼 - 개선된 레이아웃
         self.editForm = QFormLayout()
+        self.editForm.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.editForm.setFormAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.editForm.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow
+        )
+        self.editForm.setContentsMargins(0, 10, 0, 0)
+        self.editForm.setSpacing(15)
 
+        # 이름 입력 - 개선된 입력 필드
         self.nameInput = QLineEdit()
+        self.nameInput.setMinimumHeight(32)
+        self.nameInput.setPlaceholderText("태그 이름 입력")
+        self.nameInput.setStyleSheet(
+            """
+            QLineEdit {
+                border-radius: 4px;
+                padding: 4px 8px;
+            }
+        """
+        )
         self.editForm.addRow("이름:", self.nameInput)
 
+        # 카테고리 콤보박스 - 개선된 드롭다운
         self.categoryComboBox = QComboBox()
+        self.categoryComboBox.setMinimumHeight(32)
+        self.categoryComboBox.setMinimumWidth(200)
+        self.categoryComboBox.setStyleSheet(
+            """
+            QComboBox {
+                border-radius: 4px;
+                padding: 4px 8px;
+            }
+        """
+        )
         self.editForm.addRow("카테고리:", self.categoryComboBox)
 
         self.rightLayout.addLayout(self.editForm)
 
+        # 저장, 취소 버튼 - 개선된 레이아웃 및 스타일
         self.actionLayout = QHBoxLayout()
-        self.saveButton = QPushButton("저장")
+        self.actionLayout.setContentsMargins(0, 15, 0, 0)
+        self.actionLayout.setSpacing(10)
+
+        self.actionLayout.addStretch(1)
+
         self.cancelButton = QPushButton("취소")
-        self.actionLayout.addWidget(self.saveButton)
+        self.cancelButton.setMinimumWidth(100)
+        self.cancelButton.setMinimumHeight(36)
+
+        self.saveButton = QPushButton("저장")
+        self.saveButton.setMinimumWidth(100)
+        self.saveButton.setMinimumHeight(36)
+        self.saveButton.setDefault(True)
+
         self.actionLayout.addWidget(self.cancelButton)
+        self.actionLayout.addWidget(self.saveButton)
         self.rightLayout.addLayout(self.actionLayout)
 
+        # 여백 추가
         self.rightLayout.addStretch(1)
 
+        # 패널 분할 비율 설정 (왼쪽 : 오른쪽 = 1 : 1)
         self.main_layout.addWidget(self.leftPanel, 1)
         self.main_layout.addWidget(self.rightPanel, 1)
 
+        # 초기 상태 설정
         self.enableEditForm(False)
 
     def connectSignals(self):
@@ -146,14 +275,18 @@ class TagDialog(QDialog):
             item = QListWidgetItem(f"#{tag.name}")
             item.setData(Qt.ItemDataRole.UserRole, tag)
 
+            # 카테고리 색상 가져오기 및 안전한 접근
             category_info = self.categories.get(tag.category_id)
             color_hex = (
                 category_info["color"]
                 if category_info
                 else self.categories[None]["color"]
             )
+
+            # 안전한 QColor 생성
             color = QColor(color_hex)
-            item.setForeground(QBrush(color))
+            if color.isValid():
+                item.setForeground(QBrush(color))
 
             self.tagList.addItem(item)
 
@@ -199,9 +332,13 @@ class TagDialog(QDialog):
 
             self.nameInput.setText(tag.name)
 
+            # 안전한 카테고리 접근
             if tag.category_id is not None and tag.category_id in self.categories:
                 index = self.categoryComboBox.findData(tag.category_id)
-                self.categoryComboBox.setCurrentIndex(index if index >= 0 else 0)
+                if index >= 0:
+                    self.categoryComboBox.setCurrentIndex(index)
+                else:
+                    self.categoryComboBox.setCurrentIndex(0)
             else:
                 self.categoryComboBox.setCurrentIndex(0)
 
@@ -284,8 +421,21 @@ class TagDialog(QDialog):
 
         self.tagList.clearSelection()
 
+    @pyqtSlot(str)
+    def on_theme_changed(self, theme_name):
+        """
+        테마 변경 시그널을 처리하는 슬롯
+
+        Args:
+            theme_name: 변경된 테마 이름
+        """
+        # 공통 테마 변경 함수 호출
+        apply_theme_change(self, theme_name, self.theme_manager)
+
     def closeEvent(self, event):
         """창 닫기 이벤트 처리"""
         if self.theme_manager:
+            # 테마 변경 시그널 연결 해제
+            self.theme_manager.themeChanged.disconnect(self.on_theme_changed)
             self.theme_manager.unregister_widget(self)
         super().closeEvent(event)

@@ -3,6 +3,7 @@ PaceKeeper Qt - 메인 윈도우 UI 설정
 UI 관련 초기화 및 설정 메서드 모음
 """
 
+from icecream import ic
 from PyQt6.QtCore import QCoreApplication, Qt
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (QHBoxLayout, QLabel, QMenu, QMenuBar, QPushButton,
@@ -86,7 +87,8 @@ def setup_menu_bar(self):
     self.setMenuBar(self.menuBar)
 
     # 파일 메뉴
-    fileMenu = self.menuBar.addMenu("파일(&F)")
+    fileMenu = QMenu("파일(&F)", self)
+    self.menuBar.addMenu(fileMenu)
 
     # 설정 액션
     settingsAction = QAction("설정(&S)...", self)
@@ -103,7 +105,8 @@ def setup_menu_bar(self):
     fileMenu.addAction(exitAction)
 
     # 보기 메뉴
-    viewMenu = self.menuBar.addMenu("보기(&V)")
+    viewMenu = QMenu("보기(&V)", self)
+    self.menuBar.addMenu(viewMenu)
 
     # 로그 보기 액션
     viewLogsAction = QAction("로그 관리(&L)...", self)
@@ -122,10 +125,13 @@ def setup_menu_bar(self):
     viewMenu.addAction(manageTagsAction)
 
     # 테마 메뉴
-    themeMenu = self.menuBar.addMenu("테마(&T)")
+    themeMenu = QMenu("테마(&T)", self)
+    self.menuBar.addMenu(themeMenu)
 
     # 테마 액션 추가
     themes = self.theme_manager.get_available_themes()
+
+    ic("테마 액션 추가", themes)
     for theme in themes:
         themeAction = QAction(theme, self)
         themeAction.triggered.connect(
@@ -134,7 +140,8 @@ def setup_menu_bar(self):
         themeMenu.addAction(themeAction)
 
     # 도움말 메뉴
-    helpMenu = self.menuBar.addMenu("도움말(&H)")
+    helpMenu = QMenu("도움말(&H)", self)
+    self.menuBar.addMenu(helpMenu)
 
     # 도움말 액션
     helpAction = QAction("도움말(&H)", self)

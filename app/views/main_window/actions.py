@@ -15,7 +15,12 @@ from app.views.dialogs.tag_dialog import TagDialog
 
 def open_settings(self):
     """설정 대화상자 열기"""
-    settings_dialog = SettingsDialog(self, self.config, self.theme_manager)
+    # 테마 관리자의 단일 인스턴스 사용
+    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
+
+    settings_dialog = SettingsDialog(
+        self, self.config, AdvancedThemeManager.get_instance()
+    )
     result = settings_dialog.exec()
     if result:
         # 설정이 변경되면 UI 업데이트
@@ -24,7 +29,10 @@ def open_settings(self):
 
 def open_log_dialog(self):
     """로그 대화상자 열기"""
-    log_dialog = LogDialog(self, self.log_service, self.category_service)
+    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
+
+    theme_manager = AdvancedThemeManager.get_instance()
+    log_dialog = LogDialog(self, self.log_service, self.category_service, theme_manager)
     log_dialog.exec()
 
     # 대화상자가 닫힌 후 최근 로그 업데이트
@@ -33,13 +41,19 @@ def open_log_dialog(self):
 
 def open_category_dialog(self):
     """카테고리 대화상자 열기"""
-    category_dialog = CategoryDialog(self, self.category_service)
+    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
+
+    theme_manager = AdvancedThemeManager.get_instance()
+    category_dialog = CategoryDialog(self, self.category_service, theme_manager)
     category_dialog.exec()
 
 
 def open_tag_dialog(self):
     """태그 대화상자 열기"""
-    tag_dialog = TagDialog(self, self.tag_service)
+    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
+
+    theme_manager = AdvancedThemeManager.get_instance()
+    tag_dialog = TagDialog(self, self.tag_service, self.category_service, theme_manager)
     tag_dialog.exec()
 
     # 대화상자가 닫힌 후 태그 목록 업데이트
@@ -53,7 +67,10 @@ def show_break_dialog(self, session_type):
     Args:
         session_type: 세션 타입 (SHORT_BREAK 또는 LONG_BREAK)
     """
-    break_dialog = BreakDialog(self, session_type)
+    from app.views.styles.advanced_theme_manager import AdvancedThemeManager
+
+    theme_manager = AdvancedThemeManager.get_instance()
+    break_dialog = BreakDialog(self, session_type, theme_manager)
 
     # 휴식 시작 시그널 연결
     break_dialog.startBreakRequested.connect(

@@ -165,10 +165,11 @@ class DBManager:
             params: 쿼리 파라미터
 
         Returns:
-            마지막으로 삽입된 행의 ID
+            마지막으로 삽입된 행의 ID, 삽입 실패 시 0
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(query, params)
             conn.commit()
-            return cursor.lastrowid
+            # lastrowid가 None일 수 있으니 기본값 0으로 설정
+            return cursor.lastrowid or 0

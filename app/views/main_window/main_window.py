@@ -1,8 +1,9 @@
 from icecream import ic
 from PyQt6.QtCore import pyqtSlot  # pyqtSlot 임포트
 from PyQt6.QtGui import QAction  # QAction 임포트
-from PyQt6.QtWidgets import (QMainWindow, QMenuBar,  # QMenuBar 추가 임포트
-                             QSplitter, QStatusBar, QToolBar)
+from PyQt6.QtWidgets import QMenuBar  # QMenuBar 추가 임포트
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QSplitter, QStatusBar,
+                             QToolBar)
 
 from app.config.app_config import AppConfig
 from app.controllers.main_controller import MainController
@@ -54,19 +55,26 @@ class MainWindow(QMainWindow):
     main_controller: MainController
     timer_controller: TimerController
 
-    def __init__(self, app_config=None, theme_manager=None):
+    def __init__(self, app_config=None, theme_manager=None, app_instance=None):
         """
         메인 윈도우 초기화
 
         Args:
             app_config: 애플리케이션 설정 관리자
             theme_manager: 테마 관리자
+            app_instance: QApplication 인스턴스 (테마 변경 시 사용)
         """
         super().__init__()
 
+        # QApplication 인스턴스 저장
+        self.app_instance = app_instance or QApplication.instance()
+
         # 컴포넌트 초기화
         self.config = app_config or AppConfig()
-        self.theme_manager = theme_manager or AdvancedThemeManager()
+        # 단일 테마 관리자 인스턴스 사용
+        self.theme_manager = theme_manager or AdvancedThemeManager.get_instance(
+            app=self.app_instance
+        )
 
         # 테마 관리자에 메인 윈도우 등록 및 시그널 연결
         if self.theme_manager:
@@ -211,8 +219,10 @@ class MainWindow(QMainWindow):
         """로그 대화상자 열기"""
         from app.views.dialogs.log_dialog import LogDialog
 
-        # 서비스 대신 컨트롤러 전달 (LogDialog 수정 필요)
-        log_dialog = LogDialog(self, self.main_controller)
+        # 서비스 대신 컨트롤러 전달 - 테마 관리자도 전달
+        log_dialog = LogDialog(
+            self, self.main_controller, theme_manager=self.theme_manager
+        )
         log_dialog.exec()
 
         # 대화상자가 닫힌 후 최근 로그 업데이트 - 컨트롤러 시그널로 처리됨
@@ -222,16 +232,16 @@ class MainWindow(QMainWindow):
         """카테고리 대화상자 열기"""
         from app.views.dialogs.category_dialog import CategoryDialog
 
-        # 서비스 대신 컨트롤러 전달 (CategoryDialog 수정 필요)
-        category_dialog = CategoryDialog(self, self.main_controller)
+        # 서비스 대신 컨트롤러 전달 - 테마 관리자도 전달
+        category_dialog = CategoryDialog(self, self.main_controller, self.theme_manager)
         category_dialog.exec()
 
     def openTagDialog(self):
         """태그 대화상자 열기"""
         from app.views.dialogs.tag_dialog import TagDialog
 
-        # 서비스 대신 컨트롤러 전달 (TagDialog 수정 필요)
-        tag_dialog = TagDialog(self, self.main_controller)
+        # 서비스 대신 컨트롤러 전달 - 테마 관리자도 전달
+        tag_dialog = TagDialog(self, self.main_controller, theme_manager=self.theme_manager)
         tag_dialog.exec()
 
         # 대화상자가 닫힌 후 태그 목록 업데이트 - 컨트롤러 시그널로 처리됨
@@ -366,12 +376,71 @@ class MainWindow(QMainWindow):
     # --- 테마 변경 슬롯 추가 ---
     @pyqtSlot(str)
     def on_theme_changed(self, theme_name: str):
-        """ 테마 변경 시그널을 처리하는 슬롯 """
-        # AdvancedThemeManager의 update_all_widgets가 스타일시트 적용을 처리하므로,
-        # MainWindow 자체에서 특별히 할 작업은 현재 없음.
-        # 필요하다면 특정 위젯의 스타일을 추가로 조정하거나 로깅 등을 수행.
-        # print(f"테마 변경 감지됨 (MainWindow): {theme_name}")
-        pass
+        """테마 변경 시그널을 처리하는 슬롯"""
+        # 현재 테마를 설정에 저장 (중요!)
+        self.config.set("theme", theme_name)
+
+        # 애플리케이션 인스턴스 찾기
+        app = self.app_instance  # 생성자에서 전달받은 인스턴스 우선 사용
+        if app is None:
+            # 전달받은 인스턴스가 없으면 싱글톤 인스턴스 사용 시도
+            app = QApplication.instance()
+
+        if app is None:
+            # QApplication이 None인 경우 현재 위젯에만 적용
+            print(
+                "QApplication 인스턴스를 찾을 수 없습니다. 테마 변경이 일부만 적용될 수 있습니다."
+            )
+            style_content = self.theme_manager.get_theme_style(theme_name)
+            if style_content:
+                self.setStyleSheet(style_content)
+        else:
+            # 현재 테마를 가져와 필요한 작업 수행
+            style_content = self.theme_manager.get_theme_style(theme_name)
+            if style_content:
+                self.setStyleSheet(style_content)
+
+            # UI 업데이트 - 중요한 부분만 업데이트하여 성능 최적화
+            self.updateRecentLogs()  # 로그 목록 새로고침
+            self.updateTags()  # 태그 버튼 새로고침
+
+    def change_theme(self, theme_name):
+        """테마 변경 메서드 - 사용자가 테마를 직접 변경할 때 호출"""
+        # 먼저 설정에 테마 이름 저장
+        self.config.set("theme", theme_name)
+        self.config.save_settings()
+
+        # 테마 관리자에 애플리케이션 인스턴스 설정
+        app = self.app_instance
+        if app is None:
+            app = QApplication.instance()
+            if app is not None:
+                self.app_instance = app  # 찾은 인스턴스 저장
+
+        print(f"[DEBUG] 인스턴스 상태: app={app}, 유형={type(app) if app else 'None'}")
+
+        if app is not None:
+            # 테마 관리자에 액세스 여부 확인
+            if self.theme_manager is None:
+                print(f"[DEBUG] 경고: 테마 관리자가 None입니다!")
+                self.theme_manager = AdvancedThemeManager.get_instance(app=app)
+
+            # QApplication 인스턴스 명시적 설정
+            self.theme_manager.set_application(app)
+
+            # 테마 적용 (직접 인스턴스 전달)
+            print(f"[DEBUG] 전체 애플리케이션에 테마 적용 시도: {theme_name}")
+            result = self.theme_manager.apply_theme(target=app, theme_name=theme_name)
+            print(f"[DEBUG] 테마 적용 결과: {result}")
+        else:
+            print(f"[DEBUG] 경고: 어떤 QApplication 인스턴스도 찾을 수 없습니다!")
+            # 인스턴스 없이 적용 시도 (마지막 수단)
+            result = self.theme_manager.apply_theme(theme_name=theme_name)
+
+        # 현재 위젯에도 직접 테마 적용 (즉시 표시를 위해)
+        style_content = self.theme_manager.get_theme_style(theme_name)
+        if style_content:
+            self.setStyleSheet(style_content)
 
     # --- 새로운 핸들러 및 슬롯 메서드 ---
     @pyqtSlot()

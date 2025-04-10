@@ -1,5 +1,5 @@
 """
-PaceKeeper Qt - 고급 테마 관리자
+PaceKeeper Qt - 고급 테마 관리자 (개선된 버전)
 Qt 스타일 시트(QSS)를 사용한 테마 관리 및 동적 스타일 적용
 """
 
@@ -7,22 +7,50 @@ import json
 import os
 
 from PyQt6.QtCore import QFile, QObject, QTextStream, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QWidget
 
 
 class AdvancedThemeManager(QObject):
-    """고급 테마 관리 및 적용 클래스"""
+    """고급 테마 관리 및 적용 클래스 (위젯 자동 등록 및 효율적 관리 기능 추가)"""
+
+    # 싱글톤 인스턴스
+    _instance = None
+    _app = None  # QApplication 인스턴스 저장
 
     # 사용자 정의 시그널
     themeChanged = pyqtSignal(str)
 
-    def __init__(self, theme_dir=None):
+    @classmethod
+    def get_instance(cls, theme_dir=None, app=None):
+        """싱글톤 패턴으로 테마 관리자의 단일 인스턴스 반환
+
+        Args:
+            theme_dir: 테마 디렉토리 경로 (첫 인스턴스 생성 시에만 사용)
+            app: QApplication 인스턴스
+
+        Returns:
+            AdvancedThemeManager: 단일 테마 관리자 인스턴스
+        """
+        if cls._instance is None:
+            cls._instance = cls(theme_dir, app)
+        elif app is not None and cls._app is None:
+            # 기존 인스턴스가 있지만 앱이 설정되지 않은 경우
+            cls._app = app
+        return cls._instance
+
+    def __init__(self, theme_dir=None, app=None):
         """
         고급 테마 관리자 초기화
 
         Args:
             theme_dir: 테마 디렉토리 경로 (기본값: 'themes')
+            app: QApplication 인스턴스
         """
         super().__init__()
+
+        # QApplication 인스턴스 저장
+        if app is not None:
+            AdvancedThemeManager._app = app
 
         if theme_dir:
             self.themes_dir = theme_dir
@@ -34,10 +62,13 @@ class AdvancedThemeManager(QObject):
 
         self.current_theme = "default"
         self.theme_cache = {}  # 테마 캐싱
-        self.managed_widgets = [] # 관리할 위젯 리스트
+        self.managed_widgets = set()  # 관리할 위젯 세트 (리스트 → 세트로 변경)
 
         # 사용 가능한 테마 목록 초기화
         self.available_themes = self._detect_themes()
+
+        # 위젯 모니터링 설정 여부
+        self._monitoring_setup = False
 
     def _detect_themes(self):
         """
@@ -47,21 +78,66 @@ class AdvancedThemeManager(QObject):
             dict: {테마 이름: 파일 경로} 형태의 딕셔너리
         """
         themes = {}
+        print(f"\n[DEBUG] 테마 감지 시작 - 테마 디렉토리: {self.themes_dir}")
 
         # 기본 테마 추가 (항상 존재해야 함)
         default_path = os.path.join(self.themes_dir, "default.qss")
         if os.path.exists(default_path):
             themes["default"] = default_path
+            print(f"[DEBUG] 기본 테마 감지: {default_path}")
+        else:
+            print(f"[DEBUG] 경고: 기본 테마 파일을 찾을 수 없습니다: {default_path}")
 
         # 테마 디렉토리에서 모든 .qss 파일 검색
         if os.path.exists(self.themes_dir):
+            print(f"[DEBUG] 테마 디렉토리 확인: {self.themes_dir}")
             for file in os.listdir(self.themes_dir):
                 if file.endswith(".qss") and file != "default.qss":
                     name = os.path.splitext(file)[0]
                     path = os.path.join(self.themes_dir, file)
                     themes[name] = path
+                    print(f"[DEBUG] 테마 감지: {name} => {path}")
+        else:
+            print(f"[DEBUG] 경고: 테마 디렉토리가 존재하지 않습니다: {self.themes_dir}")
 
+        print(f"[DEBUG] 총 {len(themes)} 개의 테마 감지\n")
         return themes
+
+    def setup_widget_monitoring(self, app):
+        """
+        애플리케이션 내 모든 위젯을 자동으로 모니터링하고 등록
+
+        Args:
+            app: QApplication 인스턴스
+        """
+        # 중복 설정 방지
+        if self._monitoring_setup:
+            return
+
+        # 원래 QWidget 초기화 메서드 저장
+        original_init = QWidget.__init__
+        theme_manager = self  # 클로저에서 self 참조
+
+        # QWidget 초기화 메서드 재정의
+        def custom_init(self, *args, **kwargs):
+            # 원래 초기화 메서드 호출
+            original_init(self, *args, **kwargs)
+
+            # 위젯이 Dialog, Window 또는 주요 UI 컴포넌트인 경우만 등록
+            if self.__class__.__name__.endswith(
+                ("Dialog", "Window", "Widget")
+            ) and not self.objectName().startswith("qt_"):
+                theme_manager.register_widget(self)
+
+        # QWidget 초기화 메서드 교체
+        QWidget.__init__ = custom_init
+
+        # 애플리케이션 종료 시 원래 메서드 복원
+        def restore_widget_init():
+            QWidget.__init__ = original_init
+
+        app.aboutToQuit.connect(restore_widget_init)
+        self._monitoring_setup = True
 
     def get_available_themes(self):
         """
@@ -91,8 +167,11 @@ class AdvancedThemeManager(QObject):
         Returns:
             str: 테마 스타일시트 내용
         """
+        print(f"[DEBUG] 테마 파일 로드 시도: {theme_path}")
+
         # 캐시 확인
         if theme_path in self.theme_cache:
+            print(f"[DEBUG] 캐시에서 테마 로드: {theme_path}")
             return self.theme_cache[theme_path]
 
         # 파일에서 로드
@@ -101,97 +180,201 @@ class AdvancedThemeManager(QObject):
                 content = f.read()
                 # 캐시에 저장
                 self.theme_cache[theme_path] = content
+                print(
+                    f"[DEBUG] 테마 로드 성공: {theme_path}\n테마 내용 길이: {len(content)} 바이트"
+                )
                 return content
         except Exception as e:
-            print(f"테마 로드 실패: {e}")
+            print(f"[DEBUG] 테마 로드 실패: {e}")
             return ""
 
     def register_widget(self, widget):
         """
         테마 변경 시 자동으로 업데이트할 위젯 등록
-        
+
         Args:
             widget: 등록할 위젯 인스턴스
         """
-        if widget not in self.managed_widgets:
-            self.managed_widgets.append(widget)
+        # 세트에 추가 (중복 자동 처리)
+        self.managed_widgets.add(widget)
+
+        # 위젯 삭제 이벤트 연결
+        try:
+            widget.destroyed.connect(
+                lambda obj=None, w=widget: self.unregister_widget(w)
+            )
+        except (RuntimeError, TypeError):
+            # 이미 위젯이 소멸 중이거나 시그널 연결 불가 시
+            pass
 
     def unregister_widget(self, widget):
         """
         등록된 위젯 제거
-        
+
         Args:
             widget: 제거할 위젯 인스턴스
         """
-        try:
-            # 리스트에서 제거 시도
-            self.managed_widgets.remove(widget)
-        except ValueError:
-            # 위젯이 리스트에 없는 경우 무시
-            pass 
-        except Exception as e:
-            print(f"위젯 등록 해제 중 오류 발생: {e}")
+        # 세트에서 제거 (존재하지 않는 요소 제거 시 오류 없음)
+        self.managed_widgets.discard(widget)
 
     def update_all_widgets(self):
         """등록된 모든 위젯에 현재 테마 적용"""
         style_content = self.get_theme_style(self.current_theme)
-        if style_content:
-            # 반복 중 리스트 변경을 허용하기 위해 리스트 복사본 사용
-            for widget in list(self.managed_widgets):
-                try:
-                    # 위젯 유효성 검사 (RuntimeError 처리)
-                    if widget:
-                        widget.setStyleSheet(style_content)
-                except RuntimeError as e:
-                    # C++ 객체가 삭제된 경우
-                    print(f"위젯 업데이트 중 오류 발생 (런타임 오류 - 위젯 삭제됨?): {widget} - {e}")
-                    # 오류 발생 시 관리 목록에서 제거
-                    self.unregister_widget(widget) 
-                except Exception as e:
-                    print(f"위젯 업데이트 중 알 수 없는 오류 발생: {widget} - {e}")
+        if not style_content:
+            print(f"[DEBUG] 테마 스타일을 가져올 수 없음, 위젯 업데이트 건너뜀")
+            return
 
-    def apply_theme(self, target, theme_name="default"):
+        # 유효한 위젯만 저장할 임시 세트
+        valid_widgets = set()
+
+        print(f"[DEBUG] 관리 중인 위젯 수: {len(self.managed_widgets)}")
+        processed = 0
+        updated = 0
+        errors = 0
+
+        for widget in self.managed_widgets:
+            processed += 1
+            try:
+                # 위젯 유효성 검사 - QDialog 상속 클래스에 대한 특별 처리 추가
+                from PyQt6.QtWidgets import QDialog
+
+                # QDialog가 이미 닫힌 경우 확인
+                if isinstance(widget, QDialog) and not widget.isVisible():
+                    print(f"[DEBUG] QDialog 위젯이 더 이상 표시되지 않음, 건너뜀")
+                    continue
+
+                # 일반 위젯 유효성 검사
+                if (
+                    widget
+                    and hasattr(widget, "isDestroyed")
+                    and not widget.isDestroyed()
+                ):
+                    print(f"[DEBUG] 위젯에 테마 적용: {type(widget).__name__}")
+                    widget.setStyleSheet(style_content)
+                    updated += 1
+                    valid_widgets.add(widget)
+                else:
+                    print(f"[DEBUG] 위젯 {processed}가 유효하지 않음 또는 삭제됨")
+            except RuntimeError as e:
+                errors += 1
+                # C++ 객체가 삭제된 경우
+                print(f"[DEBUG] 위젯 {processed}가 이미 삭제됨 (RuntimeError): {e}")
+            except Exception as e:
+                errors += 1
+                print(f"[DEBUG] 위젯 업데이트 중 오류 발생: {e}")
+
+        # 관리 위젯 세트 업데이트 (유효한 위젯만 유지)
+        self.managed_widgets = valid_widgets
+        print(
+            f"[DEBUG] 위젯 업데이트 완료: 처리={processed}, 성공={updated}, 오류={errors}"
+        )
+
+    def set_application(self, app):
+        """QApplication 인스턴스 설정
+
+        Args:
+            app: QApplication 인스턴스
+        """
+        AdvancedThemeManager._app = app
+        print(f"[DEBUG] QApplication 인스턴스 설정 완료")
+
+    def apply_theme(self, target=None, theme_name="default"):
         """
         애플리케이션 또는 특정 위젯에 테마 적용
-        
+
         Args:
-            target: QApplication 인스턴스 또는 테마를 적용할 QWidget
+            target: QApplication 인스턴스 또는 테마를 적용할 QWidget (기본값: None이면 저장된 앱 인스턴스 사용)
             theme_name: 적용할 테마 이름
-            
+
         Returns:
             bool: 성공 여부
         """
+        # target이 None이면 저장된 앱 인스턴스 사용
+        if target is None:
+            target = AdvancedThemeManager._app
+            print(
+                f"\n[DEBUG] apply_theme 시작: 저장된 앱 인스턴스 사용, theme_name={theme_name}"
+            )
+        else:
+            print(
+                f"\n[DEBUG] apply_theme 시작: target={type(target)}, theme_name={theme_name}"
+            )
+
+        # 타겟이 여전히 None인지 확인
+        if target is None:
+            print(
+                f"[DEBUG] 경고: 대상이 None입니다. 저장된 앱 인스턴스도 없습니다. 테마 변경을 무시합니다."
+            )
+            return False
+
         # 테마 존재 확인
         if theme_name not in self.available_themes:
-            print(f"경고: 테마 '{theme_name}'을(를) 찾을 수 없습니다.")
+            print(f"[DEBUG] 경고: 테마 '{theme_name}'을(를) 찾을 수 없습니다.")
             return False
 
         theme_path = self.available_themes[theme_name]
         style_content = self._load_theme_file(theme_path)
-        
+
         if not style_content:
+            print(f"[DEBUG] 테마 내용이 비어있습니다. 테마 적용 실패.")
             return False
 
         previous_theme = self.current_theme
-        
-        from PyQt6.QtWidgets import QApplication, QWidget # 여기서 임포트
-        if isinstance(target, QApplication):
-            # 애플리케이션 전체에 적용
-            target.setStyleSheet(style_content)
-            self.current_theme = theme_name # 전체 테마 변경 시에만 업데이트
-            self.update_all_widgets() # 등록된 모든 위젯 업데이트
-            
-            # 실제 테마가 변경되었을 때만 시그널 발생
-            if previous_theme != theme_name:
-                self.themeChanged.emit(theme_name)
-        elif isinstance(target, QWidget):
-            # 특정 위젯(예: 대화상자 미리보기)에만 적용
-            target.setStyleSheet(style_content)
-        else:
-             print(f"경고: 지원되지 않는 대상 타입입니다: {type(target)}")
-             return False
 
-        return True
+        try:
+            if isinstance(target, QApplication):
+                # 애플리케이션 전체에 적용
+                print(f"[DEBUG] 전체 애플리케이션에 테마 적용 시도: {theme_name}")
+                target.setStyleSheet(style_content)
+                print(f"[DEBUG] 스타일시트 적용 완료: 길이={len(style_content)}")
+                self.current_theme = theme_name  # 전체 테마 변경 시에만 업데이트
+
+                # 테마가 변경되었을 때만 시그널 발생 (중요 - 순서를 변경해서 먼저 시그널을 보냄)
+                if previous_theme != theme_name:
+                    print(
+                        f"[DEBUG] 테마 변경 시그널 발생: {previous_theme} -> {theme_name}"
+                    )
+                    self.themeChanged.emit(theme_name)
+
+                # 등록된 모든 위젯 업데이트 (시그널 발생 후 실행)
+                print(
+                    f"[DEBUG] 등록된 모든 위젯 업데이트 시도, 위젯 수: {len(self.managed_widgets)}"
+                )
+                self.update_all_widgets()
+
+                # 추가: 현재 열려있는 모든 대화상자에 대한 특별 처리
+                print(f"[DEBUG] 현재 열려있는 대화상자 찾기 시도")
+                try:
+                    from PyQt6.QtWidgets import QDialog
+
+                    for widget in target.allWidgets():
+                        if (
+                            isinstance(widget, QDialog)
+                            and widget.isVisible()
+                            and widget not in self.managed_widgets
+                        ):
+                            print(
+                                f"[DEBUG] 관리되지 않는 대화상자 발견: {type(widget).__name__}"
+                            )
+                            # 대화상자에 스타일 직접 적용
+                            widget.setStyleSheet(style_content)
+                except Exception as e:
+                    print(f"[DEBUG] 대화상자 처리 중 오류: {e}")
+
+            elif isinstance(target, QWidget):
+                # 특정 위젯에만 적용
+                print(f"[DEBUG] 특정 위젯에 테마 적용: {type(target).__name__}")
+                target.setStyleSheet(style_content)
+            else:
+                print(f"[DEBUG] 경고: 지원되지 않는 대상 타입입니다: {type(target)}")
+                return False
+
+            print(f"[DEBUG] 테마 적용 성공: {theme_name}\n")
+            return True
+
+        except Exception as e:
+            print(f"[DEBUG] 테마 적용 중 오류 발생: {e}")
+            return False
 
     def get_theme_style(self, theme_name="default"):
         """

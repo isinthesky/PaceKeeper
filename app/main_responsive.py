@@ -16,6 +16,7 @@ from app.config.app_config import AppConfig
 from app.views.main_window import MainWindow
 from app.views.styles.advanced_theme_manager import AdvancedThemeManager
 from app.views.styles.responsive_style_manager import ResponsiveStyleManager
+from app.views.styles.widget_helpers import setup_widget_helpers
 
 
 def main():
@@ -33,8 +34,17 @@ def main():
     # 설정 로드
     config = AppConfig()
 
-    # 테마 관리자 생성 및 테마 적용
-    theme_manager = AdvancedThemeManager()
+    # 위젯 헬퍼 설정
+    setup_widget_helpers()
+
+    # 테마 관리자의 단일 인스턴스 가져오기 (QApplication 전달)
+    theme_manager = AdvancedThemeManager.get_instance(app=app)
+
+    # 명시적으로 QApplication 인스턴스 설정
+    theme_manager.set_application(app)
+
+    # 위젯 자동 모니터링 설정
+    theme_manager.setup_widget_monitoring(app)
 
     # 고급 또는 일반 테마 적용 (설정에 따라)
     if config.get("use_advanced_theme", False):
@@ -48,7 +58,7 @@ def main():
     responsive_style_manager = ResponsiveStyleManager()
 
     # 메인 윈도우 생성 (반응형)
-    window = MainWindow(config, theme_manager)
+    window = MainWindow(config, theme_manager, app_instance=app)
 
     # 초기 반응형 스타일 적용
     initial_width = window.width()
