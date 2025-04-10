@@ -5,7 +5,7 @@ PaceKeeper Qt - 메인 윈도우 액션
 
 from PyQt6.QtWidgets import QMessageBox
 
-from app.utils.constants import SessionType, TimerState
+from app.utils.constants import SessionType
 from app.views.dialogs.break_dialog import BreakDialog
 from app.views.dialogs.category_dialog import CategoryDialog
 from app.views.dialogs.log_dialog import LogDialog

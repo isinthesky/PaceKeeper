@@ -21,13 +21,13 @@ class TagButtonsWidget(QWidget):
     def setupUI(self):
         """UI 초기화"""
         # 메인 레이아웃
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.mainLayout = QVBoxLayout(self)
+        self.mainLayout.setContentsMargins(10, 10, 10, 10)
 
         # 헤더 레이블
         self.headerLabel = QLabel("Tags")
         self.headerLabel.setObjectName("sectionHeader")
-        self.layout.addWidget(self.headerLabel)
+        self.mainLayout.addWidget(self.headerLabel)
 
         # 스크롤 영역
         self.scrollArea = QScrollArea()
@@ -49,7 +49,7 @@ class TagButtonsWidget(QWidget):
         self.scrollLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.scrollArea.setWidget(self.scrollContent)
-        self.layout.addWidget(self.scrollArea)
+        self.mainLayout.addWidget(self.scrollArea)
 
     def addTag(self, tagName, color=None):
         """태그 버튼 추가"""
@@ -72,5 +72,28 @@ class TagButtonsWidget(QWidget):
         """모든 태그 버튼 삭제"""
         while self.scrollLayout.count():
             item = self.scrollLayout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+
+            try:
+                if item:    
+                    widget = item.widget()
+                    if widget:
+                        widget.deleteLater()
+            except Exception as e:
+                print(f"[DEBUG] 태그 버튼 삭제 중 오류 발생: {e}")
+
+    def update_tags(self, tags):
+        """태그 버튼 일괄 업데이트
+
+        Args:
+            tags: TagEntity 목록
+        """
+        # 기존 버튼 삭제
+        self.clear()
+
+        # 새 태그 추가
+        for tag in tags:
+            # TagEntity에서 필요한 정보 추출
+            tag_name = tag.name if hasattr(tag, "name") else str(tag)
+            # 색상이 있으면 적용
+            color = tag.color if hasattr(tag, "color") else None
+            self.addTag(tag_name, color)

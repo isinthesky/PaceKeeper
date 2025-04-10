@@ -21,4 +21,4 @@ def setup_widget_helpers():
 
     # QWidget 클래스에 메서드 추가
     if not hasattr(QWidget, "isDestroyed"):
-        QWidget.isDestroyed = is_destroyed
+        setattr(QWidget, "isDestroyed", is_destroyed)

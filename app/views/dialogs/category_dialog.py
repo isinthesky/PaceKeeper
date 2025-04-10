@@ -13,24 +13,38 @@ from PyQt6.QtWidgets import (QApplication, QColorDialog, QDialog, QFormLayout,
 from app.domain.category.category_entity import CategoryEntity
 from app.domain.category.category_service import CategoryService
 from app.views.styles.advanced_theme_manager import AdvancedThemeManager
-from app.views.styles.update_dialogs import set_object_names, apply_theme_change
+from app.views.styles.update_dialogs import (apply_theme_change,
+                                             set_object_names)
 
 
 class CategoryDialog(QDialog):
     """카테고리 관리 대화상자 클래스 - 개선된 UI"""
 
-    def __init__(self, parent=None, category_service=None, theme_manager=None):
+    def __init__(self, parent=None, controller_or_service=None, theme_manager=None):
         """
         카테고리 대화상자 초기화
 
         Args:
             parent: 부모 위젯
-            category_service: 카테고리 서비스 인스턴스
+            controller_or_service: 메인 컨트롤러 또는 카테고리 서비스 인스턴스
             theme_manager: 테마 관리자 인스턴스
         """
         super().__init__(parent)
 
-        self.category_service = category_service or CategoryService()
+        # 객체 이름 설정 - Qt 스타일시트 선택자용
+        self.setObjectName("CategoryDialog")
+
+        # 컨트롤러 또는 서비스 구분
+        from app.controllers.main_controller import MainController
+
+        if isinstance(controller_or_service, MainController):
+            self.controller = controller_or_service
+            self.category_service = self.controller.category_service
+        else:
+            # 이전 방식 지원 (후박성)
+            self.controller = None
+            self.category_service = controller_or_service or CategoryService()
+
         # 단일 테마 관리자 인스턴스 사용
         self.theme_manager = theme_manager or AdvancedThemeManager.get_instance()
         self.current_category = None
@@ -42,9 +56,21 @@ class CategoryDialog(QDialog):
 
         # UI 초기화
         self.setupUI()
-        
+
         # 다이얼로그의 모든 객체에 이름 설정
         set_object_names(self)
+
+        # 초기 테마 적용
+        if self.theme_manager:
+            style_content = self.theme_manager.get_theme_style(
+                self.theme_manager.get_current_theme()
+            )
+            if style_content:
+                print(f"[DEBUG] 초기 테마 적용: {len(style_content)} 바이트")
+                self.setStyleSheet(style_content)
+
+                # 초기 테마 적용 후 갱신
+                self.update()
 
         # 카테고리 목록 로드
         self.loadCategories()
@@ -65,54 +91,20 @@ class CategoryDialog(QDialog):
 
         # 왼쪽 패널 (카테고리 목록) - 카드 스타일 적용
         self.leftPanel = QWidget()
-        self.leftPanel.setStyleSheet(
-            """
-            QWidget {
-                background-color: palette(base);
-                border-radius: 6px;
-                border: 1px solid palette(mid);
-            }
-        """
-        )
+        self.leftPanel.setObjectName("leftPanel")
         self.leftLayout = QVBoxLayout(self.leftPanel)
         self.leftLayout.setContentsMargins(15, 15, 15, 15)
         self.leftLayout.setSpacing(10)
 
         # 카테고리 목록 헤더 - 더 강조된 스타일
         self.listLabel = QLabel("카테고리 목록")
-        self.listLabel.setStyleSheet(
-            """
-            QLabel {
-                font-size: 14px;
-                font-weight: bold;
-                color: palette(text);
-            }
-        """
-        )
+        self.listLabel.setObjectName("listLabel")
         self.leftLayout.addWidget(self.listLabel)
 
         # 카테고리 목록 위젯 - 개선된 스타일
         self.categoryList = QListWidget()
+        self.categoryList.setObjectName("categoryList")
         self.categoryList.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
-        self.categoryList.setStyleSheet(
-            """
-            QListWidget {
-                background-color: palette(base);
-                border-radius: 4px;
-                border: 1px solid palette(mid);
-                padding: 5px;
-            }
-            QListWidget::item {
-                border-radius: 4px;
-                padding: 8px;
-                margin: 2px 0;
-            }
-            QListWidget::item:selected {
-                background-color: palette(highlight);
-                color: palette(highlighted-text);
-            }
-        """
-        )
         self.leftLayout.addWidget(self.categoryList)
 
         # 버튼 레이아웃 - 현대적인 버튼
@@ -121,10 +113,12 @@ class CategoryDialog(QDialog):
 
         # 추가, 삭제 버튼
         self.addButton = QPushButton("추가")
+        self.addButton.setObjectName("addButton")
         self.addButton.setMinimumWidth(80)
         self.addButton.setMinimumHeight(32)
 
         self.removeButton = QPushButton("삭제")
+        self.removeButton.setObjectName("removeButton")
         self.removeButton.setMinimumWidth(80)
         self.removeButton.setMinimumHeight(32)
 
@@ -134,30 +128,14 @@ class CategoryDialog(QDialog):
 
         # 오른쪽 패널 (카테고리 편집) - 카드 스타일 적용
         self.rightPanel = QWidget()
-        self.rightPanel.setStyleSheet(
-            """
-            QWidget {
-                background-color: palette(base);
-                border-radius: 6px;
-                border: 1px solid palette(mid);
-            }
-        """
-        )
+        self.rightPanel.setObjectName("rightPanel")
         self.rightLayout = QVBoxLayout(self.rightPanel)
         self.rightLayout.setContentsMargins(20, 15, 20, 15)
         self.rightLayout.setSpacing(15)
 
         # 카테고리 편집 헤더
         self.editLabel = QLabel("카테고리 편집")
-        self.editLabel.setStyleSheet(
-            """
-            QLabel {
-                font-size: 14px;
-                font-weight: bold;
-                color: palette(text);
-            }
-        """
-        )
+        self.editLabel.setObjectName("editLabel")
         self.rightLayout.addWidget(self.editLabel)
 
         # 카테고리 편집 폼 - 개선된 레이아웃
@@ -172,28 +150,14 @@ class CategoryDialog(QDialog):
 
         # 이름 입력 - 개선된 입력 필드
         self.nameInput = QLineEdit()
+        self.nameInput.setObjectName("nameInput")
         self.nameInput.setMinimumHeight(32)
-        self.nameInput.setStyleSheet(
-            """
-            QLineEdit {
-                border-radius: 4px;
-                padding: 4px 8px;
-            }
-        """
-        )
         self.editForm.addRow("이름:", self.nameInput)
 
         # 설명 입력
         self.descriptionInput = QLineEdit()
+        self.descriptionInput.setObjectName("descriptionInput")
         self.descriptionInput.setMinimumHeight(32)
-        self.descriptionInput.setStyleSheet(
-            """
-            QLineEdit {
-                border-radius: 4px;
-                padding: 4px 8px;
-            }
-        """
-        )
         self.editForm.addRow("설명:", self.descriptionInput)
 
         # 색상 선택 - 개선된 UI
@@ -201,18 +165,12 @@ class CategoryDialog(QDialog):
         self.colorLayout.setSpacing(10)
 
         self.colorPreview = QFrame()
+        self.colorPreview.setObjectName("colorPreview")
         self.colorPreview.setFixedSize(40, 32)
         self.colorPreview.setFrameShape(QFrame.Shape.Box)
-        self.colorPreview.setStyleSheet(
-            """
-            QFrame {
-                border-radius: 4px;
-                border: 1px solid palette(mid);
-            }
-        """
-        )
 
         self.colorButton = QPushButton("색상 선택")
+        self.colorButton.setObjectName("colorButton")
         self.colorButton.setMinimumHeight(32)
 
         self.colorLayout.addWidget(self.colorPreview)
@@ -229,10 +187,12 @@ class CategoryDialog(QDialog):
         self.actionLayout.addStretch(1)
 
         self.cancelButton = QPushButton("취소")
+        self.cancelButton.setObjectName("cancelButton")
         self.cancelButton.setMinimumWidth(100)
         self.cancelButton.setMinimumHeight(36)
 
         self.saveButton = QPushButton("저장")
+        self.saveButton.setObjectName("saveButton")
         self.saveButton.setMinimumWidth(100)
         self.saveButton.setMinimumHeight(36)
         self.saveButton.setDefault(True)
@@ -268,19 +228,25 @@ class CategoryDialog(QDialog):
         # 목록 초기화
         self.categoryList.clear()
 
-        # 카테고리 조회
-        categories = self.category_service.get_all_categories()
+        try:
+            # 카테고리 조회
+            categories = self.category_service.get_all_categories()
 
-        # 목록에 추가
-        for category in categories:
-            item = QListWidgetItem(category.name)
-            item.setData(Qt.ItemDataRole.UserRole, category)
+            # 목록에 추가
+            for category in categories:
+                item = QListWidgetItem(category.name)
+                item.setData(Qt.ItemDataRole.UserRole, category)
 
-            # 색상 적용
-            color = QColor(category.color)
-            item.setForeground(QBrush(color))
+                # 색상 적용
+                color = QColor(category.color)
+                item.setForeground(QBrush(color))
 
-            self.categoryList.addItem(item)
+                self.categoryList.addItem(item)
+        except Exception as e:
+            print(f"[DEBUG] 카테고리 로드 실패: {e}")
+            QMessageBox.warning(
+                self, "오류", "카테고리 목록을 불러오는 중 오류가 발생했습니다."
+            )
 
     def enableEditForm(self, enabled):
         """
@@ -383,14 +349,20 @@ class CategoryDialog(QDialog):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            # 카테고리 삭제
-            self.category_service.delete_category(category.id)
+            try:
+                # 카테고리 삭제
+                self.category_service.delete_category(category.id)
 
-            # 목록 다시 로드
-            self.loadCategories()
+                # 목록 다시 로드
+                self.loadCategories()
 
-            # 폼 비활성화
-            self.enableEditForm(False)
+                # 폼 비활성화
+                self.enableEditForm(False)
+            except Exception as e:
+                print(f"[DEBUG] 카테고리 삭제 실패: {e}")
+                QMessageBox.warning(
+                    self, "오류", "카테고리를 삭제하는 중 오류가 발생했습니다."
+                )
 
     @pyqtSlot()
     def onSelectColor(self):
@@ -431,27 +403,33 @@ class CategoryDialog(QDialog):
             parts = color_style.split("background-color:")[1].strip()
             color = parts.split(";")[0].strip()
 
-        # 카테고리 업데이트
-        if self.current_category:
-            self.current_category.name = name
-            self.current_category.description = self.descriptionInput.text().strip()
-            self.current_category.color = color
+        try:
+            # 카테고리 업데이트
+            if self.current_category:
+                self.current_category.name = name
+                self.current_category.description = self.descriptionInput.text().strip()
+                self.current_category.color = color
 
-            # 새 카테고리인 경우 생성, 기존 카테고리인 경우 업데이트
-            if self.isNewCategory():
-                self.category_service.create_category(
-                    name=self.current_category.name,
-                    description=self.current_category.description,
-                    color=self.current_category.color,
-                )
-            else:
-                self.category_service.update_category(self.current_category)
+                # 새 카테고리인 경우 생성, 기존 카테고리인 경우 업데이트
+                if self.isNewCategory():
+                    self.category_service.create_category(
+                        name=self.current_category.name,
+                        description=self.current_category.description,
+                        color=self.current_category.color,
+                    )
+                else:
+                    self.category_service.update_category(self.current_category)
 
-            # 목록 다시 로드
-            self.loadCategories()
+                # 목록 다시 로드
+                self.loadCategories()
 
-            # 폼 비활성화
-            self.enableEditForm(False)
+                # 폼 비활성화
+                self.enableEditForm(False)
+        except Exception as e:
+            print(f"[DEBUG] 카테고리 저장 실패: {e}")
+            QMessageBox.warning(
+                self, "오류", "카테고리를 저장하는 중 오류가 발생했습니다."
+            )
 
     @pyqtSlot()
     def onCancelEdit(self):
@@ -470,13 +448,34 @@ class CategoryDialog(QDialog):
         Args:
             theme_name: 변경된 테마 이름
         """
-        # 공통 테마 변경 함수 호출
-        apply_theme_change(self, theme_name, self.theme_manager)
+        print(f"[DEBUG] 테마 변경 시그널 수신: {theme_name}")
+
+        # 테마 스타일 직접 적용
+        if self.theme_manager:
+            style_content = self.theme_manager.get_theme_style(theme_name)
+            if style_content:
+                print(f"[DEBUG] 테마 스타일 적용: {len(style_content)} 바이트")
+                self.setStyleSheet(style_content)
+
+                # 자식 위젯의 개별 스타일시트 제거
+                for widget in self.findChildren(QWidget):
+                    widget.setStyleSheet("")
+
+                # 테마 적용 후 갱신
+                self.update()
 
     def closeEvent(self, event):
         """창 닫기 이벤트 처리"""
-        if self.theme_manager:
+        if (
+            hasattr(self, "theme_manager")
+            and self.theme_manager is not None
+            and hasattr(self, "on_theme_changed")
+        ):
             # 테마 변경 시그널 연결 해제
-            self.theme_manager.themeChanged.disconnect(self.on_theme_changed)
-            self.theme_manager.unregister_widget(self)
+            try:
+                self.theme_manager.themeChanged.disconnect(self.on_theme_changed)
+                self.theme_manager.unregister_widget(self)
+            except (RuntimeError, TypeError):
+                # disconnect 오류 무시(이미 연결 해제됐거나 유효하지 않은 경우)
+                pass
         super().closeEvent(event)

@@ -10,6 +10,7 @@ import threading
 import time
 
 from PyQt6.QtCore import QLocale
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from app.config.app_config import AppConfig
@@ -19,6 +20,74 @@ from app.views.styles.responsive_style_manager import ResponsiveStyleManager
 from app.views.styles.widget_helpers import setup_widget_helpers
 
 
+def resource_path(relative_path):
+    """
+    절대 경로 변환 유틸리티 함수
+    frozen 여부에 따라 적절한 경로 반환
+    """
+    try:
+        # PyInstaller로 빌드된 경우
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # 일반 실행인 경우
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
+def find_app_icon():
+    """
+    애플리케이션 아이콘 파일 찾기
+    여러 가능한 위치에서 검색
+    """
+    # 가능한 아이콘 경로들
+    possible_paths = [
+        resource_path(os.path.join("app", "assets", "icons", "pacekeeper.ico")),
+        resource_path(os.path.join("app", "assets", "icons", "pacekeeper.png")),
+        resource_path(os.path.join("app", "assets", "icons", "pacekeeper.icns")),
+        resource_path(os.path.join("assets", "icons", "pacekeeper.ico")),
+        resource_path(os.path.join("assets", "icons", "pacekeeper.png")),
+        resource_path(os.path.join("assets", "icons", "pacekeeper.icns")),
+        resource_path(os.path.join("app", "assets", "icons", "app_icon.ico")),
+        resource_path(os.path.join("app", "assets", "icons", "app_icon.png")),
+        resource_path(os.path.join("app", "assets", "icons", "app_icon.icns")),
+        resource_path(os.path.join("assets", "icons", "app_icon.ico")),
+        resource_path(os.path.join("assets", "icons", "app_icon.png")),
+        resource_path(os.path.join("assets", "icons", "app_icon.icns")),
+    ]
+    
+    # 존재하는 첫 번째 아이콘 파일 반환
+    for path in possible_paths:
+        if os.path.exists(path):
+            print(f"[DEBUG] 앱 아이콘 파일 발견: {path}")
+            return path
+    
+    print("[DEBUG] 경고: 앱 아이콘 파일을 찾을 수 없습니다.")
+    return None
+
+
+def find_available_themes():
+    """사용 가능한 테마 파일들 찾기"""
+    themes_found = []
+    
+    # 가능한 테마 디렉토리 경로들
+    theme_dirs = [
+        resource_path(os.path.join("app", "views", "styles", "themes")),
+        resource_path(os.path.join("views", "styles", "themes")),
+        resource_path(os.path.join("styles", "themes")),
+        resource_path("themes"),
+    ]
+    
+    for dir_path in theme_dirs:
+        if os.path.exists(dir_path) and os.path.isdir(dir_path):
+            print(f"[DEBUG] 테마 디렉토리 발견: {dir_path}")
+            for file in os.listdir(dir_path):
+                if file.endswith(".qss"):
+                    themes_found.append(os.path.splitext(file)[0])
+                    print(f"[DEBUG] 테마 발견: {os.path.splitext(file)[0]}")
+    
+    return themes_found
+
+
 def main():
     """애플리케이션 진입점"""
     # QApplication 인스턴스 생성
@@ -26,6 +95,16 @@ def main():
     app.setApplicationName("PaceKeeper")
     app.setOrganizationName("PaceKeeper Team")
     app.setOrganizationDomain("pacekeeper.com")
+    
+    # 앱 아이콘 설정
+    icon_path = find_app_icon()
+    if icon_path:
+        app_icon = QIcon(icon_path)
+        app.setWindowIcon(app_icon)
+    
+    # 사용 가능한 테마 확인
+    available_themes = find_available_themes()
+    print(f"[DEBUG] 사용 가능한 테마: {available_themes}")
 
     # 언어 설정
     locale = QLocale.system()
@@ -51,7 +130,13 @@ def main():
         theme = "advanced"
     else:
         theme = config.get("theme", "default")
+    
+    # 요청된 테마가 사용 가능한지 확인하고 없으면 기본 테마로 대체
+    if theme not in available_themes and theme != "default" and "default" in available_themes:
+        print(f"[DEBUG] 테마 '{theme}'이(가) 사용 불가능하여 'default'로 대체됩니다.")
+        theme = "default"
 
+    # 테마 적용
     theme_manager.apply_theme(app, theme)
 
     # 반응형 스타일 관리자 생성
@@ -59,6 +144,10 @@ def main():
 
     # 메인 윈도우 생성 (반응형)
     window = MainWindow(config, theme_manager, app_instance=app)
+    
+    # 애플리케이션 아이콘을 메인 윈도우에 설정
+    if icon_path:
+        window.setWindowIcon(app_icon)
 
     # 초기 반응형 스타일 적용
     initial_width = window.width()
@@ -114,7 +203,7 @@ def main():
                 except:
                     pass
 
-            # 8초 후 강제 종료 타이머 설정
+            # 3초 후 강제 종료 타이머 설정
             timer = threading.Timer(3.0, force_exit)
             timer.daemon = True  # 데몬 스레드로 설정
             timer.start()

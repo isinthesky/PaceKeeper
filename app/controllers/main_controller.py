@@ -238,6 +238,20 @@ class MainController(QObject):
         """
         return self.tag_service.get_all_tags()
 
+    def get_recent_tags(self, limit: int = 8) -> List[TagEntity]:
+        """
+        최근 사용된 태그 조회
+
+        Args:
+            limit: 반환할 최대 태그 수
+
+        Returns:
+            태그 객체 목록
+        """
+        # 태그 서비스에서 최근 태그를 가져올 수 있는 메서드가 있다면 그것을 호출
+        # 여기서는 현재 모든 태그를 리턴
+        return self.tag_service.get_all_tags()[:limit]
+
     def get_all_categories(self) -> List[CategoryEntity]:
         """
         모든 카테고리 조회

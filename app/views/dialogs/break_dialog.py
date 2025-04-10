@@ -199,7 +199,11 @@ class BreakDialog(QDialog):
             self.auto_start_timer.stop()
 
         # 테마 관리자 정리
-        if hasattr(self, "theme_manager") and self.theme_manager is not None:
+        if (
+            hasattr(self, "theme_manager")
+            and self.theme_manager is not None
+            and hasattr(self, "on_theme_changed")
+        ):
             try:
                 # 테마 변경 시그널 연결 해제
                 self.theme_manager.themeChanged.disconnect(self.on_theme_changed)

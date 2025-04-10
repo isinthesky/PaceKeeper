@@ -4,9 +4,7 @@ PaceKeeper Qt - 태그 서비스
 """
 
 from typing import List, Optional
-
 from PyQt6.QtCore import QObject, pyqtSignal
-
 from app.domain.tag.tag_entity import TagEntity
 from app.domain.tag.tag_repository import TagRepository
 

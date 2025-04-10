@@ -8,10 +8,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QSplitter, QStatusBar,
 from app.config.app_config import AppConfig
 from app.controllers.main_controller import MainController
 from app.controllers.timer_controller import TimerController
-from app.domain.category.category_service import CategoryService
-from app.domain.log.log_service import LogService
-from app.domain.tag.tag_service import TagService
-from app.utils.constants import SessionType, TimerState  # TimerState 임포트
+from app.utils.constants import TimerState  # TimerState 임포트
 from app.views.log_widget import LogListWidget
 from app.views.main_window.actions import (open_category_dialog,
                                            open_log_dialog, open_settings,
@@ -241,7 +238,9 @@ class MainWindow(QMainWindow):
         from app.views.dialogs.tag_dialog import TagDialog
 
         # 서비스 대신 컨트롤러 전달 - 테마 관리자도 전달
-        tag_dialog = TagDialog(self, self.main_controller, theme_manager=self.theme_manager)
+        tag_dialog = TagDialog(
+            self, self.main_controller, theme_manager=self.theme_manager
+        )
         tag_dialog.exec()
 
         # 대화상자가 닫힌 후 태그 목록 업데이트 - 컨트롤러 시그널로 처리됨
@@ -441,6 +440,27 @@ class MainWindow(QMainWindow):
         style_content = self.theme_manager.get_theme_style(theme_name)
         if style_content:
             self.setStyleSheet(style_content)
+
+        # UI 업데이트 - 위젯 유효성 검사 추가
+        # 로그 목록 위젯 갱신
+        if hasattr(self, "logListWidget"):
+            try:
+                # 객체가 유효한지 확인
+                self.logListWidget.objectName()  # 존재하는 메서드 호출 시도
+                self.updateRecentLogs()
+            except RuntimeError:
+                # 소멸된 위젯 - 무시
+                pass
+
+        # 태그 버튼 위젯 갱신
+        if hasattr(self, "tagButtonsWidget"):
+            try:
+                # 객체가 유효한지 확인
+                self.tagButtonsWidget.objectName()
+                self.updateTags()
+            except RuntimeError:
+                # 소멸된 위젯 - 무시
+                pass
 
     # --- 새로운 핸들러 및 슬롯 메서드 ---
     @pyqtSlot()

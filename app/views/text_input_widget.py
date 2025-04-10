@@ -21,13 +21,13 @@ class TextInputWidget(QWidget):
     def setupUI(self):
         """UI 초기화"""
         # 메인 레이아웃
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.mainLayout = QVBoxLayout(self)
+        self.mainLayout.setContentsMargins(10, 10, 10, 10)
 
         # 헤더 레이블
         self.headerLabel = QLabel("Log Entry")
         self.headerLabel.setObjectName("sectionHeader")
-        self.layout.addWidget(self.headerLabel)
+        self.mainLayout.addWidget(self.headerLabel)
 
         # 입력 레이아웃
         self.inputLayout = QHBoxLayout()
@@ -41,7 +41,7 @@ class TextInputWidget(QWidget):
         self.inputLayout.addWidget(self.textInput)
 
         # 메인 레이아웃에 입력 레이아웃 추가
-        self.layout.addLayout(self.inputLayout)
+        self.mainLayout.addLayout(self.inputLayout)
 
     def onSubmitClicked(self):
         """제출 버튼 클릭 이벤트 핸들러"""

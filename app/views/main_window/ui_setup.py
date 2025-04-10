@@ -3,18 +3,66 @@ PaceKeeper Qt - 메인 윈도우 UI 설정
 UI 관련 초기화 및 설정 메서드 모음
 """
 
+import os
+import sys
+
 from icecream import ic
-from PyQt6.QtCore import QCoreApplication, Qt
-from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import (QHBoxLayout, QLabel, QMenu, QMenuBar, QPushButton,
-                             QSplitter, QStatusBar, QSystemTrayIcon, QToolBar,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import (QHBoxLayout, QLabel, QMenu, QMenuBar, QSplitter,
+                             QStatusBar, QSystemTrayIcon, QToolBar, QVBoxLayout,
+                             QWidget)
 
 from app.utils.constants import SessionType, TimerState
 from app.views.log_widget import LogListWidget
 from app.views.tag_widget import TagButtonsWidget
 from app.views.text_input_widget import TextInputWidget
 from app.views.timer_widget_responsive import TimerWidget
+
+
+def resource_path(relative_path):
+    """
+    절대 경로 변환 유틸리티 함수
+    frozen 여부에 따라 적절한 경로 반환
+    """
+    try:
+        # PyInstaller로 빌드된 경우
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # 일반 실행인 경우
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
+def find_app_icon():
+    """
+    애플리케이션 아이콘 파일 찾기
+    여러 가능한 위치에서 검색
+    """
+    # 가능한 아이콘 경로들
+    possible_paths = [
+        resource_path(os.path.join("app", "assets", "icons", "pacekeeper.ico")),
+        resource_path(os.path.join("app", "assets", "icons", "pacekeeper.png")),
+        resource_path(os.path.join("app", "assets", "icons", "pacekeeper.icns")),
+        resource_path(os.path.join("assets", "icons", "pacekeeper.ico")),
+        resource_path(os.path.join("assets", "icons", "pacekeeper.png")),
+        resource_path(os.path.join("assets", "icons", "pacekeeper.icns")),
+        resource_path(os.path.join("app", "assets", "icons", "app_icon.ico")),
+        resource_path(os.path.join("app", "assets", "icons", "app_icon.png")),
+        resource_path(os.path.join("app", "assets", "icons", "app_icon.icns")),
+        resource_path(os.path.join("assets", "icons", "app_icon.ico")),
+        resource_path(os.path.join("assets", "icons", "app_icon.png")),
+        resource_path(os.path.join("assets", "icons", "app_icon.icns")),
+    ]
+    
+    # 존재하는 첫 번째 아이콘 파일 반환
+    for path in possible_paths:
+        if os.path.exists(path):
+            print(f"[DEBUG] 앱 아이콘 파일 발견: {path}")
+            return path
+    
+    print("[DEBUG] 경고: 앱 아이콘 파일을 찾을 수 없습니다.")
+    return None
 
 
 def setup_ui(self):
@@ -92,7 +140,7 @@ def setup_menu_bar(self):
 
     # 설정 액션
     settingsAction = QAction("설정(&S)...", self)
-    settingsAction.setShortcut("Ctrl+S")
+    # 단축키 제거
     settingsAction.triggered.connect(self.openSettings)
     fileMenu.addAction(settingsAction)
 
@@ -189,9 +237,25 @@ def setup_tool_bar(self):
 
 def setup_tray_icon(self):
     """시스템 트레이 아이콘 설정"""
-    # 아이콘 생성 (실제 구현에서는 적절한 아이콘 파일 사용)
+    # 아이콘 생성 - 적절한 아이콘 파일 찾기
     self.trayIcon = QSystemTrayIcon(self)
-    # self.trayIcon.setIcon(QIcon("path/to/icon.png"))
+    
+    # 아이콘 파일 찾기
+    icon_path = find_app_icon()
+    if icon_path:
+        app_icon = QIcon(icon_path)
+        self.trayIcon.setIcon(app_icon)
+        print(f"[DEBUG] 트레이 아이콘 설정 완료: {icon_path}")
+    else:
+        # 아이콘이 없으면 fallback 아이콘 생성
+        fallback_icon = QIcon()
+        # 바탕 픽셀을 몇 개 추가하여 기본 아이콘 생성
+        from PyQt6.QtGui import QPixmap, QPainter, QColor
+        pixmap = QPixmap(32, 32)
+        pixmap.fill(QColor(0, 120, 212))  # 기본 파란색
+        fallback_icon = QIcon(pixmap)
+        self.trayIcon.setIcon(fallback_icon)
+        print("[DEBUG] 트레이 아이콘 설정: 대체 아이콘 사용")
 
     # 트레이 메뉴
     trayMenu = QMenu()
@@ -230,7 +294,7 @@ def setup_tray_icon(self):
     try:
         self.trayIcon.activated.connect(self.onTrayIconActivated)
     except Exception as e:
-        print(f"Warning: Failed to connect tray icon activated signal: {e}")
+        print(f"[DEBUG] 경고: 트레이 아이콘 활성화 시그널 연결 실패: {e}")
 
     # 트레이 아이콘 표시
     self.trayIcon.show()

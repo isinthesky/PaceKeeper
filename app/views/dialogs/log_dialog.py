@@ -132,9 +132,9 @@ class LogDialog(QDialog):
         self.fromDateEdit.setCalendarPopup(True)
         self.fromDateEdit.setDate(QDate.currentDate().addDays(-30))
         self.fromDateEdit.setMinimumHeight(32)
-        
+
         dateRangeLabel = QLabel("~")
-        
+
         self.toDateEdit = QDateEdit()
         self.toDateEdit.setObjectName("toDateEdit")
         self.toDateEdit.setCalendarPopup(True)
@@ -228,10 +228,10 @@ class LogDialog(QDialog):
         # 로그 테이블 - 개선된 디자인
         self.logTable = QTableWidget()
         self.logTable.setObjectName("logTable")
-        
+
         self.logTable.setColumnCount(6)
         self.logTable.setHorizontalHeaderLabels(
-        ["날짜", "시간", "내용", "태그", "카테고리", "소요 시간"]
+            ["날짜", "시간", "내용", "태그", "카테고리", "소요 시간"]
         )
 
         # 헤더 스타일 및 크기 조정 - Pylance 타입 체크 오류 수정
@@ -502,18 +502,26 @@ class LogDialog(QDialog):
             if style_content:
                 print(f"[DEBUG] 로그 다이얼로그에 테마 적용: {theme_name}")
                 self.setStyleSheet(style_content)
-                
+
                 # 모든 자식 위젯에도 스타일시트 적용
                 for widget in self.findChildren(QWidget):
                     widget.setStyleSheet("")
-                    
+
                 # 테마 적용 후 갱신
                 self.update()
 
     def closeEvent(self, event):
         """창 닫기 이벤트 처리"""
-        if hasattr(self, "theme_manager") and self.theme_manager:
+        if (
+            hasattr(self, "theme_manager")
+            and self.theme_manager is not None
+            and hasattr(self, "on_theme_changed")
+        ):
             # 테마 변경 시그널 연결 해제
-            self.theme_manager.themeChanged.disconnect(self.on_theme_changed)
-            self.theme_manager.unregister_widget(self)
+            try:
+                self.theme_manager.themeChanged.disconnect(self.on_theme_changed)
+                self.theme_manager.unregister_widget(self)
+            except (RuntimeError, TypeError):
+                # disconnect 오류 무시(이미 연결 해제됐거나 유효하지 않은 경우)
+                pass
         super().closeEvent(event)

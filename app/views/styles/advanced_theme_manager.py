@@ -218,7 +218,7 @@ class AdvancedThemeManager(QObject):
         self.managed_widgets.discard(widget)
 
     def update_all_widgets(self):
-        """등록된 모든 위젯에 현재 테마 적용"""
+        """등록된 모든 위젯에 현재 테마 적용 - 안전하게 구현"""
         style_content = self.get_theme_style(self.current_theme)
         if not style_content:
             print(f"[DEBUG] 테마 스타일을 가져올 수 없음, 위젯 업데이트 건너뜀")
@@ -235,26 +235,40 @@ class AdvancedThemeManager(QObject):
         for widget in self.managed_widgets:
             processed += 1
             try:
-                # 위젯 유효성 검사 - QDialog 상속 클래스에 대한 특별 처리 추가
-                from PyQt6.QtWidgets import QDialog
-
-                # QDialog가 이미 닫힌 경우 확인
-                if isinstance(widget, QDialog) and not widget.isVisible():
-                    print(f"[DEBUG] QDialog 위젯이 더 이상 표시되지 않음, 건너뜀")
+                # 폐기된 QObject에 접근하지 않도록 안전하게 처리
+                if widget is None:
+                    print(f"[DEBUG] 위젯 {processed}가 None입니다.")
                     continue
 
-                # 일반 위젯 유효성 검사
-                if (
-                    widget
-                    and hasattr(widget, "isDestroyed")
-                    and not widget.isDestroyed()
-                ):
+                try:
+                    # 위젯 메타클래스 확인 (QObject인지 확인)
+                    widget_class = widget.__class__
+                except RuntimeError as e:
+                    print(
+                        f"[DEBUG] 위젯 {processed}에 접근할 수 없음 (RuntimeError): {e}"
+                    )
+                    errors += 1
+                    continue
+
+                # QDialog가 이미 닫힌 경우 확인
+                try:
+                    from PyQt6.QtWidgets import QDialog
+
+                    if isinstance(widget, QDialog) and not widget.isVisible():
+                        print(f"[DEBUG] QDialog 위젯이 더 이상 표시되지 않음, 건너뜀")
+                        continue
+                except Exception as e:
+                    print(f"[DEBUG] QDialog 체크 중 오류: {e}")
+
+                # 스타일시트 적용 시도
+                try:
                     print(f"[DEBUG] 위젯에 테마 적용: {type(widget).__name__}")
                     widget.setStyleSheet(style_content)
                     updated += 1
                     valid_widgets.add(widget)
-                else:
-                    print(f"[DEBUG] 위젯 {processed}가 유효하지 않음 또는 삭제됨")
+                except Exception as e:
+                    errors += 1
+                    print(f"[DEBUG] 스타일시트 설정 중 오류: {e}")
             except RuntimeError as e:
                 errors += 1
                 # C++ 객체가 삭제된 경우
@@ -347,17 +361,53 @@ class AdvancedThemeManager(QObject):
                 try:
                     from PyQt6.QtWidgets import QDialog
 
-                    for widget in target.allWidgets():
-                        if (
-                            isinstance(widget, QDialog)
-                            and widget.isVisible()
-                            and widget not in self.managed_widgets
-                        ):
-                            print(
-                                f"[DEBUG] 관리되지 않는 대화상자 발견: {type(widget).__name__}"
-                            )
-                            # 대화상자에 스타일 직접 적용
-                            widget.setStyleSheet(style_content)
+                    # 테마 적용을 위한 함수를 가져옵니다.
+                    try:
+                        from app.views.styles.update_dialogs import (
+                            apply_theme_change, set_object_names)
+
+                        has_dialog_helpers = True
+                        print(f"[DEBUG] 대화상자 테마 헬퍼 함수 가져오기 성공")
+                    except ImportError:
+                        has_dialog_helpers = False
+                        print(
+                            f"[DEBUG] update_dialogs 모듈을 가져올 수 없습니다. 기본 방식으로 테마 적용"
+                        )
+
+                    # 안전하게 모든 위젯 검사
+                    all_widgets = []
+                    try:
+                        all_widgets = target.allWidgets()
+                    except Exception as e:
+                        print(f"[DEBUG] allWidgets 호출 중 오류: {e}")
+
+                    for widget in all_widgets:
+                        try:
+                            # 대화상자 및 관리되지 않는지 확인
+                            is_dialog = isinstance(widget, QDialog)
+                            is_visible = widget.isVisible()
+                            is_managed = widget in self.managed_widgets
+
+                            if is_dialog and is_visible and not is_managed:
+                                dialog_name = widget.__class__.__name__
+                                print(
+                                    f"[DEBUG] 관리되지 않는 대화상자 발견: {dialog_name}"
+                                )
+
+                                # set_object_names 호출 후 테마 적용
+                                if has_dialog_helpers:
+                                    # objectName이 없는 경우 설정
+                                    if not widget.objectName():
+                                        widget.setObjectName(dialog_name)
+
+                                    # 다이얼로그에 객체 이름 설정 및 테마 적용
+                                    set_object_names(widget)
+                                    apply_theme_change(widget, theme_name, self)
+                                else:
+                                    # 대화상자에 스타일 직접 적용
+                                    widget.setStyleSheet(style_content)
+                        except Exception as e:
+                            print(f"[DEBUG] 개별 대화상자 처리 중 오류: {e}")
                 except Exception as e:
                     print(f"[DEBUG] 대화상자 처리 중 오류: {e}")
 

@@ -135,3 +135,13 @@ class TimerWidget(QWidget):
         )  # 위젯 너비의 20%, 최소 80px, 최대 140px
         self.startButton.setMinimumWidth(button_width)
         self.pauseButton.setMinimumWidth(button_width)
+
+    def showSeconds(self, show=True):
+        """초 표시 여부 설정
+
+        Args:
+            show: 초 표시 여부 (기본값: True)
+        """
+        # 이 메서드는 타이머 형식을 변경할 때 사용될 수 있음
+        # 현재는 UI에서 초를 항상 표시하므로 구현만 제공
+        pass

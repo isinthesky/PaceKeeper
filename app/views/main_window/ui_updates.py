@@ -1,106 +1,97 @@
 """
-PaceKeeper Qt - 메인 윈도우 UI 업데이트
-실시간 UI 상태 업데이트 메서드 모음
+PaceKeeper Qt - UI 업데이트 함수 모듈
+메인 윈도우 UI 업데이트 관련 함수
 """
 
-from PyQt6.QtWidgets import QPushButton
-
-from app.utils.constants import SessionType, TimerState
+from PyQt6.QtWidgets import QApplication
 
 
-def update_ui(self):
-    """UI 상태 업데이트"""
-    # 테마 적용
-    from PyQt6.QtWidgets import QApplication
+def update_ui(window):
+    """
+    사용자 설정에 따라 UI 업데이트
 
-    app = QApplication.instance()
-    if app and hasattr(self, "theme_manager") and self.theme_manager:
-        current_theme = self.config.get("theme", "default")
-        self.theme_manager.apply_theme(app, current_theme)
+    Args:
+        window: 메인 윈도우 인스턴스
+    """
+    print(f"[DEBUG] UI 업데이트 시작")
+    theme = window.config.get("theme", "default")
+    print(f"[DEBUG] 현재 테마: {theme}")
 
-    # 타이머 상태에 따른 UI 업데이트
-    timer_state = self.timer_controller.get_state()
+    # 테마 적용 (QApplication에 적용)
+    if window.theme_manager:
+        app = window.app_instance or QApplication.instance()
+        if app:
+            # 테마 매니저를 통해 테마 적용
+            window.theme_manager.apply_theme(app, theme)
+        else:
+            # app 인스턴스가 없는 경우 메인 윈도우에만 적용
+            style_content = window.theme_manager.get_theme_style(theme)
+            if style_content:
+                window.setStyleSheet(style_content)
 
-    # 타이머 위젯 업데이트 - 시간 문자열 생성
-    time_str = "25:00"  # 기본값
-    if hasattr(self.timer_controller, "get_remaining_time"):
-        remaining_seconds = self.timer_controller.get_remaining_time()
-        minutes = remaining_seconds // 60
-        seconds = remaining_seconds % 60
-        time_str = f"{minutes:02d}:{seconds:02d}"
+    # 타이머 표시 설정 (초 표시 여부 등)
+    show_seconds = window.config.get("show_seconds", True)
+    if (
+        hasattr(window, "timerWidget")
+        and hasattr(window.timerWidget, "isDestroyed")
+        and not window.timerWidget.isDestroyed()
+    ):
+        window.timerWidget.showSeconds(show_seconds)
 
-    # TimerWidget을 통해 타이머 상태 업데이트
-    if hasattr(self, "timerWidget") and hasattr(self.timerWidget, "setTimerState"):
-        self.timerWidget.setTimerState(timer_state, time_str)
-
-    # 툴바 및 트레이 액션 업데이트
-    if timer_state == TimerState.IDLE:
-        # 타이머 정지 상태
-        self.startStopAction.setText("시작")
-        self.trayStartStopAction.setText("시작")
-        self.pauseResumeAction.setEnabled(False)
-        self.trayPauseResumeAction.setEnabled(False)
-        self.statusLabel.setText("준비")
-
-    elif timer_state == TimerState.RUNNING:
-        # 타이머 실행 상태
-        self.startStopAction.setText("중지")
-        self.trayStartStopAction.setText("중지")
-        self.pauseResumeAction.setText("일시정지")
-        self.trayPauseResumeAction.setText("일시정지")
-        self.pauseResumeAction.setEnabled(True)
-        self.trayPauseResumeAction.setEnabled(True)
-
-        session_type = self.timer_controller.get_session_type()
-        session_name = "집중" if session_type == SessionType.POMODORO else "휴식"
-        self.statusLabel.setText(f"{session_name} 중...")
-
-    elif timer_state == TimerState.PAUSED:
-        # 타이머 일시정지 상태
-        self.startStopAction.setText("중지")
-        self.trayStartStopAction.setText("중지")
-        self.pauseResumeAction.setText("재개")
-        self.trayPauseResumeAction.setText("재개")
-        self.pauseResumeAction.setEnabled(True)
-        self.trayPauseResumeAction.setEnabled(True)
-        self.statusLabel.setText("일시정지됨")
-
-    elif timer_state == TimerState.FINISHED:
-        # 타이머 종료 상태
-        self.startStopAction.setText("시작")
-        self.trayStartStopAction.setText("시작")
-        self.pauseResumeAction.setEnabled(False)
-        self.trayPauseResumeAction.setEnabled(False)
-        self.statusLabel.setText("세션 종료")
-
-    # 최근 로그 업데이트
-    update_recent_logs(self)
-
-    # 태그 목록 업데이트
-    update_tags(self)
+    # 기타 UI 설정 적용
+    # window.setupLayout() # 필요시 레이아웃 다시 설정
 
 
-def update_recent_logs(self):
-    """최근 로그 목록 업데이트"""
-    # 로그 위젯 초기화
-    self.logListWidget.clear()
+def update_recent_logs(window):
+    """
+    최근 로그 목록 업데이트
 
-    # 최근 로그 가져오기
-    logs = self.main_controller.get_recent_logs()
+    Args:
+        window: 메인 윈도우 인스턴스
+    """
+    # 위젯 유효성 검사 추가
+    if (
+        not hasattr(window, "logListWidget")
+        or not hasattr(window.logListWidget, "isDestroyed")
+        or window.logListWidget.isDestroyed()
+    ):
+        print(f"[DEBUG] 로그 위젯이 없거나 파괴됨")
+        return
 
-    # 로그 위젯에 추가
-    for log in logs:
-        self.logListWidget.addLogItem(log.message, log.tags)
+    # 목록 초기화
+    window.logListWidget.clear()
+
+    try:
+        # 최근 로그 가져오기 (limit=5)
+        recent_logs = window.main_controller.get_recent_logs(limit=5)
+
+        # 목록에 로그 추가
+        window.logListWidget.add_logs(recent_logs)
+    except Exception as e:
+        print(f"[DEBUG] 최근 로그 업데이트 중 오류 발생: {e}")
 
 
-def update_tags(self):
-    """태그 목록 업데이트"""
-    # 태그 위젯 초기화
-    self.tagButtonsWidget.clear()
+def update_tags(window):
+    """
+    태그 버튼 업데이트
 
-    # 태그 목록 가져오기
-    tags = self.main_controller.get_all_tags()
+    Args:
+        window: 메인 윈도우 인스턴스
+    """
+    # 위젯 유효성 검사 추가
+    if (
+        not hasattr(window, "tagButtonsWidget")
+        or not hasattr(window.tagButtonsWidget, "isDestroyed")
+        or window.tagButtonsWidget.isDestroyed()
+    ):
+        print(f"[DEBUG] 태그 위젯이 없거나 파괴됨")
+        return
 
-    # 태그 위젯에 추가
-    for tag in tags:
-        self.tagButtonsWidget.addTag(tag.name, tag.color)
+    try:
+        # 최근 사용된 태그 가져오기
+        recent_tags = window.main_controller.get_recent_tags(limit=8)
+
+        # 태그 버튼 업데이트
+        window.tagButtonsWidget.update_tags(recent_tags)
+    except Exception as e:
+        print(f"[DEBUG] 태그 업데이트 중 오류 발생: {e}")

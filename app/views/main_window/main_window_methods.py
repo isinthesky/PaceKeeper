@@ -14,7 +14,7 @@ from app.views.dialogs.tag_dialog import TagDialog
 def show_settings_dialog(self):
     """설정 대화상자 표시"""
     dialog = SettingsDialog(
-        self, app_config=self.config, theme_manager=self.theme_manager
+        parent=self, controller_or_app_config=self.config, theme_manager=self.theme_manager
     )
     dialog.settingsChanged.connect(self.on_settings_changed)
     dialog.exec()
@@ -32,7 +32,7 @@ def show_category_dialog(self):
     """카테고리 대화상자 표시"""
     dialog = CategoryDialog(
         self,
-        category_service=self.controller.category_service,
+        controller_or_service=self.controller.category_service,
         theme_manager=self.theme_manager,
     )
     dialog.exec()
@@ -42,7 +42,7 @@ def show_tag_dialog(self):
     """태그 대화상자 표시"""
     dialog = TagDialog(
         self,
-        tag_service=self.controller.tag_service,
+        controller_or_service=self.controller.tag_service,
         category_service=self.controller.category_service,
         theme_manager=self.theme_manager,
     )
