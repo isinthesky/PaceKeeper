@@ -478,7 +478,7 @@ QTabBar::tab:hover:!selected {
     background-color: #e3f2fd;
 }
 
-/* 대화 상자 */
+/* 대화 상자 기본 스타일 */
 QDialog {
     background-color: #fafafa;
 }
@@ -489,6 +489,409 @@ QDialog QLabel {
 
 QDialog QPushButton {
     min-width: 80px;
+}
+
+/* SettingsDialog 구체적인 스타일 */
+QDialog#SettingsDialog {
+    background-color: #fafafa;
+    color: #212121;
+    padding: 5px;
+}
+
+/* SettingsDialog 내부 위젯 스타일 */
+QDialog#SettingsDialog QTabWidget {
+    background-color: #fafafa;
+}
+
+QDialog#SettingsDialog QTabWidget::pane {
+    border: 1px solid #bdbdbd;
+    background-color: white;
+    border-radius: 4px;
+}
+
+QDialog#SettingsDialog QTabBar::tab {
+    background-color: #f5f5f5;
+    color: #616161;
+    padding: 8px 12px;
+    border: 1px solid #bdbdbd;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    margin-right: 2px;
+}
+
+QDialog#SettingsDialog QTabBar::tab:selected {
+    background-color: white;
+    color: #1976d2;
+    border-bottom-color: white;
+}
+
+QDialog#SettingsDialog QTabBar::tab:hover:!selected {
+    background-color: #e3f2fd;
+}
+
+/* SettingsDialog 그룹박스 스타일 */
+QDialog#SettingsDialog QGroupBox {
+    background-color: white;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    margin-top: 12px;
+    padding-top: 15px;
+    font-weight: bold;
+    color: #1976d2;
+}
+
+QDialog#SettingsDialog QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 5px;
+    background-color: white;
+}
+
+/* SettingsDialog 콤보박스 스타일 */
+QDialog#SettingsDialog QComboBox {
+    background-color: white;
+    color: #212121;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    padding: 4px 8px;
+    min-width: 150px;
+    min-height: 25px;
+}
+
+QDialog#SettingsDialog QComboBox:hover {
+    border: 1px solid #2196f3;
+}
+
+QDialog#SettingsDialog QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid #bdbdbd;
+}
+
+/* SettingsDialog 스핀박스 스타일 */
+QDialog#SettingsDialog QSpinBox {
+    background-color: white;
+    color: #212121;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    padding: 4px 8px;
+    min-width: 80px;
+    min-height: 25px;
+}
+
+QDialog#SettingsDialog QSpinBox:hover {
+    border: 1px solid #2196f3;
+}
+
+/* SettingsDialog 체크박스 스타일 */
+QDialog#SettingsDialog QCheckBox {
+    spacing: 8px;
+    color: #212121;
+}
+
+QDialog#SettingsDialog QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+}
+
+QDialog#SettingsDialog QCheckBox::indicator:unchecked {
+    border: 1px solid #bdbdbd;
+    background-color: white;
+}
+
+QDialog#SettingsDialog QCheckBox::indicator:checked {
+    background-color: #2196f3;
+    border: 1px solid #2196f3;
+}
+
+/* SettingsDialog 슬라이더 스타일 */
+QDialog#SettingsDialog QSlider::groove:horizontal {
+    height: 8px;
+    background: #f5f5f5;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+}
+
+QDialog#SettingsDialog QSlider::handle:horizontal {
+    background: #2196f3;
+    border: none;
+    width: 16px;
+    height: 16px;
+    margin: -4px 0;
+    border-radius: 8px;
+}
+
+/* SettingsDialog 버튼 스타일 */
+QDialog#SettingsDialog QPushButton {
+    min-width: 100px;
+    min-height: 30px;
+    padding: 5px 10px;
+}
+
+QDialog#SettingsDialog QPushButton#okButton {
+    background-color: #2196f3;
+    color: white;
+}
+
+QDialog#SettingsDialog QPushButton#okButton:hover {
+    background-color: #42a5f5;
+}
+
+QDialog#SettingsDialog QPushButton#cancelButton {
+    background-color: #f5f5f5;
+    color: #616161;
+    border: 1px solid #bdbdbd;
+}
+
+QDialog#SettingsDialog QPushButton#cancelButton:hover {
+    background-color: #e0e0e0;
+}
+
+/* 라벨 스타일 */
+QDialog#SettingsDialog QLabel {
+    color: #424242;
+}
+
+/* Form 레이아웃 내의 라벨 스타일 */
+QDialog#SettingsDialog QFormLayout QLabel {
+    font-weight: bold;
+    color: #1976d2;
+}
+
+/* CategoryDialog 구체적인 스타일 */
+QDialog#CategoryDialog {
+    background-color: #fafafa;
+    color: #212121;
+    padding: 5px;
+}
+
+/* CategoryDialog 패널 스타일 */
+QDialog#CategoryDialog QWidget#leftPanel,
+QDialog#CategoryDialog QWidget#rightPanel {
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #bdbdbd;
+}
+
+/* CategoryDialog 라벨 스타일 */
+QDialog#CategoryDialog QLabel#listLabel,
+QDialog#CategoryDialog QLabel#editLabel {
+    font-size: 14px;
+    font-weight: bold;
+    color: #1976d2;
+}
+
+/* CategoryDialog 리스트 위젯 스타일 */
+QDialog#CategoryDialog QListWidget {
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+}
+
+QDialog#CategoryDialog QListWidget::item {
+    padding: 8px;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+QDialog#CategoryDialog QListWidget::item:selected {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+/* CategoryDialog 입력 필드 스타일 */
+QDialog#CategoryDialog QLineEdit {
+    background-color: white;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    padding: 6px 10px;
+    min-height: 32px;
+}
+
+QDialog#CategoryDialog QLineEdit:focus {
+    border: 1px solid #2196f3;
+}
+
+/* CategoryDialog 버튼 스타일 */
+QDialog#CategoryDialog QPushButton {
+    min-width: 90px;
+    min-height: 32px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+QDialog#CategoryDialog QPushButton#addButton {
+    background-color: #4caf50;
+    color: white;
+}
+
+QDialog#CategoryDialog QPushButton#addButton:hover {
+    background-color: #66bb6a;
+}
+
+QDialog#CategoryDialog QPushButton#removeButton {
+    background-color: #f44336;
+    color: white;
+}
+
+QDialog#CategoryDialog QPushButton#removeButton:hover {
+    background-color: #ef5350;
+}
+
+QDialog#CategoryDialog QPushButton#colorButton {
+    background-color: #9c27b0;
+    color: white;
+}
+
+QDialog#CategoryDialog QPushButton#colorButton:hover {
+    background-color: #ba68c8;
+}
+
+QDialog#CategoryDialog QPushButton#saveButton {
+    background-color: #2196f3;
+    color: white;
+}
+
+QDialog#CategoryDialog QPushButton#saveButton:hover {
+    background-color: #42a5f5;
+}
+
+QDialog#CategoryDialog QPushButton#cancelButton {
+    background-color: #f5f5f5;
+    color: #616161;
+    border: 1px solid #bdbdbd;
+}
+
+QDialog#CategoryDialog QPushButton#cancelButton:hover {
+    background-color: #e0e0e0;
+}
+
+/* CategoryDialog 색상 미리보기 스타일 */
+QDialog#CategoryDialog QFrame#colorPreview {
+    border-radius: 4px;
+    border: 1px solid #bdbdbd;
+}
+
+/* TagDialog 구체적인 스타일 */
+QDialog#TagDialog {
+    background-color: #fafafa;
+    color: #212121;
+    padding: 5px;
+}
+
+/* TagDialog 패널 스타일 */
+QDialog#TagDialog QWidget#leftPanel,
+QDialog#TagDialog QWidget#rightPanel {
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #bdbdbd;
+}
+
+/* TagDialog 라벨 스타일 */
+QDialog#TagDialog QLabel#listLabel,
+QDialog#TagDialog QLabel#editLabel {
+    font-size: 14px;
+    font-weight: bold;
+    color: #1976d2;
+}
+
+/* TagDialog 리스트 위젯 스타일 */
+QDialog#TagDialog QListWidget {
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+}
+
+QDialog#TagDialog QListWidget::item {
+    padding: 8px;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+QDialog#TagDialog QListWidget::item:selected {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+/* TagDialog 입력 필드 스타일 */
+QDialog#TagDialog QLineEdit {
+    background-color: white;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    padding: 6px 10px;
+    min-height: 32px;
+}
+
+QDialog#TagDialog QLineEdit:focus {
+    border: 1px solid #2196f3;
+}
+
+/* TagDialog 콤보박스 스타일 */
+QDialog#TagDialog QComboBox {
+    background-color: white;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    padding: 6px 10px;
+    min-height: 32px;
+}
+
+QDialog#TagDialog QComboBox:hover {
+    border: 1px solid #2196f3;
+}
+
+QDialog#TagDialog QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid #bdbdbd;
+}
+
+/* TagDialog 버튼 스타일 */
+QDialog#TagDialog QPushButton {
+    min-width: 90px;
+    min-height: 32px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+QDialog#TagDialog QPushButton#addButton {
+    background-color: #4caf50;
+    color: white;
+}
+
+QDialog#TagDialog QPushButton#addButton:hover {
+    background-color: #66bb6a;
+}
+
+QDialog#TagDialog QPushButton#removeButton {
+    background-color: #f44336;
+    color: white;
+}
+
+QDialog#TagDialog QPushButton#removeButton:hover {
+    background-color: #ef5350;
+}
+
+QDialog#TagDialog QPushButton#saveButton {
+    background-color: #2196f3;
+    color: white;
+}
+
+QDialog#TagDialog QPushButton#saveButton:hover {
+    background-color: #42a5f5;
+}
+
+QDialog#TagDialog QPushButton#cancelButton {
+    background-color: #f5f5f5;
+    color: #616161;
+    border: 1px solid #bdbdbd;
+}
+
+QDialog#TagDialog QPushButton#cancelButton:hover {
+    background-color: #e0e0e0;
 }
 
 /* 그룹 박스 */

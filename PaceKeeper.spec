@@ -1,16 +1,45 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 
 block_cipher = None
+
+# 테마 파일 경로
+themes_path = os.path.join('app', 'views', 'styles', 'themes')
+themes_files = []
+if os.path.exists(themes_path):
+    for theme_file in os.listdir(themes_path):
+        if theme_file.endswith('.qss'):
+            themes_files.append((os.path.join(themes_path, theme_file), 
+                               os.path.join('app', 'views', 'styles', 'themes')))
+
+# 아이콘 파일 경로
+icon_path = os.path.join('app', 'assets', 'icons')
+icon_files = []
+if os.path.exists(icon_path):
+    for icon_file in os.listdir(icon_path):
+        if icon_file.endswith(('.ico', '.png', '.icns')):
+            icon_files.append((os.path.join(icon_path, icon_file),
+                             os.path.join('app', 'assets', 'icons')))
+
+# 데이터 파일 결합
+all_datas = [
+    ('config.json', '.'),
+]
+all_datas.extend(themes_files)
+all_datas.extend(icon_files)
 
 a = Analysis(
     ['app/main_responsive.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        ('assets', 'assets'),
-        ('config.json', '.'),
+    datas=all_datas,
+    hiddenimports=[
+        'PyQt6.QtCore',
+        'PyQt6.QtGui',
+        'PyQt6.QtWidgets',
+        'app.views.styles.advanced_theme_manager',
+        'app.views.styles.widget_helpers',
     ],
-    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -38,7 +67,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets/icons/pacekeeper.ico',
+    icon='app/assets/icons/pacekeeper.ico' if os.path.exists('app/assets/icons/pacekeeper.ico') else None,
 )
 
 coll = COLLECT(
@@ -60,3 +89,9 @@ coll = COLLECT(
 # - Windows: %APPDATA%\PaceKeeper\
 # - macOS: ~/Library/Application Support/PaceKeeper/
 # - Linux: ~/.pacekeeper/
+
+# 빌드 관련 노트:
+# 1. 테마 파일이 app/views/styles/themes 디렉토리에 포함됩니다.
+# 2. 아이콘 파일이 app/assets/icons 디렉토리에 포함됩니다.
+# 3. PyQt6 모듈이 hiddenimports에 명시적으로 포함됩니다.
+# 4. widget_helpers 모듈도 hiddenimports에 포함되었습니다.

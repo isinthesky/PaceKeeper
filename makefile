@@ -1,4 +1,4 @@
-.PHONY: help setup venv install run run-prod clean add remove designer
+.PHONY: help setup venv install run run-prod clean add remove designer lint build format
 
 # 기본 변수 설정
 PYTHON := python3.12
@@ -16,10 +16,12 @@ help:
 	@echo "  make venv          : Python 가상 환경 생성"
 	@echo "  make install       : 필요한 패키지 설치"
 	@echo "  make run           : 애플리케이션 실행"
+	@echo "  make build         : 애플리케이션 배포 파일 빌드"
+	@echo "  make lint          : 코드 정적 분석 및 오류 검사"
+	@echo "  make format        : 코드 자동 포맷팅"
 	@echo "  make clean         : 생성된 캐시 및 임시 파일 정리"
 	@echo "  make add 패키지명    : 특정 패키지 설치"
 	@echo "  make remove 패키지명 : 특정 패키지 제거"
-	@echo "  make format        : 코드 포맷팅"
 
 # 전체 설정 (가상 환경 + 의존성 설치)
 setup: venv install
@@ -45,6 +47,28 @@ run: venv
 	@. $(VENV_DIR)/bin/activate && \
 	export PYTHONPATH=$(PYTHONPATH) && \
 	python app/main_responsive.py
+
+# 코드 정적 분석 및 오류 검사
+lint: venv
+	@echo "코드 정적 분석 및 오류 검사 중..."
+	@. $(VENV_DIR)/bin/activate && \
+	$(PIP) install flake8 pylint ruff && \
+	echo "flake8 검사 중..." && \
+	flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics && \
+	echo "pylint 검사 중..." && \
+	pylint --disable=C0111,C0103,C0303,W0613,R0903,W0212,R0913,R0914 app/ && \
+	echo "ruff 검사 중..." && \
+	ruff check app/
+	@echo "코드 정적 분석 완료!"
+
+# 코드 포맷팅
+format: venv
+	@echo "코드 포맷팅 중..."
+	@. $(VENV_DIR)/bin/activate && \
+	$(PIP) install black isort && \
+	black app tests && \
+	isort app tests
+	@echo "코드 포맷팅 완료!"
 
 # 캐시 및 임시 파일 정리
 clean:
@@ -88,26 +112,38 @@ remove: venv
 # 빌드 (PyInstaller 사용)
 build: venv
 	@echo "애플리케이션 빌드 중..."
-	@. $(VENV_DIR)/bin/activate && pyinstaller PaceKeeper.spec
-	@echo "빌드 완료! dist/ 폴더에서 실행 파일을 확인하세요."
+	@. $(VENV_DIR)/bin/activate && \
+	$(PIP) install pyinstaller && \
+	export PYTHONPATH=$(PYTHONPATH) && \
+	if [ ! -f "$(PROJECT_DIR)/PaceKeeper.spec" ]; then \
+		echo "빌드 스펙 파일 생성 중..." && \
+		pyinstaller --name PaceKeeper --windowed --noconfirm \
+		--add-data "$(PROJECT_DIR)/app/views/styles/themes:themes" \
+		--paths "$(PROJECT_DIR)" \
+		--hidden-import="PyQt6.QtCore" \
+		--hidden-import="PyQt6.QtGui" \
+		--hidden-import="PyQt6.QtWidgets" \
+		"$(PROJECT_DIR)/app/main_responsive.py"; \
+	else \
+		echo "기존 스펙 파일을 사용합니다." && \
+		pyinstaller "$(PROJECT_DIR)/PaceKeeper.spec"; \
+	fi
+	@echo "빌드 완료! dist/PaceKeeper 폴더에서 실행 파일을 확인하세요."
 
 # 빌드 스펙 파일 생성
 spec: venv
 	@echo "빌드 스펙 파일 생성 중..."
 	@. $(VENV_DIR)/bin/activate && \
-	pyi-makespec main.py --name PaceKeeper-Qt --windowed --add-data "resources:resources" --add-data "assets:assets"
-	@echo "빌드 스펙 파일 생성 완료!"
-
-
-# 코드 포맷팅
-format: venv
-	@echo "코드 포맷팅 중..."
-	@. $(VENV_DIR)/bin/activate && \
+	$(PIP) install pyinstaller && \
 	export PYTHONPATH=$(PYTHONPATH) && \
-	$(PIP) install black isort && \
-	black app tests && \
-	isort app tests
-	@echo "코드 포맷팅 완료!"
+	pyinstaller --name PaceKeeper --windowed \
+	--add-data "$(PROJECT_DIR)/app/views/styles/themes:themes" \
+	--paths "$(PROJECT_DIR)" \
+	--hidden-import="PyQt6.QtCore" \
+	--hidden-import="PyQt6.QtGui" \
+	--hidden-import="PyQt6.QtWidgets" \
+	"$(PROJECT_DIR)/app/main_responsive.py" --debug
+	@echo "빌드 스펙 파일 생성 완료!"
 
 %:
 	@:
