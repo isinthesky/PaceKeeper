@@ -138,8 +138,7 @@ class MainController:
                 continue
             
             tag_text = self.tag_service.get_tag_text(log.tags)
-            tag_str = json.dumps(tag_text)
-            tag_list = tag_str.replace('[', '').replace(']', '').replace('"', '')
+            tag_list = ', '.join(tag_text) if tag_text else ''
             setattr(log, "tag_text", tag_list)
             
             unique_logs.append(log)
