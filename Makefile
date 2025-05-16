@@ -63,7 +63,7 @@ REQUIREMENTS_DEV := requirements-dev.txt
 APP_NAME := PaceKeeper
 
 # 툴 명령어 설정
-PYINSTALLER := pyinstaller
+PYINSTALLER := PyInstaller
 RUFF := ruff
 VULTURE := vulture
 

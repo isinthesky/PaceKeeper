@@ -15,19 +15,24 @@ def collect_all_files(src_dir, dest_dir):
 
 datas = []
 # Collect icons
-datas += collect_all_files('breaktrack/assets/icons/', 'assets/icons')
+datas += collect_all_files('pacekeeper/assets/icons/', 'assets/icons')
 # Collect sounds
-datas += collect_all_files('breaktrack/assets/sounds', 'assets/sounds')
+datas += collect_all_files('pacekeeper/assets/sounds', 'assets/sounds')
 # Include config.json
-datas += [('breaktrack/config.json', '.')]
+datas += [('pacekeeper/config.json', '.')]
+# Include language files
+datas += [('pacekeeper/consts/lang_ko.json', 'pacekeeper/consts')]
+datas += [('pacekeeper/consts/lang_en.json', 'pacekeeper/consts')]
 
 a = Analysis(
-    ['breaktrack/main.py'],            # Project entry point
+    ['pacekeeper/main.py'],            # Project entry point
     pathex=['.'],                      # Path to search for source code
     binaries=[],                       # Binary files
     datas=datas,                       # Data files
     hiddenimports=[
-        'pygame',                       # Uncomment if pygame is not auto-detected
+        'pygame',
+        'PyQt5',
+        'sqlalchemy',
     ],
     hookspath=[],
     hooksconfig={},
@@ -52,18 +57,26 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='BreakTrack',
-    debug=False,
+    name='PaceKeeper',
+    debug=False,                   # Disable debug messages
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,                  # Hide console window (GUI app)
-    icon='assets/icons/BreakTrack.icns'  # Use .icns for macOS
+    console=False,                 # Hide console window
+    icon='assets/icons/PaceKeeper.icns'  # Use .icns for macOS
 )
 
 app = BUNDLE(
     exe,
-    name='BreakTrack.app',
-    icon='assets/icons/BreakTrack.icns',
-    bundle_identifier=None,
+    name='PaceKeeper.app',
+    icon='assets/icons/PaceKeeper.icns',
+    bundle_identifier='com.pacekeeper.app',
+    info_plist={
+        'NSHighResolutionCapable': 'True',
+        'LSBackgroundOnly': 'False',
+        'LSEnvironment': {
+            'DYLD_LIBRARY_PATH': '/opt/homebrew/lib:$DYLD_LIBRARY_PATH',
+            'QT_MAC_WANTS_LAYER': '1'
+        }
+    }
 )

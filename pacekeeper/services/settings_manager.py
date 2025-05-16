@@ -1,11 +1,13 @@
 # services/settings_manager.py
 
 import os
+import sys
 import json
 from typing import Dict, Any, Optional, List, Callable, Union
 
 from pacekeeper.consts.settings import CONFIG_FILE, DEFAULT_SETTINGS, SET_LANGUAGE
 from pacekeeper.consts.labels import load_language_resource
+from pacekeeper.utils.resource_path import resource_path
 
 # 언어 리소스 로드
 lang_res = load_language_resource()
@@ -39,12 +41,18 @@ class SettingsManager:
         Args:
             config_file: 설정 파일 이름 (기본값: CONFIG_FILE 상수 사용)
         """
-        # 사용자 홈 디렉토리에 .pacekeeper 폴더 생성
-        self.config_dir: str = os.path.join(os.path.expanduser('~'), '.pacekeeper')
-        os.makedirs(self.config_dir, exist_ok=True)
+        # PyInstaller로 빌드된 경우
+        if getattr(sys, 'frozen', False):
+            # 사용자 홈 디렉토리 사용 (설정은 사용자별로 저장)
+            self.config_dir: str = os.path.join(os.path.expanduser('~'), '.pacekeeper')
+            os.makedirs(self.config_dir, exist_ok=True)
+            self.config_file: str = os.path.join(self.config_dir, config_file)
+        else:
+            # 개발 환경에서는 기존 방식 사용
+            self.config_dir: str = os.path.join(os.path.expanduser('~'), '.pacekeeper')
+            os.makedirs(self.config_dir, exist_ok=True)
+            self.config_file: str = os.path.join(self.config_dir, config_file)
         
-        # 설정 파일 경로 설정
-        self.config_file: str = os.path.join(self.config_dir, config_file)
         self.default_settings: Dict[str, Any] = dict(DEFAULT_SETTINGS)
         self.settings: Dict[str, Any] = dict(self.default_settings)
         

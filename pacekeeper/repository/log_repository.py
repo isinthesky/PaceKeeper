@@ -10,14 +10,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from pacekeeper.repository.entities import Base, Category, Log, Tag
 from pacekeeper.utils.functions import extract_tags
 from pacekeeper.utils.desktop_logger import DesktopLogger
-from pacekeeper.consts.settings import DB_FILE
 from pacekeeper.consts.labels import load_language_resource
+from pacekeeper.repository.db_config import DATABASE_URI
 from icecream import ic
 
 lang_res = load_language_resource()
 
 # SQLite를 사용한다고 가정 (파일 기반 DB)
-DATABASE_URI = f"sqlite:///{DB_FILE}"
 engine = create_engine(DATABASE_URI, echo=False, connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine)
 

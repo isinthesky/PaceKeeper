@@ -5,11 +5,10 @@ from sqlalchemy.orm import sessionmaker, Session as SessionType
 from sqlalchemy import create_engine
 
 from pacekeeper.repository.entities import Base, Tag
-from pacekeeper.consts.settings import DB_FILE
+from pacekeeper.repository.db_config import DATABASE_URI
 from pacekeeper.utils.desktop_logger import DesktopLogger
 from icecream import ic
 
-DATABASE_URI = f"sqlite:///{DB_FILE}"
 engine = create_engine(DATABASE_URI, echo=False, connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine)
 

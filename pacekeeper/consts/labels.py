@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from dataclasses import dataclass
 from typing import Dict
 from pathlib import Path
@@ -26,7 +27,14 @@ def load_language_resource(language: str = "ko") -> LanguageResource:
         print(f"지원되지 않는 언어 코드 '{language}' 입니다. 기본값 'ko'로 설정합니다.")
         language = "ko"
 
-    file_path = Path(__file__).parent / f"lang_{language}.json"
+    # PyInstaller로 빌드된 경우 리소스 경로 처리
+    if getattr(sys, 'frozen', False):
+        # 빌드된 실행파일에서는 _MEIPASS 경로 사용
+        base_path = os.path.join(sys._MEIPASS, 'pacekeeper', 'consts')
+        file_path = os.path.join(base_path, f"lang_{language}.json")
+    else:
+        # 개발 환경에서는 현재 파일 기준 경로 사용
+        file_path = Path(__file__).parent / f"lang_{language}.json"
     try:
         with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
