@@ -13,9 +13,89 @@ PaceKeeper는 작업 시간과 휴식 시간을 관리하는 애플리케이션�
 
 ## 기술 스택
 
-- Python 3.x
+- Python 3.11+
 - PyQt5 (GUI 프레임워크)
 - SQLite (데이터베이스)
+- SQLAlchemy (ORM)
+- PyInstaller (배포)
+
+## 설치 및 실행
+
+### 의존성 설치
+
+Makefile을 사용하여 간편하게 가상 환경을 생성하고 의존성을 설치할 수 있습니다:
+
+```bash
+# 기본 의존성 설치
+make install
+
+# 개발 의존성 포함 설치 (lint 등 개발 도구 포함)
+make install-dev
+```
+
+직접 가상 환경을 관리하려면 다음 명령을 사용합니다:
+
+```bash
+# 가상 환경 생성
+python -m venv venv
+
+# 가상 환경 활성화 (Windows)
+venv\Scripts\activate
+
+# 가상 환경 활성화 (macOS/Linux)
+source venv/bin/activate
+
+# 의존성 설치
+pip install -r requirements.txt
+
+# 개발 의존성 설치
+pip install -r requirements-dev.txt
+```
+
+### 애플리케이션 실행
+
+```bash
+# Makefile을 사용한 실행
+make run
+
+# 직접 실행
+python -m pacekeeper.main
+
+# 진입점 스크립트 생성 및 실행 (더 편리한 실행)
+make entry
+./entry.py
+```
+
+### 애플리케이션 빌드
+
+```bash
+# 현재 플랫폼에 맞게 빌드
+make build
+
+# 특정 플랫폼용 빌드
+make build-macos
+make build-windows
+```
+
+## Makefile 사용법
+
+프로젝트는 Makefile을 통해 일반적인 작업들을 자동화합니다:
+
+| 명령어 | 설명 |
+|--------|------|
+| `make help` | 도움말 표시 |
+| `make venv` | 가상 환경 생성 |
+| `make run` | 개발 환경에서 애플리케이션 실행 |
+| `make install` | 기본 의존성 설치 |
+| `make install-dev` | 개발 의존성 포함 설치 |
+| `make build` | 현재 플랫폼용 실행 파일 빌드 |
+| `make clean` | 빌드 결과물 및 캐시 파일 정리 |
+| `make lint` | 코드 문법 및 스타일 검사 |
+| `make lint-fix` | 코드 문법 및 스타일 자동 수정 |
+| `make dead-code` | 사용되지 않는 코드 검사 |
+| `make docs` | 문서 확인 |
+| `make entry` | 진입점 스크립트 생성 |
+| `make clean-all` | 모든 생성 파일 및 가상 환경 정리 |
 
 ## 프로젝트 구조
 
@@ -72,12 +152,6 @@ pacekeeper/
 5. 다이얼로그 처리 방식 변경
 6. 타이머 처리를 QTimer 기반으로 변경
 7. 언어 리소스 구조 확장 및 개선
-
-## 실행 방법
-
-```bash
-python -m pacekeeper.main
-```
 
 ## 라이센스
 
