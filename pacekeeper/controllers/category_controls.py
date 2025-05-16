@@ -210,7 +210,9 @@ class TagButtonsPanel(QWidget):
                 
         for tag in tags:
             if tag:
-                btn = QPushButton(tag["name"], self)
+                # 명시적으로 문자열 변환하여 인코딩 보장
+                tag_name = str(tag["name"])
+                btn = QPushButton(tag_name, self)
                 
                 if self.on_tag_selected:
                     btn.clicked.connect(lambda checked, t=tag: self.on_tag_selected(t))

@@ -332,8 +332,9 @@ class TagButtonsPanel(QWidget):
                     ic(f"태그에 'category_id' 키가 없습니다: {tag_dict}")
                     tag_dict['category_id'] = None
                 
-                # 버튼 생성
-                btn = QPushButton(tag_dict["name"], self)
+                # 버튼 생성 - 명시적으로 문자열 변환하여 인코딩 보장
+                tag_name = str(tag_dict["name"])
+                btn = QPushButton(tag_name, self)
                 
                 # 클릭 이벤트 연결
                 try:

@@ -44,7 +44,7 @@ class LogService:
                     self.logger.log_error("태그 추가 실패", exc_info=True)
 
         # 태그 ID 리스트를 JSON 형식으로 변환하여 저장
-        tags_json = json.dumps(tag_ids)
+        tags_json = json.dumps(tag_ids, ensure_ascii=False)
         
         ic(tags_json)
 

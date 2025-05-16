@@ -178,15 +178,27 @@ class LogDialog(QDialog):
             tag_text = ""
             try:
                 if row.tags and row.tags != "[]":
-                    tag_ids = json.loads(row.tags)
-                    if tag_ids:
+                    # JSON 문자열을 리스트로 변환
+                    try:
+                        tag_ids = json.loads(row.tags)
+                    except (json.JSONDecodeError, TypeError) as e:
+                        ic(f"JSON 파싱 오류: {e} - 입력: {row.tags}")
+                        tag_ids = []
+                    
+                    # 유효한 태그 ID 리스트인 경우 태그 서비스를 통해 이름 가져오기
+                    if isinstance(tag_ids, list) and tag_ids:
                         tag_names = self.tag_service.get_tag_text(tag_ids)
-                        tag_text = ", ".join(tag_names)
+                        # 유효한 태그 이름이 있는 경우 쉼표로 구분하여 연결
+                        if tag_names:
+                            # 문자열 연결 전에 각 항목이 문자열인지 확인하고 인코딩 보장
+                            tag_text = ", ".join(str(name) for name in tag_names if name)
             except Exception as e:
                 ic(f"태그 변환 오류: {e}")
-                tag_text = str(row.tags)
+                tag_text = ""
                 
-            self.table_widget.setItem(row_idx, 3, QTableWidgetItem(tag_text))
+            # 태그 텍스트 설정
+            tag_item = QTableWidgetItem(tag_text)
+            self.table_widget.setItem(row_idx, 3, tag_item)
 
     def on_period_button(self, days):
         """
@@ -293,5 +305,7 @@ class LogDialog(QDialog):
         """
         태그 버튼 클릭 시 해당 태그로 검색을 수행합니다.
         """
-        self.tag_tc.setText(tag["name"])
+        # 명시적으로 문자열 변환하여 인코딩 보장
+        tag_name = str(tag["name"])
+        self.tag_tc.setText(tag_name)
         self.on_search()
