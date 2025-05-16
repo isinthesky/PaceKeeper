@@ -33,3 +33,7 @@ __pycache__/*.*
 
 *.db
 *.txt
+**/.claude/settings.local.json
+
+# Local memory file
+CLAUDE.local.md
