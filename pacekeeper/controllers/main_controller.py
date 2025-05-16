@@ -79,11 +79,11 @@ class MainController:
         if cycle % self.config_ctrl.get_setting("cycles", 4) == 0:
             break_min = self.config_ctrl.get_setting("long_break", 15)
             self.config_ctrl.set_status(AppStatus.LONG_BREAK)
-            self.sound_manager.play_sound(resource_path("assets/sounds/long_brk.wav"))
+            self.sound_manager.play_sound("pacekeeper/assets/sounds/long_brk.wav")
         else:
             break_min = self.config_ctrl.get_setting("short_break", 5)
             self.config_ctrl.set_status(AppStatus.SHORT_BREAK)
-            self.sound_manager.play_sound(resource_path("assets/sounds/short_brk.wav"))
+            self.sound_manager.play_sound("pacekeeper/assets/sounds/short_brk.wav")
             
         # 휴식 세션 시작
         # Qt에서는 wx.CallAfter 대신 QTimer.singleShot 사용

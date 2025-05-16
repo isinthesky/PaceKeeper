@@ -2,24 +2,34 @@
 """리소스 경로 처리 유틸리티"""
 import os
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 def resource_path(relative_path):
     """PyInstaller로 빌드된 앱에서 리소스 경로를 올바르게 반환합니다."""
-    try:
-        # PyInstaller가 생성한 임시 폴더
+    if getattr(sys, 'frozen', False):
+        # PyInstaller 환경: sys._MEIPASS 사용
         base_path = sys._MEIPASS
-    except AttributeError:
-        # 개발 환경에서 실행 중
-        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    except Exception as e:
-        print(f"Resource path error: {e}")
+    else:
+        # 개발 환경: 프로젝트 루트 디렉토리 사용
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
-    # 전체 경로 생성
-    full_path = os.path.join(base_path, relative_path)
+    # 상대 경로 처리
+    if relative_path.startswith('pacekeeper/'):
+        # 개발 환경에서의 전체 경로
+        if not getattr(sys, 'frozen', False):
+            full_path = os.path.join(base_path, relative_path)
+        else:
+            # PyInstaller 환경에서는 pacekeeper/ 접두사 제거
+            relative_path = relative_path.replace('pacekeeper/', '')
+            full_path = os.path.join(base_path, relative_path)
+    else:
+        full_path = os.path.join(base_path, relative_path)
     
-    # 디버그 출력
-    print(f"Resource path: {relative_path} -> {full_path}")
+    # 디버그 로깅
+    logger.debug(f"Resource path: {relative_path} -> {full_path}")
+    logger.debug(f"File exists: {os.path.exists(full_path)}")
     
     return full_path
 
