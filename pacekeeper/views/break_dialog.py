@@ -3,9 +3,10 @@ from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout
 
 from pacekeeper.consts.labels import load_language_resource
-from pacekeeper.consts.settings import SET_BREAK_COLOR, SET_PADDING_SIZE
+from pacekeeper.consts.settings import SET_PADDING_SIZE
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.controllers.main_controller import MainController
+from pacekeeper.utils.theme_manager import theme_manager
 from pacekeeper.views.controls import TimerLabel
 
 lang_res = load_language_resource(ConfigController().get_language())
@@ -38,10 +39,9 @@ class BreakDialog(QDialog):
         self.setWindowTitle(lang_res.title_labels['BREAK_DIALOG_TITLE'])
         self.resize(dlg_width, dlg_height)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-
-        # 추가: config에 저장된 SET_BREAK_COLOR 값으로 배경색 설정 (기본값 "#FDFFB6")
-        bg_color = self.config.get_setting(SET_BREAK_COLOR, "#FDFFB6")
-        self.setStyleSheet(f"background-color: {bg_color};")
+        
+        # 현대적인 휴식 다이얼로그 스타일 적용
+        theme_manager.set_widget_property(self, "break", True)
 
         # 타이머 정지를 위한 함수 지정
         self.stop_timer_func = self.main_controller.timer_service.stop
@@ -57,20 +57,20 @@ class BreakDialog(QDialog):
         # 안내 문구
         info_label = QLabel(lang_res.messages['START_BREAK'], self)
         info_label.setAlignment(Qt.AlignCenter)
-        info_label.setStyleSheet("color: black;")  # 라벨 폰트 색상을 검정색으로 지정
+        theme_manager.apply_label_style(info_label, "break")
         main_layout.addWidget(info_label, 0, Qt.AlignCenter)
         main_layout.addSpacing(20)  # 간격 추가
 
         # 남은 시간 표시를 위한 타이머 라벨
         self.break_label = TimerLabel(self, "00:00", font_increment=10)
         self.break_label.setAlignment(Qt.AlignCenter)
-        self.break_label.setStyleSheet("color: black;")  # 타이머 라벨의 폰트 색상을 검정색으로 지정
+        theme_manager.apply_label_style(self.break_label, "breakTimer")
         main_layout.addWidget(self.break_label, 0, Qt.AlignCenter)
         main_layout.addSpacing(20)  # 간격 추가
 
         # 휴식 닫기 버튼 추가
         self.close_button = QPushButton("휴식 닫기", self)
-        self.close_button.setStyleSheet("background-color: #797979;")
+        theme_manager.apply_button_style(self.close_button, "warning")
         main_layout.addWidget(self.close_button, 0, Qt.AlignCenter)
         main_layout.addSpacing(20)  # 간격 추가
 

@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import APP_TITLE, SET_MAIN_DLG_HEIGHT, SET_MAIN_DLG_WIDTH
 from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.utils.theme_manager import theme_manager
 from pacekeeper.views.break_dialog import BreakDialog
 from pacekeeper.views.category_dialog import CategoryDialog
 from pacekeeper.views.controls import RecentLogsControl, TagButtonsPanel, TextInputPanel, TimerLabel
@@ -49,9 +50,10 @@ class MainWindow(QMainWindow):
         self.init_ui()
         self.init_menu()
         self.init_events()
+        self.apply_theme()
 
         self.original_size = self.size()
-        self.study_size = QSize(250, 170)
+        self.study_size = QSize(220, 160)  # 더 자연스러운 직사각형 비율 (2:1)
 
     def hide_main_controls(self) -> None:
         """
@@ -74,8 +76,11 @@ class MainWindow(QMainWindow):
                 self.log_input_panel.hide()
                 ic("log_input_panel 숨김")
 
-            # 창 크기 변경
+            # 창 크기 변경 및 제약 제거
+            self.setMinimumSize(0, 0)  # 최소 크기 제약 제거
+            self.setMaximumSize(16777215, 16777215)  # 최대 크기 제약 제거
             self.resize(self.study_size)
+            self.setFixedSize(self.study_size)  # 고정 크기로 설정
             ic(f"창 크기를 {self.study_size.width()}x{self.study_size.height()}로 변경")
         except Exception as e:
             ic(f"UI 컨트롤 숨기기 중 오류 발생: {e}")
@@ -100,7 +105,9 @@ class MainWindow(QMainWindow):
                 self.log_input_panel.show()
                 ic("log_input_panel 표시")
 
-            # 창 크기 복원
+            # 창 크기 복원 및 제약 제거
+            self.setMinimumSize(0, 0)  # 최소 크기 제약 제거
+            self.setMaximumSize(16777215, 16777215)  # 최대 크기 제약 제거
             self.resize(self.original_size)
             ic(f"창 크기를 {self.original_size.width()}x{self.original_size.height()}로 복원")
         except Exception as e:
@@ -109,12 +116,16 @@ class MainWindow(QMainWindow):
     def init_ui(self) -> None:
         """UI 컴포넌트 초기화 및 레이아웃 구성"""
         self.main_layout = QVBoxLayout(self.central_widget)
+        self.main_layout.setSpacing(6)
+        self.main_layout.setContentsMargins(8, 8, 8, 8)
 
-        # 타이머 라벨
+        # 타이머 라벨 (카드 없이 직접 배치)
         self.timer_label = TimerLabel(self.central_widget, initial_text="00:00", font_increment=20, bold=True)
+        theme_manager.apply_label_style(self.timer_label, "timer")
         self.main_layout.addWidget(self.timer_label, 0, Qt.AlignCenter)
+        self.main_layout.addSpacing(8)
 
-        # 최근 기록 표시 영역 (콜백 on_logs_updated 설정)
+        # 최근 기록 표시 영역 (단순화)
         self.recent_logs = RecentLogsControl(
             self.central_widget, self.config_ctrl,
             on_double_click=self.on_log_double_click,
@@ -123,29 +134,27 @@ class MainWindow(QMainWindow):
         ic("RecentLogsControl 초기화 완료, on_logs_updated 콜백 설정됨")
         self.main_layout.addWidget(self.recent_logs, 1)
 
-        # 태그 버튼 패널 (category_service는 나중에 main_controller를 통해 설정)
+        # 태그 버튼 패널 (단순화)
         self.tag_panel = TagButtonsPanel(self.central_widget, on_tag_selected=self.add_tag_to_input)
         self.main_layout.addWidget(self.tag_panel)
         # RecentLogsControl의 update_logs 호출 시 update_tag_buttons()가 자동 호출됩니다.
 
-        # 텍스트 입력 패널 (예: 할일 입력)
+        # 텍스트 입력 패널 (단순화)
         self.log_input_panel = TextInputPanel(self.central_widget, on_text_changed=self.on_log_input_text_change)
         self.main_layout.addWidget(self.log_input_panel)
 
-        # 시작/중지 버튼 패널
+        # 시작/중지 버튼 패널 (단순화)
         self.button_panel = QWidget(self.central_widget)
         button_layout = QHBoxLayout(self.button_panel)
+        button_layout.setSpacing(8)
+        button_layout.setContentsMargins(0, 0, 0, 0)
 
         # 시작 버튼 (토글 버튼으로 Start/Stop 기능 수행)
         self.start_button = QPushButton(lang_res.button_labels.get('START', "START"), self.button_panel)
+        theme_manager.apply_button_style(self.start_button, "primary")
         # 일시정지 버튼
         self.pause_button = QPushButton(lang_res.button_labels.get('PAUSE', "PAUSE"), self.button_panel)
-
-        # 버튼 폰트 조정
-        for btn in (self.start_button, self.pause_button):
-            font = btn.font()
-            font.setPointSize(font.pointSize() + 3)
-            btn.setFont(font)
+        theme_manager.apply_button_style(self.pause_button, "secondary")
 
         self.pause_button.setEnabled(False)
 
@@ -299,9 +308,11 @@ class MainWindow(QMainWindow):
                 ic("학습 세션 시작")
                 self.main_controller.start_study_session()
 
-                # 컨트롤 숨기기 및 작은 창으로 전환
+                # 컨트롤 숨기기 및 작은 창으로 전환 (미니 모드 활성화)
                 ic("UI 컨트롤 숨기기 및 창 크기 축소")
                 self.hide_main_controls()
+                # 미니 모드 속성 설정
+                theme_manager.set_widget_property(self, "miniMode", True)
             else:
                 # 타이머가 실행 중이면 강제 종료 처리 및 UI 복원
                 ic("타이머 중지 요청")
@@ -314,9 +325,11 @@ class MainWindow(QMainWindow):
                 self.pause_button.setEnabled(False)
                 self.timer_label.setText("00:00")
 
-                # 원래 UI 복원
+                # 원래 UI 복원 (미니 모드 비활성화)
                 ic("UI 컨트롤 복원 및 창 크기 원복")
                 self.restore_main_controls()
+                # 미니 모드 속성 제거
+                theme_manager.set_widget_property(self, "miniMode", False)
 
             # 시작 버튼 상태 업데이트
             self.update_start_button_state()
@@ -545,3 +558,12 @@ class MainWindow(QMainWindow):
             ic(f"시작 버튼 상태 업데이트 중 오류 발생: {e}")
             # 오류 발생 시 기본적으로 버튼 비활성화
             self.start_button.setEnabled(False)
+
+    def apply_theme(self) -> None:
+        """현대적인 테마 적용"""
+        try:
+            # 전체 애플리케이션에 테마 적용
+            theme_manager.apply_theme()
+            ic("현대적인 테마 적용 완료")
+        except Exception as e:
+            ic(f"테마 적용 중 오류 발생: {e}")

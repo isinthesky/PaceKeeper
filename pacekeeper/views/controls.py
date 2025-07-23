@@ -3,7 +3,6 @@ from icecream import ic
 from PyQt5.QtCore import QPoint, QRect, QSize, Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QAbstractItemView,
-    QGroupBox,
     QHeaderView,
     QLabel,
     QLayout,
@@ -18,6 +17,7 @@ from PyQt5.QtWidgets import (
 
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.utils.theme_manager import theme_manager
 
 lang_res = load_language_resource(ConfigController().get_language())
 
@@ -33,8 +33,8 @@ class TimerLabel(QLabel):
         self.setFont(font)
         self.setAlignment(Qt.AlignCenter)
         # 타이머 라벨 크기 설정
-        self.setMinimumWidth(150)
-        self.setMinimumHeight(40)
+        self.setMinimumWidth(120)
+        self.setMinimumHeight(32)
 
 class RecentLogsControl(QWidget):
     """최근 로그를 리스트로 보여주는 재사용 가능한 컨트롤"""
@@ -47,15 +47,10 @@ class RecentLogsControl(QWidget):
 
         # 메인 레이아웃 설정
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(5, 5, 5, 5)
+        self.layout.setContentsMargins(2, 2, 2, 2)
 
-        # 그룹박스 생성 (wx.StaticBox 대체)
-        self.group_box = QGroupBox(lang_res.messages['RECENT_LOGS'], self)
-        self.group_layout = QVBoxLayout(self.group_box)
-        self.group_layout.setContentsMargins(0, 10, 0, 0)  # 내부 여백 최소화
-
-        # 테이블 위젯 생성 (wx.ListCtrl 대체)
-        self.table_widget = QTableWidget(self.group_box)
+        # 테이블 위젯 직접 생성 (그룹박스 제거)
+        self.table_widget = QTableWidget(self)
         self.table_widget.setColumnCount(3)
         self.table_widget.setHorizontalHeaderLabels(["시간", "메시지", "태그"])
         self.table_widget.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -67,8 +62,7 @@ class RecentLogsControl(QWidget):
         if on_double_click:
             self.table_widget.itemDoubleClicked.connect(lambda item: on_double_click(item.row()))
 
-        self.group_layout.addWidget(self.table_widget)
-        self.layout.addWidget(self.group_box)
+        self.layout.addWidget(self.table_widget)
 
         # 초기 데이터 로드를 제한된 개수의 로그를 불러옵니다.
         self.update_logs(limit=10)
@@ -267,7 +261,7 @@ class TagButtonsPanel(QWidget):
         super().__init__(parent)
         self.on_tag_selected = on_tag_selected
         self.category_service = category_service  # 의존성 주입을 통해 전달받음
-        self.layout = QFlowLayout(self, margin=5, spacing=5)
+        self.layout = QFlowLayout(self, margin=2, spacing=3)
         self.setLayout(self.layout)
 
     def update_tags(self, tags):
@@ -311,10 +305,13 @@ class TagButtonsPanel(QWidget):
 
         ic(f"태그 버튼 업데이트 시작, 태그 수: {len(tags)}")
 
-        # 태그가 없으면 함수 종료
+        # 태그가 없으면 패널 숨기기
         if not tags:
-            ic("태그가 없습니다. 업데이트를 종료합니다.")
+            ic("태그가 없습니다. 패널을 숨깁니다.")
+            self.hide()
             return
+        else:
+            self.show()
 
         # 태그 버튼 생성
         for tag in tags:
@@ -344,22 +341,24 @@ class TagButtonsPanel(QWidget):
                 # 버튼 생성 - 명시적으로 문자열 변환하여 인코딩 보장
                 tag_name = str(tag_dict["name"])
                 btn = QPushButton(tag_name, self)
+                theme_manager.apply_button_style(btn, "tag")
 
                 # 클릭 이벤트 연결
                 try:
                     # 람다 함수에서 태그 딕셔너리를 복사하여 사용
                     tag_copy = dict(tag_dict)
-                    btn.clicked.connect(lambda checked, t=tag_copy: self.on_tag_selected(t))
+                    btn.clicked.connect(lambda: self.on_tag_selected(tag_copy))
                 except Exception as e:
                     ic(f"버튼 클릭 이벤트 연결 중 오류 발생: {e}")
 
-                # 카테고리 색상 설정
+                # 카테고리 색상 설정 (필요시 커스텀 색상 적용)
                 try:
                     category = color_set.get(tag_dict["category_id"])
-                    if category and hasattr(category, 'color'):
-                        btn.setStyleSheet(f"background-color: {category.color};")
+                    if category and hasattr(category, 'color') and category.color:
+                        # 커스텀 색상이 있는 경우에만 인라인 스타일 적용
+                        btn.setStyleSheet(f"QPushButton[tag=true] {{ background-color: {category.color}; }}")
                     else:
-                        ic(f"카테고리 ID {tag_dict['category_id']}에 해당하는 카테고리를 찾을 수 없거나 색상 정보가 없습니다.")
+                        ic(f"카테골0리 ID {tag_dict['category_id']}에 해당하는 카테고리를 찾을 수 없거나 색상 정보가 없습니다.")
                 except Exception as e:
                     ic(f"카테고리 색상 설정 중 오류 발생: {e}")
 
@@ -383,22 +382,17 @@ class TextInputPanel(QWidget):
     def __init__(self, parent, label_text=None, on_text_changed=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(5, 5, 5, 5)
+        self.layout.setContentsMargins(2, 2, 2, 2)
 
-        # 그룹박스 생성 (wx.StaticBox 대체)
-        group_label = label_text if label_text else lang_res.messages['TASK_DESCRIPTION']
-        self.group_box = QGroupBox(group_label, self)
-        self.group_layout = QVBoxLayout(self.group_box)
-
-        # 텍스트 입력 필드
-        self.input_ctrl = QLineEdit(self.group_box)
+        # 텍스트 입력 필드 직접 생성 (그룹박스 제거)
+        self.input_ctrl = QLineEdit(self)
+        placeholder = label_text if label_text else "#태그 형식으로 작업 입력..."
+        self.input_ctrl.setPlaceholderText(placeholder)
         if on_text_changed:
             self.input_ctrl.textChanged.connect(on_text_changed)
         else:
             self.input_ctrl.textChanged.connect(self.on_text_changed)
-        self.group_layout.addWidget(self.input_ctrl)
-
-        self.layout.addWidget(self.group_box)
+        self.layout.addWidget(self.input_ctrl)
 
     def get_value(self):
         """입력 필드의 현재 값을 반환"""
@@ -409,8 +403,8 @@ class TextInputPanel(QWidget):
         self.input_ctrl.setText(value)
 
     def set_hint(self, hint_text):
-        """그룹박스 레이블 텍스트 설정"""
-        self.group_box.setTitle(hint_text)
+        """플레이스홀더 텍스트 설정"""
+        self.input_ctrl.setPlaceholderText(hint_text)
 
     def on_text_changed(self):
         """텍스트 변경 이벤트 핸들러"""
