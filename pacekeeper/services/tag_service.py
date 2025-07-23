@@ -1,27 +1,29 @@
 import json
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from pacekeeper.repository.log_repository import LogRepository
-from pacekeeper.repository.entities import Log, Category, Tag
-from pacekeeper.repository.tag_repository import TagRepository
-from pacekeeper.utils.functions import extract_tags
-from pacekeeper.utils.desktop_logger import DesktopLogger
 from icecream import ic
 
+from pacekeeper.repository.entities import Category, Log, Tag
+from pacekeeper.repository.log_repository import LogRepository
+from pacekeeper.repository.tag_repository import TagRepository
+from pacekeeper.utils.desktop_logger import DesktopLogger
+from pacekeeper.utils.functions import extract_tags
+
+
 class TagService:
-    def __init__(self):
-        self.logger = DesktopLogger("PaceKeeper")
-        self.repository = TagRepository()
+    def __init__(self) -> None:
+        self.logger: DesktopLogger = DesktopLogger("PaceKeeper")
+        self.repository: TagRepository = TagRepository()
         self.logger.log_system_event("TagService 초기화됨.")
 
-    def get_tag_text(self, tag_ids: list[int]) -> list[str]:
+    def get_tag_text(self, tag_ids: Union[list[int], str]) -> list[str]:
         """
         태그 ID 목록을 받아 태그 이름을 문자열로 변환합니다.
-        
+
         Args:
             tag_ids: 태그 ID 목록 (정수 리스트 또는 JSON 문자열)
-            
+
         Returns:
             태그 이름 목록
         """
@@ -32,12 +34,12 @@ class TagService:
             except json.JSONDecodeError as e:
                 ic(f"JSON 파싱 오류: {e} - 입력: {tag_ids}")
                 return []
-                
+
         # 입력이 리스트가 아닌 경우 빈 리스트 반환
         if not isinstance(tag_ids, list):
             ic(f"태그 ID가 리스트가 아닙니다: {type(tag_ids)}")
             return []
-            
+
         tag_names = []
         for tag_id in tag_ids:
             try:
@@ -48,16 +50,16 @@ class TagService:
                     tag_names.append(str(tag.name))
             except Exception as e:
                 ic(f"태그 조회 오류: {e} - 태그 ID: {tag_id}")
-                
+
         return tag_names
-    
+
     def get_tag(self, tag_id: int) -> Optional[Tag]:
         """
         지정된 ID의 태그를 조회합니다.
-        
+
         Args:
             tag_id: 조회할 태그 ID
-            
+
         Returns:
             태그 객체 또는 None (조회 실패 시)
         """
@@ -71,7 +73,7 @@ class TagService:
     def get_tags(self) -> list[dict]:
         """
         모든 태그 목록을 반환합니다.
-        
+
         Returns:
             태그 딕셔너리 목록
         """
@@ -87,15 +89,17 @@ class TagService:
     def update_tag(self, tag: Tag) -> Optional[Tag]:
         """
         태그 업데이트
-        
+
         Args:
             tag: 업데이트할 태그 객체
-            
+
         Returns:
             업데이트된 태그 객체 또는 None (업데이트 실패 시)
         """
         try:
-            updated_tag = self.repository.update_tag(tag.id, tag.name, tag.description, tag.category_id)
+            updated_tag = self.repository.update_tag(
+                tag.id, tag.name, tag.description, tag.category_id
+            )
             if updated_tag:
                 return updated_tag
             else:

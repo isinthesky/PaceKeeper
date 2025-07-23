@@ -24,11 +24,62 @@
 
 ## 아키텍처
 PaceKeeper는 관심사 분리가 명확한 MVC 아키텍처를 따릅니다:
-- **Views**: PyQt5 UI 컴포넌트 (main_window, dialogs, controls)
-- **Controllers**: 비즈니스 로직 및 상태 관리 (main_controller, timer_controller, config_controller)
-- **Services**: 애플리케이션 서비스 (log_service, tag_service, category_service)
-- **Repository**: SQLAlchemy를 사용한 데이터 접근 계층 (log_repository, tag_repository, category_repository)
-- **Entities**: 데이터베이스 테이블을 위한 SQLAlchemy 모델
+
+### 프로젝트 구조
+```
+pacekeeper/
+├── main.py                    # 애플리케이션 진입점
+├── assets/                    # 정적 리소스
+│   ├── icons/                 # 애플리케이션 아이콘 (PaceKeeper.icns, .ico, .png)
+│   └── sounds/                # 알림음 파일 (알람, 휴식 등)
+├── consts/                    # 상수 및 설정
+│   ├── labels.py             # 다국어 라벨 관리자
+│   ├── lang_ko.json          # 한국어 언어 파일
+│   ├── lang_en.json          # 영어 언어 파일
+│   └── settings.py           # 기본 설정값
+├── controllers/              # 비즈니스 로직 및 상태 관리
+│   ├── main_controller.py    # 메인 애플리케이션 컨트롤러
+│   ├── timer_controller.py   # 타이머 상태 및 뽀모도로 로직
+│   ├── config_controller.py  # 설정 관리
+│   ├── category_controls.py  # 카테고리 컨트롤러
+│   ├── sound_manager.py      # 사운드 시스템 관리
+│   └── timer_thread.py       # 타이머 스레드 처리
+├── repository/               # 데이터 접근 계층
+│   ├── entities.py           # SQLAlchemy 데이터베이스 모델
+│   ├── db_config.py          # 데이터베이스 연결 설정
+│   ├── log_repository.py     # 작업 로그 데이터 접근
+│   ├── tag_repository.py     # 태그 데이터 접근
+│   └── category_repository.py # 카테고리 데이터 접근
+├── services/                 # 애플리케이션 서비스 레이어
+│   ├── log_service.py        # 작업 로그 비즈니스 로직
+│   ├── tag_service.py        # 태그 관리 서비스
+│   ├── category_service.py   # 카테고리 관리 서비스
+│   ├── app_state_manager.py  # 애플리케이션 상태 관리
+│   ├── setting_model.py      # 설정 모델
+│   └── settings_manager.py   # 설정 관리 서비스
+├── utils/                    # 유틸리티 함수
+│   ├── logger.py             # 로깅 유틸리티
+│   ├── desktop_logger.py     # 데스크톱 로깅
+│   ├── functions.py          # 공통 함수
+│   └── resource_path.py      # 리소스 경로 관리
+└── views/                    # PyQt5 UI 컴포넌트
+    ├── main_window.py        # 메인 애플리케이션 윈도우
+    ├── main_frame.py         # 메인 프레임 컴포넌트
+    ├── controls.py           # UI 컨트롤 요소
+    ├── break_dialog.py       # 휴식 알림 다이얼로그
+    ├── log_dialog.py         # 로그 관리 다이얼로그
+    ├── category_dialog.py    # 카테고리 관리 다이얼로그
+    └── settings_dialog.py    # 설정 다이얼로그
+```
+
+### 계층별 역할
+- **Views**: PyQt5 UI 컴포넌트, 사용자 인터페이스 담당 → @pacekeeper/views/CLAUDE.md
+- **Controllers**: 비즈니스 로직 및 상태 관리, View와 Service 간 중재 → @pacekeeper/controllers/CLAUDE.md
+- **Services**: 애플리케이션 서비스, 도메인 로직 처리 → @pacekeeper/services/CLAUDE.md
+- **Repository**: SQLAlchemy를 사용한 데이터 접근 계층 → @pacekeeper/repository/CLAUDE.md
+- **Utils**: 공통 유틸리티 및 헬퍼 함수
+- **Consts**: 상수, 설정값, 다국어 지원
+- **Assets**: 정적 리소스 (아이콘, 사운드)
 
 핵심 컴포넌트:
 - `main.py`: 애플리케이션 진입점, Qt 앱과 컨트롤러 초기화

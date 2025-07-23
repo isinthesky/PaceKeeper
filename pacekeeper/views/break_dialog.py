@@ -108,4 +108,6 @@ class BreakDialog(QDialog):
         on_break_end 콜백을 호출합니다.
         """
         if not self._destroyed and self.on_break_end:
+            self._destroyed = True  # 중복 호출 방지
             self.on_break_end()
+            self.on_break_end = None  # 콜백 참조 제거

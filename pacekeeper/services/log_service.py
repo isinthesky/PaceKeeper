@@ -2,18 +2,20 @@ import json
 from datetime import datetime
 from typing import List, Optional
 
-from pacekeeper.repository.log_repository import LogRepository
-from pacekeeper.repository.entities import Log, Category
-from pacekeeper.repository.tag_repository import TagRepository
-from pacekeeper.utils.functions import extract_tags
-from pacekeeper.utils.desktop_logger import DesktopLogger
 from icecream import ic
 
+from pacekeeper.repository.entities import Category, Log
+from pacekeeper.repository.log_repository import LogRepository
+from pacekeeper.repository.tag_repository import TagRepository
+from pacekeeper.utils.desktop_logger import DesktopLogger
+from pacekeeper.utils.functions import extract_tags
+
+
 class LogService:
-    def __init__(self):
-        self.logger = DesktopLogger("PaceKeeper")
-        self.repository = LogRepository()
-        self.tag_repo = TagRepository()
+    def __init__(self) -> None:
+        self.logger: DesktopLogger = DesktopLogger("PaceKeeper")
+        self.repository: LogRepository = LogRepository()
+        self.tag_repo: TagRepository = TagRepository()
         self.logger.log_system_event("LogService 초기화됨.")
 
     def create_study_log(self, message: str, study_start_time: Optional[datetime] = None) -> None:
@@ -29,9 +31,9 @@ class LogService:
         else:
             start_date = now.strftime("%Y-%m-%d %H:%M:%S")
         end_date = now.strftime("%Y-%m-%d %H:%M:%S")
-        
+
         # 메시지에서 태그 추출 및 태그 테이블에 추가하여 태그 ID 수집
-        tag_ids = []
+        tag_ids: List[int] = []
         tags_list: List[str] = extract_tags(message)
         if tags_list:
             for tag in tags_list:
@@ -45,15 +47,10 @@ class LogService:
 
         # 태그 ID 리스트를 JSON 형식으로 변환하여 저장
         tags_json = json.dumps(tag_ids, ensure_ascii=False)
-        
+
         ic(tags_json)
 
-        new_log = Log(
-            start_date=start_date,
-            end_date=end_date,
-            message=message,
-            tags=tags_json
-        )
+        new_log = Log(start_date=start_date, end_date=end_date, message=message, tags=tags_json)
         try:
             self.repository.save_log(new_log)
             self.logger.log_system_event("학습 로그 저장 성공")
@@ -120,4 +117,4 @@ class LogService:
             self.repository.soft_delete_logs(log_ids)
             self.logger.log_system_event(f"로그 삭제 (IDs: {log_ids}) 성공")
         except Exception as e:
-            self.logger.log_error("로그 삭제 실패", exc_info=True) 
+            self.logger.log_error("로그 삭제 실패", exc_info=True)
