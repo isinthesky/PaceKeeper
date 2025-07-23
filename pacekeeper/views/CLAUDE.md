@@ -142,8 +142,46 @@ def load_stylesheet(self) -> str:
 - **이벤트 최적화**: 빈번한 업데이트는 타이머나 스레드 활용
 - **메모리 관리**: 위젯 참조 해제 및 시그널 연결 해제
 
+### 의존성 주입 및 Controller 연동
+```python
+# MainWindow 의존성 주입 예시
+class MainWindow(QMainWindow):
+    def __init__(self, main_controller: Any | None = None, config_ctrl: Any | None = None) -> None:
+        # Controller는 생성자에서 None으로 받고, 나중에 설정
+        self.main_controller = main_controller
+        self.config_ctrl = config_ctrl
+        
+    def set_main_controller(self, main_controller) -> None:
+        """MainController 설정 (의존성 주입 후 호출)"""
+        self.main_controller = main_controller
+        
+        # 하위 컴포넌트에도 서비스 전달
+        if hasattr(self, 'tag_panel') and self.tag_panel:
+            self.tag_panel.category_service = main_controller.category_service
+
+# TagButtonsPanel 의존성 주입 예시            
+class TagButtonsPanel(QWidget):
+    def __init__(self, parent, on_tag_selected=None, category_service=None):
+        super().__init__(parent)
+        self.category_service = category_service  # 의존성 주입을 통해 전달받음
+```
+
+### Controller를 통한 Service 접근
+```python
+# 올바른 방법: Controller를 통한 Service 접근
+def update_tag_buttons(self):
+    if not self.main_controller:
+        return
+    tags = self.main_controller.tag_service.get_tags()  # Controller를 통해 접근
+    self.tag_panel.update_tags(tags)
+
+# 잘못된 방법: Service 직접 인스턴스화 (금지)
+# self.tag_service = TagService()  # ❌ 금지
+```
+
 ### 금지사항
-- 비즈니스 로직이나 데이터 처리 로직 포함
-- 직접적인 데이터베이스 접근
-- Service나 Repository 직접 호출
-- 하드코딩된 텍스트 (다국어 지원 위반)
+- **비즈니스 로직이나 데이터 처리 로직 포함**: View는 순수 UI만 담당
+- **Service나 Repository 직접 인스턴스화**: `new Service()` 사용 금지
+- **Service 직접 호출**: 반드시 Controller를 통해서만 접근
+- **직접적인 데이터베이스 접근**: 모든 데이터 접근은 Controller 경유
+- **하드코딩된 텍스트**: Labels.get_label() 사용 (다국어 지원)

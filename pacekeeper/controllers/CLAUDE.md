@@ -22,9 +22,11 @@ Controllers 레이어는 비즈니스 로직과 상태 관리를 담당하며, V
 ## 코드 작성 규칙
 
 ### 아키텍처 패턴
-- **의존성 주입**: 생성자를 통한 서비스 의존성 주입
+- **의존성 주입**: 생성자를 통한 서비스 인터페이스 주입 (ILogService, ITagService, ICategoryService)
+- **인터페이스 의존**: 구체 클래스가 아닌 인터페이스에 의존하여 테스트성과 확장성 향상
 - **단일 책임**: 각 컨트롤러는 하나의 도메인 영역만 담당
 - **이벤트 기반**: PyQt5 시그널/슬롯을 활용한 느슨한 결합
+- **View-Service 중재**: UI 이벤트를 Service 호출로 변환하는 어댑터 역할
 
 ### 네이밍 컨벤션
 ```python
@@ -64,8 +66,30 @@ logger.debug(f"설정 업데이트: {key}={old_value} → {new_value}")
 - **데이터 바인딩**: 상태 변경 시 즉시 View에 반영
 - **비동기 처리**: 긴 작업은 별도 스레드에서 처리 후 시그널로 결과 전달
 
+### 의존성 주입 패턴 적용
+```python
+# 의존성 주입 생성자 패턴
+class MainController:
+    def __init__(
+        self,
+        main_window: "MainWindow",
+        config_ctrl: ConfigController,
+        category_service: ICategoryService,  # 인터페이스에 의존
+        tag_service: ITagService,           # 인터페이스에 의존  
+        log_service: ILogService,           # 인터페이스에 의존
+        sound_manager: SoundManager,
+        timer_service: TimerService
+    ) -> None:
+        # 의존성 저장
+        self.category_service = category_service
+        self.tag_service = tag_service
+        self.log_service = log_service
+```
+
 ### 금지사항
-- Repository 직접 접근 (반드시 Service를 통해)
-- UI 위젯 직접 생성 또는 조작
-- 하드코딩된 설정값 사용
-- 동기적 네트워크 또는 파일 I/O
+- **Repository 직접 접근**: 반드시 Service 인터페이스를 통해서만 접근
+- **구체 클래스 의존**: Service 구현체가 아닌 인터페이스에 의존
+- **직접 인스턴스화**: `new Service()` 대신 DI 컨테이너를 통한 주입
+- **UI 위젯 직접 생성**: View는 View에서만 관리
+- **하드코딩된 설정값**: ConfigController를 통한 설정 관리
+- **동기적 네트워크/파일 I/O**: 블로킹 작업 방지

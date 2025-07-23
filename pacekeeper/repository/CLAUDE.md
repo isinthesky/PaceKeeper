@@ -22,7 +22,9 @@ Repository 레이어는 데이터 접근을 추상화하고 데이터 영속성�
 
 ### 아키텍처 패턴
 - **Repository 패턴**: 데이터 접근 로직을 비즈니스 로직에서 분리
-- **Unit of Work**: 트랜잭션 단위로 작업 관리
+- **인터페이스 구현**: 각 Repository는 해당 인터페이스를 구현 (ILogRepository, ITagRepository, ICategoryRepository)
+- **의존성 주입**: DatabaseSessionManager를 생성자에서 주입받아 사용
+- **Unit of Work**: 트랜잭션 단위로 작업 관리 및 데이터 일관성 보장
 - **Active Record 방지**: 엔티티는 순수 데이터 모델로 유지
 
 ### 네이밍 컨벤션
@@ -128,8 +130,38 @@ def find_paginated(self, page: int, size: int) -> Tuple[List[LogEntity], int]:
 - **인덱스 활용**: 자주 조회되는 컬럼에 인덱스 설정
 - **배치 처리**: bulk_insert_mappings, bulk_update_mappings 활용
 
+### 의존성 주입 및 세션 관리
+```python
+# Repository 의존성 주입 예시
+class CategoryRepository(ICategoryRepository):
+    def __init__(self, session_manager: DatabaseSessionManager):
+        self.session_manager = session_manager  # 중앙화된 세션 관리자 주입
+        self.desktop_logger = DesktopLogger("PaceKeeper")
+        
+    def create_category(self, name: str, description: str = "", color: str = "#FFFFFF") -> Category:
+        with self.session_manager.session_scope() as session:  # 중앙화된 세션 사용
+            category = Category(name=name, description=description, color=color)
+            session.add(category)
+            session.flush()  # ID 생성을 위해
+            return category
+```
+
+### DI 컨테이너 등록
+```python
+# container/service_registration.py
+def _register_repositories(container: "DIContainer") -> None:
+    # 인터페이스와 구현체 매핑
+    container.register_singleton(ILogRepository, LogRepository)
+    container.register_singleton(ITagRepository, TagRepository)
+    container.register_singleton(ICategoryRepository, CategoryRepository)
+    
+    # 인프라스트럭처 서비스
+    container.register_singleton(DatabaseSessionManager, DatabaseSessionManager)
+```
+
 ### 금지사항
-- 비즈니스 로직 포함 (순수 데이터 액세스만)
-- UI 또는 외부 서비스 직접 호출
-- 하드코딩된 SQL 쿼리 (ORM 활용)
-- 트랜잭션 경계 외부에서 lazy loading
+- **비즈니스 로직 포함**: 순수 데이터 접근만 담당
+- **직접 세션 생성**: DatabaseSessionManager를 통해서만 세션 접근
+- **UI 또는 외부 서비스 직접 호출**: 계층 간 의존성 위반 방지
+- **하드코딩된 SQL 쿼리**: ORM을 활용한 타입 안전 쿼리
+- **트랜잭션 경계 외부에서 lazy loading**: 세션 스코프 밖에서 지연 로딩 방지

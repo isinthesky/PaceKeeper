@@ -23,8 +23,10 @@ Services 레이어는 애플리케이션의 핵심 비즈니스 로직을 처리
 
 ### 아키텍처 패턴
 - **도메인 중심 설계**: 비즈니스 로직을 도메인별로 분리
-- **의존성 역전**: Repository 인터페이스에 의존, 구현체는 주입
+- **의존성 역전 원칙**: Repository 인터페이스에 의존, 구현체는 DI 컨테이너에서 주입
+- **인터페이스 구현**: 각 Service는 해당 인터페이스를 구현 (ILogService, ITagService, ICategoryService)
 - **순수 함수 지향**: 가능한 한 부작용 없는 함수 작성
+- **트랜잭션 관리**: UnitOfWork 패턴을 통한 데이터 일관성 보장
 
 ### 네이밍 컨벤션
 ```python
@@ -103,8 +105,34 @@ logger.debug(f"생산성 통계 계산 완료: {stats}")
 - **캐싱**: 자주 조회되는 데이터의 메모리 캐싱
 - **배치 처리**: 대량 데이터 처리 시 배치 단위 처리
 
+### 의존성 주입 패턴 적용
+```python
+# Service 의존성 주입 예시
+class CategoryService(ICategoryService):
+    def __init__(self, category_repository: ICategoryRepository) -> None:
+        self.repo: ICategoryRepository = category_repository  # 인터페이스에 의존
+        self.logger: DesktopLogger = DesktopLogger("PaceKeeper")
+        
+    def create_category(self, name: str, description: str = "", color: str = "#FFFFFF") -> Category:
+        # 비즈니스 로직 수행
+        category = self.repo.create_category(name, description, color)  # 인터페이스 메서드 호출
+        return category
+```
+
+### DI 컨테이너 등록
+```python
+# container/service_registration.py
+def _register_services(container: "DIContainer") -> None:
+    # 인터페이스와 구현체 매핑
+    container.register_singleton(ILogService, LogService)
+    container.register_singleton(ITagService, TagService)
+    container.register_singleton(ICategoryService, CategoryService)
+```
+
 ### 금지사항
-- UI 코드나 PyQt5 위젯 직접 참조
-- 파일 시스템 직접 접근 (Repository를 통해)
-- 하드코딩된 비즈니스 규칙 (설정이나 상수 사용)
-- 동시성 제어 없는 공유 상태 변경
+- **UI 코드나 PyQt5 위젯 직접 참조**: View 계층과의 의존성 금지
+- **Repository 구현체 직접 의존**: 인터페이스를 통해서만 접근
+- **직접 인스턴스화**: `new Repository()` 대신 DI를 통한 주입
+- **파일 시스템 직접 접근**: Repository를 통해서만 데이터 접근
+- **하드코딩된 비즈니스 규칙**: 설정이나 상수 활용
+- **동시성 제어 없는 공유 상태 변경**: 스레드 안전성 고려
