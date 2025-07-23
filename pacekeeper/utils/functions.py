@@ -1,7 +1,8 @@
 # utils.py
 import os
-import sys
 import re
+import sys
+
 
 def resource_path(relative_path: str) -> str:
     """

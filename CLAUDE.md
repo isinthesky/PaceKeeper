@@ -63,8 +63,7 @@ pacekeeper/
 │   ├── functions.py          # 공통 함수
 │   └── resource_path.py      # 리소스 경로 관리
 └── views/                    # PyQt5 UI 컴포넌트
-    ├── main_window.py        # 메인 애플리케이션 윈도우
-    ├── main_frame.py         # 메인 프레임 컴포넌트
+    ├── main_window.py        # 메인 애플리케이션 윈도우 (미니 모드 지원)
     ├── controls.py           # UI 컨트롤 요소
     ├── break_dialog.py       # 휴식 알림 다이얼로그
     ├── log_dialog.py         # 로그 관리 다이얼로그
@@ -83,7 +82,7 @@ pacekeeper/
 
 핵심 컴포넌트:
 - `main.py`: 애플리케이션 진입점, Qt 앱과 컨트롤러 초기화
-- `main_window.py`: 타이머와 컨트롤이 있는 메인 애플리케이션 윈도우
+- `main_window.py`: 타이머와 컨트롤이 있는 메인 애플리케이션 윈도우 (미니 모드 지원)
 - `timer_controller.py`: 타이머 상태와 휴식 로직 관리 (뽀모도로 기법)
 - `config_controller.py`: 애플리케이션 설정 및 지속성 처리
 

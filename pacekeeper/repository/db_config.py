@@ -15,7 +15,7 @@ def get_db_path():
             app_support = os.path.expanduser('~/Library/Application Support/PaceKeeper')
         else:
             app_support = os.path.expanduser('~/.pacekeeper')
-        
+
         # 디렉토리가 없으면 생성
         os.makedirs(app_support, exist_ok=True)
         db_path = os.path.join(app_support, DB_FILE)
@@ -24,7 +24,7 @@ def get_db_path():
         # 프로젝트 루트에서 한 단계 위의 pacekeeper 디렉토리에 생성
         base_dir = Path(__file__).parent.parent
         db_path = os.path.join(base_dir, DB_FILE)
-    
+
     return db_path
 
 

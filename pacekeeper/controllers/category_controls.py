@@ -1,15 +1,22 @@
-from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, 
-                           QLineEdit, QPushButton, QMessageBox, QListWidget, QListWidgetItem,
-                           QColorDialog, QWidget)
-from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import (
+    QColorDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
+from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.services.category_service import CategoryService
-from pacekeeper.repository.entities import Tag
-from pacekeeper.consts.labels import load_language_resource
-from icecream import ic
-
 
 lang_res = load_language_resource(ConfigController().get_language())
 
@@ -43,14 +50,14 @@ class CategoryControlsPanel(QWidget):
         self.color_button.setStyleSheet("background-color: #FFFFFF;")
         self.color_button.clicked.connect(self.on_color_pick)
         self.current_color = "#FFFFFF"
-        
+
         form_layout.addWidget(name_label, 0, 0)
         form_layout.addWidget(self.name_text, 0, 1)
         form_layout.addWidget(description_label, 1, 0)
         form_layout.addWidget(self.description_text, 1, 1)
         form_layout.addWidget(color_label, 2, 0)
         form_layout.addWidget(self.color_button, 2, 1)
-        
+
         main_layout.addLayout(form_layout)
 
         # 버튼 영역: 생성, 수정, 삭제
@@ -109,14 +116,14 @@ class CategoryControlsPanel(QWidget):
         if not selected_items:
             QMessageBox.information(self, "알림", "수정할 카테고리를 선택하세요.")
             return
-        
+
         selected_category = selected_items[0].data(Qt.UserRole)
         category_id = selected_category.id
-        
+
         new_name = self.name_text.text().strip()
         new_description = self.description_text.text().strip()
         new_color = self.current_color
-        
+
         if not new_name:
             QMessageBox.critical(self, "오류", "이름을 입력하세요.")
             return
@@ -134,11 +141,11 @@ class CategoryControlsPanel(QWidget):
         if not selected_items:
             QMessageBox.information(self, "알림", "삭제할 카테고리를 선택하세요.")
             return
-        
+
         selected_category = selected_items[0].data(Qt.UserRole)
         category_id = selected_category.id
-        
-        answer = QMessageBox.question(self, "확인", "선택한 카테고리를 삭제하시겠습니까?", 
+
+        answer = QMessageBox.question(self, "확인", "선택한 카테고리를 삭제하시겠습니까?",
                                      QMessageBox.Yes | QMessageBox.No)
         if answer != QMessageBox.Yes:
             return
@@ -155,7 +162,7 @@ class CategoryControlsPanel(QWidget):
         목록에서 항목이 선택되면 해당 카테고리의 이름, 설명 및 색상을 입력 폼에 채웁니다.
         """
         selected_category = item.data(Qt.UserRole)
-        
+
         self.name_text.setText(selected_category.name)
         self.description_text.setText(selected_category.description)
 
@@ -179,11 +186,11 @@ class CategoryControlsPanel(QWidget):
         self.current_color = "#FFFFFF"
         self.color_button.setStyleSheet("background-color: #FFFFFF;")
         self.list_widget.clearSelection()
-            
+
 class TagButtonsPanel(QWidget):
     """태그 버튼들을 관리하는 패널"""
     tag_selected = pyqtSignal(dict)
-    
+
     def __init__(self, parent=None, on_tag_selected=None):
         super().__init__(parent)
         self.on_tag_selected = on_tag_selected
@@ -193,7 +200,7 @@ class TagButtonsPanel(QWidget):
         self.setLayout(self.layout)
         self.service = CategoryService()
         self.selected_tag = None
-            
+
     def update_tags(self, tags:list[dict]):
         """
         태그 버튼 업데이트 메서드.
@@ -204,25 +211,25 @@ class TagButtonsPanel(QWidget):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
-        
+
         categories = self.service.get_categories()
         color_set = {category.id: category for category in categories}
-                
+
         for tag in tags:
             if tag:
                 # 명시적으로 문자열 변환하여 인코딩 보장
                 tag_name = str(tag["name"])
                 btn = QPushButton(tag_name, self)
-                
+
                 if self.on_tag_selected:
                     btn.clicked.connect(lambda checked, t=tag: self.on_tag_selected(t))
                 else:
                     btn.clicked.connect(lambda checked, t=tag: self.tag_selected.emit(t))
-                
+
                 category = color_set.get(tag["category_id"])
                 if category:
                     btn.setStyleSheet(f"background-color: {category.color};")
-                    
+
                 self.layout.addWidget(btn)
-                
+
         self.update()

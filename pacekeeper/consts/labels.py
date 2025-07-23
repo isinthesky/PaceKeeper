@@ -2,20 +2,20 @@ import json
 import os
 import sys
 from dataclasses import dataclass
-from typing import Dict
 from pathlib import Path
+
 
 @dataclass(frozen=True)
 class LanguageResource:
-    base_labels: Dict[str, str]
-    title_labels: Dict[str, str]
-    button_labels: Dict[str, str]
-    menu_labels: Dict[str, str]
-    tab_labels: Dict[str, str]
-    group_labels: Dict[str, str]
-    setting_labels: Dict[str, str]
-    messages: Dict[str, str]
-    error_messages: Dict[str, str]
+    base_labels: dict[str, str]
+    title_labels: dict[str, str]
+    button_labels: dict[str, str]
+    menu_labels: dict[str, str]
+    tab_labels: dict[str, str]
+    group_labels: dict[str, str]
+    setting_labels: dict[str, str]
+    messages: dict[str, str]
+    error_messages: dict[str, str]
 
 def load_language_resource(language: str = "ko") -> LanguageResource:
     """

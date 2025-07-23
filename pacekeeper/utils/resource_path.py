@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """리소스 경로 처리 유틸리티"""
+import logging
 import os
 import sys
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ def resource_path(relative_path):
     else:
         # 개발 환경: 프로젝트 루트 디렉토리 사용
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    
+
     # 상대 경로 처리
     if relative_path.startswith('pacekeeper/'):
         # 개발 환경에서의 전체 경로
@@ -26,11 +26,11 @@ def resource_path(relative_path):
             full_path = os.path.join(base_path, relative_path)
     else:
         full_path = os.path.join(base_path, relative_path)
-    
+
     # 디버그 로깅
     logger.debug(f"Resource path: {relative_path} -> {full_path}")
     logger.debug(f"File exists: {os.path.exists(full_path)}")
-    
+
     return full_path
 
 def get_asset_path(filename):

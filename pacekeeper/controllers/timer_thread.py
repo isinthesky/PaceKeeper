@@ -4,9 +4,11 @@
 
 import threading
 import time
+from collections.abc import Callable
+
 # wx 모듈은 PyQt5로 변환되었으므로 더 이상 필요하지 않습니다.
 # import wx
-from typing import Callable, Optional
+
 
 class TimerThread(threading.Thread):
     """
@@ -22,7 +24,7 @@ class TimerThread(threading.Thread):
         config_controller,
         update_callback: Callable[[str], None],
         total_seconds: int,
-        on_finish: Optional[Callable[[], None]] = None,
+        on_finish: Callable[[], None] | None = None,
         pauseable: bool = True
     ):
         super().__init__()

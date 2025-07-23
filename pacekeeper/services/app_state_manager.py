@@ -1,8 +1,8 @@
 # services/app_state_manager.py
 
-from enum import Enum
 from dataclasses import dataclass
-from typing import List, Callable, Dict, Any, Optional
+from enum import Enum
+from typing import Any
 
 from pacekeeper.consts.labels import load_language_resource
 
@@ -67,8 +67,8 @@ class AppStateManager:
         self._status: AppStatus = AppStatus.WAIT
         self._is_running: bool = False
         self._current_cycle: int = 1
-        self._observers: List[Observer] = []
-    
+        self._observers: list[Observer] = []
+
     def add_observer(self, observer: Observer) -> None:
         """
         상태 변경을 관찰할 옵저버 추가
@@ -78,7 +78,7 @@ class AppStateManager:
         """
         if observer not in self._observers:
             self._observers.append(observer)
-    
+
     def remove_observer(self, observer: Observer) -> None:
         """
         등록된 옵저버 제거
@@ -88,7 +88,7 @@ class AppStateManager:
         """
         if observer in self._observers:
             self._observers.remove(observer)
-    
+
     def _notify_observers(self, event_type: str, **kwargs: Any) -> None:
         """
         등록된 모든 옵저버에게 알림
@@ -99,11 +99,11 @@ class AppStateManager:
         """
         for observer in self._observers:
             observer.update(event_type, **kwargs)
-    
+
     def get_status(self) -> AppStatus:
         """현재 애플리케이션 상태 반환"""
         return self._status
-    
+
     def set_status(self, status: AppStatus) -> None:
         """
         애플리케이션 상태 설정 및 옵저버에 알림
@@ -114,11 +114,11 @@ class AppStateManager:
         old_status = self._status
         self._status = status
         self._notify_observers("status_changed", old=old_status, new=status)
-    
+
     def is_running(self) -> bool:
         """애플리케이션 실행 상태 반환"""
         return self._is_running
-    
+
     def set_running(self, running: bool) -> None:
         """
         애플리케이션 실행 상태 설정
@@ -129,11 +129,11 @@ class AppStateManager:
         old_running = self._is_running
         self._is_running = running
         self._notify_observers("running_changed", old=old_running, new=running)
-    
+
     def get_cycle(self) -> int:
         """현재 사이클 수 반환"""
         return self._current_cycle
-    
+
     def set_cycle(self, cycle: int) -> None:
         """
         사이클 수 직접 설정
@@ -144,7 +144,7 @@ class AppStateManager:
         old_cycle = self._current_cycle
         self._current_cycle = cycle
         self._notify_observers("cycle_changed", old=old_cycle, new=cycle)
-    
+
     def increment_cycle(self) -> int:
         """
         사이클 수 증가 및 옵저버에 알림
@@ -156,12 +156,12 @@ class AppStateManager:
         self._current_cycle += 1
         self._notify_observers("cycle_changed", old=old_cycle, new=self._current_cycle)
         return self._current_cycle
-    
+
     def start_app(self) -> None:
         """애플리케이션 시작 및 상태 변경"""
         self.set_running(True)
         self.set_status(AppStatus.STUDY)
-    
+
     def stop_app(self) -> None:
         """애플리케이션 중지 및 상태 초기화"""
         self.set_running(False)

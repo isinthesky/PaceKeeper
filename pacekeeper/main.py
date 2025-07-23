@@ -78,16 +78,17 @@ def main() -> NoReturn:
         logger.info("ConfigController 생성...")
         config_ctrl = ConfigController()
 
+        # 메인 컨트롤러 생성
+        logger.info("MainController 생성...")
+        main_ctrl = None  # 임시로 None으로 설정
+
         # 메인 윈도우 생성
         logger.info("MainWindow 생성...")
-        main_window = MainWindow(None, config_ctrl)
+        main_window = MainWindow(main_ctrl, config_ctrl)
 
-        # 메인 컨트롤러 생성 및 메인 윈도우에 연결
-        logger.info("MainController 생성...")
+        # 메인 컨트롤러 생성 및 연결
         main_ctrl = MainController(main_window, config_ctrl)
-
-        # 메인 윈도우에 메인 컨트롤러 설정
-        main_window.main_ctrl = main_ctrl
+        main_window.main_controller = main_ctrl
 
         # 메인 윈도우 표시
         logger.info("메인 윈도우 표시...")

@@ -1,11 +1,10 @@
 # controllers/config_controller.py
 
-from typing import Dict, Any, Optional
+from typing import Any
 
-from pacekeeper.services.app_state_manager import AppStatus, AppStateManager
-from pacekeeper.services.settings_manager import SettingsManager
 from pacekeeper.consts.labels import load_language_resource
-from pacekeeper.consts.settings import SET_LANGUAGE
+from pacekeeper.services.app_state_manager import AppStateManager, AppStatus
+from pacekeeper.services.settings_manager import SettingsManager
 
 # 언어 리소스 로드
 lang_res = load_language_resource()
@@ -18,7 +17,7 @@ class ConfigController:
     """
     _instance = None
 
-    def __new__(cls, settings_manager: Optional[SettingsManager] = None, app_state_manager: Optional[AppStateManager] = None):
+    def __new__(cls, settings_manager: SettingsManager | None = None, app_state_manager: AppStateManager | None = None):
         """
         싱글톤 패턴 구현 또는 의존성 주입을 통한 인스턴스 생성
         
@@ -32,14 +31,14 @@ class ConfigController:
         if settings_manager is not None or app_state_manager is not None:
             # 의존성 주입 모드: 새 인스턴스 생성
             return super().__new__(cls)
-        
+
         # 싱글톤 모드: 기존 인스턴스 반환 또는 새 인스턴스 생성
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.__initialized = False
         return cls._instance
 
-    def __init__(self, settings_manager: Optional[SettingsManager] = None, app_state_manager: Optional[AppStateManager] = None):
+    def __init__(self, settings_manager: SettingsManager | None = None, app_state_manager: AppStateManager | None = None):
         """
         ConfigController 초기화
         
@@ -50,11 +49,11 @@ class ConfigController:
         # 싱글톤 모드에서 중복 초기화 방지
         if hasattr(self, "__initialized") and self.__initialized:
             return
-            
+
         # 의존성 주입 또는 새 인스턴스 생성
         self.settings_manager = settings_manager or SettingsManager()
         self.app_state_manager = app_state_manager or AppStateManager()
-        
+
         self.__initialized = True
 
     # --- 설정 관련 메서드 (SettingsManager에 위임) ---
@@ -80,7 +79,7 @@ class ConfigController:
             value: 설정 값
         """
         self.settings_manager.set_setting(key, value)
-        
+
     def save_settings(self) -> bool:
         """
         현재 설정을 파일에 저장
@@ -90,7 +89,7 @@ class ConfigController:
         """
         return self.settings_manager.save_settings()
 
-    def update_settings(self, new_settings: Dict[str, Any]) -> Dict[str, str]:
+    def update_settings(self, new_settings: dict[str, Any]) -> dict[str, str]:
         """
         여러 설정 값 업데이트 및 저장
         
@@ -143,7 +142,7 @@ class ConfigController:
     def is_running(self) -> bool:
         """애플리케이션 실행 상태 반환"""
         return self.app_state_manager.is_running()
-    
+
     @is_running.setter
     def is_running(self, running: bool) -> None:
         """애플리케이션 실행 상태 설정"""

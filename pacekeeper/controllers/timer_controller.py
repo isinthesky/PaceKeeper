@@ -1,10 +1,12 @@
 # controllers/timer_controller.py
 
-from typing import Callable, Optional
+from collections.abc import Callable
+
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal
 
-from pacekeeper.services.app_state_manager import AppStatus
 from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.services.app_state_manager import AppStatus
+
 
 class TimerService(QObject):
     """
@@ -16,15 +18,15 @@ class TimerService(QObject):
     Attributes:
         timer_finished: 타이머 완료 시 발생하는 시그널
     """
-    
+
     # 시그널 정의
     timer_finished = pyqtSignal()
-    
+
     def __init__(
         self,
         config_ctrl: ConfigController,
         update_callback: Callable[[str], None],
-        on_finish: Optional[Callable[[], None]] = None,
+        on_finish: Callable[[], None] | None = None,
         pauseable: bool = True
     ) -> None:
         """
@@ -37,16 +39,16 @@ class TimerService(QObject):
             pauseable: 타이머 일시정지 가능 여부 (기본값: True)
         """
         super().__init__()
-        
+
         self.config_ctrl = config_ctrl
         self.update_callback = update_callback
         self.on_finish = on_finish
         self.pauseable = pauseable
-        
+
         # QTimer 초기화
         self.timer = QTimer()
         self.timer.timeout.connect(self._timer_tick)
-        
+
         # 타이머 상태 변수
         self.remaining_seconds: int = 0
         self.paused: bool = False
@@ -66,15 +68,15 @@ class TimerService(QObject):
         # 앱 상태 업데이트
         self.config_ctrl.set_status(AppStatus.STUDY)
         self.config_ctrl.is_running = True
-        
+
         # 타이머 종료 시 호출할 내부 콜백 연결
         self.timer_finished.connect(self._on_timer_finished)
-        
+
         # 타이머 초기화 및 시작
         self.remaining_seconds = total_seconds
         self._is_running = True
         self.paused = False
-        
+
         self._update_display()  # 초기 표시 업데이트
         self.timer.start(1000)  # 1초마다 tick
 
@@ -89,14 +91,14 @@ class TimerService(QObject):
             self._is_running = False
             self.paused = False
             self.remaining_seconds = 0
-            
+
             # 시그널 연결 해제
             try:
                 self.timer_finished.disconnect()
             except TypeError:
                 # 연결된 슬롯이 없는 경우 예외 처리
                 pass
-                
+
         self.config_ctrl.is_running = False
         self.config_ctrl.set_status(AppStatus.WAIT)
 
@@ -120,7 +122,7 @@ class TimerService(QObject):
         if self._is_running and self.pauseable and self.paused:
             self.paused = False
             self.timer.start(1000)
-            
+
             # 이전 상태로 복원 (학습 또는 휴식)
             current_status = self.config_ctrl.get_status()
             if current_status == AppStatus.PAUSED:
@@ -143,7 +145,7 @@ class TimerService(QObject):
             타이머가 실행 중이면 True, 아니면 False
         """
         return self._is_running
-    
+
     def get_remaining_time(self) -> tuple[int, int]:
         """
         현재 남은 시간을 분:초 형식으로 반환
@@ -154,7 +156,7 @@ class TimerService(QObject):
         minutes = self.remaining_seconds // 60
         seconds = self.remaining_seconds % 60
         return (minutes, seconds)
-    
+
     def _timer_tick(self) -> None:
         """
         타이머 틱 처리 - 1초마다 호출됨
@@ -169,7 +171,7 @@ class TimerService(QObject):
             self.timer.stop()
             self._is_running = False
             self.timer_finished.emit()
-    
+
     def _update_display(self) -> None:
         """
         남은 시간을 UI에 표시
@@ -178,10 +180,10 @@ class TimerService(QObject):
         """
         minutes, seconds = self.get_remaining_time()
         time_str = f"{minutes:02}:{seconds:02}"
-        
+
         if self.update_callback:
             self.update_callback(time_str)
-    
+
     def _on_timer_finished(self) -> None:
         """
         타이머 종료 시 호출되는 내부 처리

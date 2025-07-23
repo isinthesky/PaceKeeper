@@ -1,20 +1,29 @@
 # views/log_dialog.py
 import json
-from typing import List
 from datetime import date, datetime, timedelta
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-                           QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView,
-                           QWidget, QMessageBox, QScrollArea)
-from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtGui import QFont
 
+from icecream import ic
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+)
+
+from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.repository.entities import Log
 from pacekeeper.services.log_service import LogService
 from pacekeeper.services.tag_service import TagService
-from pacekeeper.repository.entities import Log
-from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.views.controls import TagButtonsPanel
-from icecream import ic
 
 lang_res = load_language_resource(ConfigController().get_language())
 
@@ -24,7 +33,7 @@ class LogDialog(QDialog):
         self.setWindowTitle(lang_res.base_labels['LOGS'])
         self.resize(800, 800)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-        
+
         self.config = config_controller
         self.log_service = LogService()
         self.tag_service = TagService()
@@ -63,7 +72,7 @@ class LogDialog(QDialog):
             ("1주", 7),
             ("1일", 1),
         ]
-        
+
         for label, days in period_buttons:
             btn = QPushButton(label)
             btn.setFixedWidth(40)
@@ -88,10 +97,10 @@ class LogDialog(QDialog):
         search_btn = QPushButton(lang_res.button_labels['SEARCH'])
         search_btn.clicked.connect(self.on_search)
         search_layout.addWidget(search_btn)
-        
+
         # 레이아웃에 검색 영역 추가
         main_layout.addLayout(search_layout)
-        
+
         # ---------------------------------------------------------------------
         # (1-1) 태그 버튼 패널: 자주 사용하는 태그 버튼 표시
         # ---------------------------------------------------------------------
@@ -99,19 +108,19 @@ class LogDialog(QDialog):
         tag_panel_label = QLabel("자주 사용하는 태그")
         tag_panel_label.setAlignment(Qt.AlignCenter)
         tag_panel_layout.addWidget(tag_panel_label)
-        
+
         # 태그 버튼 패널 생성
         self.tag_buttons_panel = TagButtonsPanel(self, self.on_tag_button_clicked)
-        
+
         # 태그 버튼 패널을 스크롤 영역에 추가
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(self.tag_buttons_panel)
         scroll_area.setMaximumHeight(100)  # 높이 제한
-        
+
         tag_panel_layout.addWidget(scroll_area)
         main_layout.addLayout(tag_panel_layout)
-        
+
         # 태그 버튼 패널 업데이트
         self.update_tag_buttons()
 
@@ -146,7 +155,7 @@ class LogDialog(QDialog):
         """
         DB에서 전체 로그를 가져와서 TableWidget에 표시
         """
-        rows: List[Log] = self.log_service.retrieve_all_logs()
+        rows: list[Log] = self.log_service.retrieve_all_logs()
         self.load_rows(rows)
 
     def load_rows(self, rows):
@@ -154,7 +163,7 @@ class LogDialog(QDialog):
         TableWidget 초기화 후, rows 데이터(ID, start_date, message, tags) 출력
         """
         self.table_widget.setRowCount(0)
-        
+
         # 데이터가 없는 경우 메시지 표시
         if not rows:
             # 테이블에 "데이터가 없습니다" 메시지를 표시
@@ -167,13 +176,13 @@ class LogDialog(QDialog):
             # 셀 병합
             self.table_widget.setSpan(0, 1, 1, 3)
             return
-            
+
         for row_idx, row in enumerate(rows):
             self.table_widget.insertRow(row_idx)
             self.table_widget.setItem(row_idx, 0, QTableWidgetItem(str(row.id)))
             self.table_widget.setItem(row_idx, 1, QTableWidgetItem(str(row.start_date)))
             self.table_widget.setItem(row_idx, 2, QTableWidgetItem(str(row.message)))
-            
+
             # 태그 ID를 태그 이름으로 변환
             tag_text = ""
             try:
@@ -184,7 +193,7 @@ class LogDialog(QDialog):
                     except (json.JSONDecodeError, TypeError) as e:
                         ic(f"JSON 파싱 오류: {e} - 입력: {row.tags}")
                         tag_ids = []
-                    
+
                     # 유효한 태그 ID 리스트인 경우 태그 서비스를 통해 이름 가져오기
                     if isinstance(tag_ids, list) and tag_ids:
                         tag_names = self.tag_service.get_tag_text(tag_ids)
@@ -195,7 +204,7 @@ class LogDialog(QDialog):
             except Exception as e:
                 ic(f"태그 변환 오류: {e}")
                 tag_text = ""
-                
+
             # 태그 텍스트 설정
             tag_item = QTableWidgetItem(tag_text)
             self.table_widget.setItem(row_idx, 3, tag_item)
@@ -211,7 +220,7 @@ class LogDialog(QDialog):
         try:
             end_dt = datetime.strptime(end_date_str, "%Y-%m-%d").date()
         except ValueError:
-            QMessageBox.critical(self, lang_res.base_labels['ERROR'], 
+            QMessageBox.critical(self, lang_res.base_labels['ERROR'],
                                lang_res.error_messages['SEARCH_DATE'])
             return
 
@@ -227,25 +236,25 @@ class LogDialog(QDialog):
         start_date = self.selected_start_date
         end_date = self.selected_end_date
         tag_keyword = self.tag_tc.text().strip().lower()  # 소문자로 변환
-    
+
         # 날짜 범위 조건 처리
         rows_date = self.log_service.retrieve_logs_by_period(start_date, end_date) if start_date and end_date else self.log_service.retrieve_all_logs()
-        
+
         # 태그 조건 처리
         if tag_keyword:
             rows_tag = self.log_service.retrieve_logs_by_tag(tag_keyword)
-            
+
             # ID 기반으로 교집합 찾기
             date_ids = {log.id for log in rows_date}
             tag_ids = {log.id for log in rows_tag}
             common_ids = date_ids.intersection(tag_ids)
-            
+
             # 교집합 ID에 해당하는 로그만 필터링
             result_rows = [log for log in rows_date if log.id in common_ids]
         else:
             # 태그 키워드가 없으면 날짜 기준 결과만 사용
             result_rows = rows_date
-            
+
         # ID 기준 내림차순 정렬
         sorted_rows = sorted(result_rows, key=lambda x: x.id, reverse=True)
         self.load_rows(sorted_rows)
@@ -256,12 +265,12 @@ class LogDialog(QDialog):
         """
         # 선택된 항목 인덱스를 가져옴
         selected_rows = self.table_widget.selectionModel().selectedRows()
-        
+
         if not selected_rows:
             QMessageBox.information(self, "알림", "삭제할 로그를 선택하세요.")
             return
 
-        answer = QMessageBox.question(self, "확인", "선택한 로그를 삭제하시겠습니까?", 
+        answer = QMessageBox.question(self, "확인", "선택한 로그를 삭제하시겠습니까?",
                                     QMessageBox.Yes | QMessageBox.No)
         if answer != QMessageBox.Yes:
             return
@@ -295,12 +304,12 @@ class LogDialog(QDialog):
             # 태그 서비스에서 모든 태그 가져오기
             tags = self.tag_service.get_tags()
             ic("태그 목록 조회 성공", len(tags))
-            
+
             # 태그 버튼 패널 업데이트
             self.tag_buttons_panel.update_tags(tags)
         except Exception as e:
             ic("태그 버튼 패널 업데이트 실패", e)
-    
+
     def on_tag_button_clicked(self, tag):
         """
         태그 버튼 클릭 시 해당 태그로 검색을 수행합니다.

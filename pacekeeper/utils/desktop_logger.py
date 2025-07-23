@@ -1,8 +1,8 @@
-import os
-import sys
 import logging
 import logging.handlers
-from icecream import ic
+import os
+import sys
+
 
 class DesktopLogger:
     def __init__(self, app_name="PaceKeeper"):
@@ -13,16 +13,16 @@ class DesktopLogger:
             base_dir = os.getenv('APPDATA')
         else:
             base_dir = os.path.expanduser("~")
-        
+
         # Windows: APPDATA\PaceKeeper\logs, 기타 OS: ~/.pacekeeper/logs
         if sys.platform == 'win32':
             self.log_dir = os.path.join(base_dir, app_name, 'logs')
         else:
             self.log_dir = os.path.join(base_dir, f".{app_name.lower()}", "logs")
-            
+
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir, exist_ok=True)
-        
+
         # 로거 초기화 및 파일 핸들러 설정
         self.logger = self._setup_logger()
 
@@ -65,4 +65,4 @@ class DesktopLogger:
 
     def log_system_event(self, event):
         """시스템 이벤트 로깅"""
-        self.logger.info(f"System Event: {event}") 
+        self.logger.info(f"System Event: {event}")

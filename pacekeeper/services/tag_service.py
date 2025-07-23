@@ -1,14 +1,10 @@
 import json
-from datetime import datetime
-from typing import List, Optional, Union
 
 from icecream import ic
 
-from pacekeeper.repository.entities import Category, Log, Tag
-from pacekeeper.repository.log_repository import LogRepository
+from pacekeeper.repository.entities import Tag
 from pacekeeper.repository.tag_repository import TagRepository
 from pacekeeper.utils.desktop_logger import DesktopLogger
-from pacekeeper.utils.functions import extract_tags
 
 
 class TagService:
@@ -17,7 +13,7 @@ class TagService:
         self.repository: TagRepository = TagRepository()
         self.logger.log_system_event("TagService 초기화됨.")
 
-    def get_tag_text(self, tag_ids: Union[list[int], str]) -> list[str]:
+    def get_tag_text(self, tag_ids: list[int] | str) -> list[str]:
         """
         태그 ID 목록을 받아 태그 이름을 문자열로 변환합니다.
 
@@ -53,7 +49,7 @@ class TagService:
 
         return tag_names
 
-    def get_tag(self, tag_id: int) -> Optional[Tag]:
+    def get_tag(self, tag_id: int) -> Tag | None:
         """
         지정된 ID의 태그를 조회합니다.
 
@@ -77,7 +73,7 @@ class TagService:
         Returns:
             태그 딕셔너리 목록
         """
-        tags: List[Tag] = self.repository.get_tags()
+        tags: list[Tag] = self.repository.get_tags()
         # 명시적으로 문자열 변환하여 인코딩 보장
         tag_dicts = []
         for tag in tags:
@@ -86,7 +82,7 @@ class TagService:
             tag_dicts.append(tag_dict)
         return tag_dicts
 
-    def update_tag(self, tag: Tag) -> Optional[Tag]:
+    def update_tag(self, tag: Tag) -> Tag | None:
         """
         태그 업데이트
 

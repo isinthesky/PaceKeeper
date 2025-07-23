@@ -1,12 +1,9 @@
 # controllers/main_controller.py
 
 import datetime
-import json
 import logging
-from typing import Any, Optional
 
-from icecream import ic
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QMessageBox
 
 from pacekeeper.consts.labels import load_language_resource
@@ -17,7 +14,6 @@ from pacekeeper.repository.entities import Log
 from pacekeeper.services.category_service import CategoryService
 from pacekeeper.services.log_service import LogService
 from pacekeeper.services.tag_service import TagService
-from pacekeeper.utils.functions import resource_path
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -46,7 +42,7 @@ class MainController:
             on_finish=None,  # 시작 시 동적으로 할당
         )
         self.paused: bool = False
-        self.current_tag: Optional[str] = None
+        self.current_tag: str | None = None
         self.current_description: str = ""
 
         # 앱 시작 시, 최근 로그를 UI에 업데이트합니다.
@@ -164,7 +160,7 @@ class MainController:
 
             tag_text = self.tag_service.get_tag_text(log.tags)
             tag_list = ", ".join(tag_text) if tag_text else ""
-            setattr(log, "tag_text", tag_list)
+            log.tag_text = tag_list
 
             unique_logs.append(log)
             seen_messages.add(message)
@@ -172,7 +168,7 @@ class MainController:
                 break
 
         # 최근 로그 UI 컨트롤 업데이트
-        self.main_window.recent_logs_control.update_logs(logs=unique_logs)
+        self.main_window.recent_logs.update_logs(logs=unique_logs)
 
     def get_all_logs(self):
         """

@@ -1,8 +1,9 @@
 # models/settings_model.py
 import json
 import os
-from pacekeeper.consts.settings import CONFIG_FILE, DEFAULT_SETTINGS
+
 from pacekeeper.consts.labels import load_language_resource
+from pacekeeper.consts.settings import CONFIG_FILE, DEFAULT_SETTINGS
 
 lang_res = load_language_resource()
 
@@ -11,7 +12,7 @@ class SettingsModel:
         # 사용자 홈 디렉토리에 .pacekeeper 폴더 생성
         self.config_dir = os.path.join(os.path.expanduser('~'), '.pacekeeper')
         os.makedirs(self.config_dir, exist_ok=True)
-        
+
         # 설정 파일 경로 설정
         self.config_file = os.path.join(self.config_dir, config_file)
         self.default_settings = dict(DEFAULT_SETTINGS)
@@ -20,7 +21,7 @@ class SettingsModel:
     def load_settings(self):
         if os.path.exists(self.config_file):
             try:
-                with open(self.config_file, 'r', encoding='utf-8') as f:
+                with open(self.config_file, encoding='utf-8') as f:
                     self.settings = json.load(f)
             except Exception as e:
                 print(lang_res.error_messages['SETTINGS_LOAD'].format(e))

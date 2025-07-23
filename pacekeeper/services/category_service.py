@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from pacekeeper.repository.category_repository import CategoryRepository
 from pacekeeper.repository.entities import Category
@@ -52,11 +51,11 @@ class CategoryService:
             category = self.repo.get_category(category_id)
             self.logger.log_system_event(f"카테고리 조회 성공: {category.name}")
             return category
-        except Exception as e:
+        except Exception:
             self.logger.log_error("카테고리 조회 실패", exc_info=True)
             return None
 
-    def get_categories(self) -> List[Category]:
+    def get_categories(self) -> list[Category]:
         """
         모든 활성 카테고리들을 조회합니다.
 
@@ -69,16 +68,16 @@ class CategoryService:
                 f"카테고리 조회 성공: {len(categories)}개 카테고리 조회됨."
             )
             return categories
-        except Exception as e:
+        except Exception:
             self.logger.log_error("카테고리 조회 실패", exc_info=True)
             return []
 
     def update_category(
         self,
         category_id: int,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        color: Optional[str] = None,
+        name: str | None = None,
+        description: str | None = None,
+        color: str | None = None,
     ) -> None:
         """
         지정된 카테고리의 이름, 설명 및 색상을 업데이트합니다.
@@ -95,7 +94,7 @@ class CategoryService:
         try:
             self.repo.update_category(category_id, name, description, color)
             self.logger.log_system_event("카테고리 업데이트 성공")
-        except Exception as e:
+        except Exception:
             self.logger.log_error("카테고리 업데이트 실패", exc_info=True)
 
     def delete_category(self, category_id: int) -> None:
@@ -109,5 +108,5 @@ class CategoryService:
         try:
             self.repo.delete_category(category_id)
             self.logger.log_system_event("카테고리 삭제 성공")
-        except Exception as e:
+        except Exception:
             self.logger.log_error("카테고리 삭제 실패", exc_info=True)
