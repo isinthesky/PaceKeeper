@@ -2,15 +2,16 @@ import json
 
 from icecream import ic
 
+from pacekeeper.interfaces.repositories.i_tag_repository import ITagRepository
+from pacekeeper.interfaces.services.i_tag_service import ITagService
 from pacekeeper.repository.entities import Tag
-from pacekeeper.repository.tag_repository import TagRepository
 from pacekeeper.utils.desktop_logger import DesktopLogger
 
 
-class TagService:
-    def __init__(self) -> None:
+class TagService(ITagService):
+    def __init__(self, tag_repository: ITagRepository) -> None:
         self.logger: DesktopLogger = DesktopLogger("PaceKeeper")
-        self.repository: TagRepository = TagRepository()
+        self.repository: ITagRepository = tag_repository
         self.logger.log_system_event("TagService 초기화됨.")
 
     def get_tag_text(self, tag_ids: list[int] | str) -> list[str]:
@@ -68,39 +69,80 @@ class TagService:
 
     def get_tags(self) -> list[dict]:
         """
-        모든 태그 목록을 반환합니다.
+        모든 태그를 딕셔너리 형태로 반환합니다.
 
         Returns:
-            태그 딕셔너리 목록
-        """
-        tags: list[Tag] = self.repository.get_tags()
-        # 명시적으로 문자열 변환하여 인코딩 보장
-        tag_dicts = []
-        for tag in tags:
-            tag_dict = tag.to_dict()
-            tag_dict["name"] = str(tag_dict["name"])  # 명시적 문자열 변환
-            tag_dicts.append(tag_dict)
-        return tag_dicts
-
-    def update_tag(self, tag: Tag) -> Tag | None:
-        """
-        태그 업데이트
-
-        Args:
-            tag: 업데이트할 태그 객체
-
-        Returns:
-            업데이트된 태그 객체 또는 None (업데이트 실패 시)
+            태그 딕셔너리 목록 (UI에서 사용)
         """
         try:
-            updated_tag = self.repository.update_tag(
-                tag.id, tag.name, tag.description, tag.category_id
-            )
-            if updated_tag:
-                return updated_tag
-            else:
-                self.logger.log_error("태그 업데이트 실패", exc_info=True)
-                return None
+            tag_entities = self.repository.get_tags()
+            return [
+                {
+                    "id": tag.id,
+                    "name": tag.name,
+                    "description": tag.description,
+                    "category_id": tag.category_id or 1  # 기본 카테고리 ID
+                }
+                for tag in tag_entities
+            ]
+        except Exception as e:
+            self.logger.log_error(f"태그 목록 조회 실패: {e}", exc_info=True)
+            return []
+
+    def get_all_tags(self) -> list[Tag]:
+        """
+        모든 활성 태그를 조회합니다.
+
+        Returns:
+            활성 태그 목록
+        """
+        return self.repository.get_tags()
+
+    def create_tag(self, name: str, description: str = "") -> Tag:
+        """
+        새로운 태그를 생성합니다.
+
+        Args:
+            name: 태그 이름
+            description: 태그 설명
+
+        Returns:
+            생성된 태그 객체
+        """
+        try:
+            return self.repository.add_tag(name, description)
+        except Exception as e:
+            self.logger.log_error(f"태그 생성 실패: {e}", exc_info=True)
+            raise e
+
+    def update_tag(self, tag_id: int, name: str | None = None,
+                   description: str | None = None) -> Tag | None:
+        """
+        태그를 업데이트합니다.
+
+        Args:
+            tag_id: 업데이트할 태그 ID
+            name: 새로운 태그 이름 (선택사항)
+            description: 새로운 태그 설명 (선택사항)
+
+        Returns:
+            업데이트된 태그 객체 또는 None
+        """
+        try:
+            return self.repository.update_tag(tag_id, name, description)
         except Exception as e:
             self.logger.log_error(f"태그 업데이트 실패: {e}", exc_info=True)
+            return None
+
+    def delete_tag(self, tag_id: int) -> None:
+        """
+        태그를 삭제합니다.
+
+        Args:
+            tag_id: 삭제할 태그 ID
+        """
+        try:
+            self.repository.delete_tag(tag_id)
+        except Exception as e:
+            self.logger.log_error(f"태그 삭제 실패: {e}", exc_info=True)
             raise e

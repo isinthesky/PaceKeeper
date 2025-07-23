@@ -3,18 +3,19 @@ from datetime import datetime
 
 from icecream import ic
 
+from pacekeeper.interfaces.repositories.i_log_repository import ILogRepository
+from pacekeeper.interfaces.repositories.i_tag_repository import ITagRepository
+from pacekeeper.interfaces.services.i_log_service import ILogService
 from pacekeeper.repository.entities import Log
-from pacekeeper.repository.log_repository import LogRepository
-from pacekeeper.repository.tag_repository import TagRepository
 from pacekeeper.utils.desktop_logger import DesktopLogger
 from pacekeeper.utils.functions import extract_tags
 
 
-class LogService:
-    def __init__(self) -> None:
+class LogService(ILogService):
+    def __init__(self, log_repository: ILogRepository, tag_repository: ITagRepository) -> None:
         self.logger: DesktopLogger = DesktopLogger("PaceKeeper")
-        self.repository: LogRepository = LogRepository()
-        self.tag_repo: TagRepository = TagRepository()
+        self.repository: ILogRepository = log_repository
+        self.tag_repo: ITagRepository = tag_repository
         self.logger.log_system_event("LogService 초기화됨.")
 
     def create_study_log(self, message: str, study_start_time: datetime | None = None) -> None:

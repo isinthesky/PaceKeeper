@@ -18,7 +18,7 @@ class StatusInfo:
 class AppStatus(Enum):
     """
     애플리케이션 상태를 나타내는 열거형
-    
+
     각 상태는 표시 레이블과 정수 값을 포함한 StatusInfo 객체를 가집니다.
     """
     WAIT = StatusInfo(label=lang_res.base_labels['WAIT'], value=0)
@@ -48,7 +48,7 @@ class Observer:
     def update(self, event_type: str, **kwargs: Any) -> None:
         """
         상태 변경 알림을 받는 메서드
-        
+
         Args:
             event_type: 이벤트 타입 (예: "status_changed", "cycle_changed")
             **kwargs: 이벤트 관련 추가 정보
@@ -59,7 +59,7 @@ class Observer:
 class AppStateManager:
     """
     애플리케이션 상태 관리 클래스
-    
+
     상태(AppStatus)와 사이클 카운트를 관리하고, 상태 변경 시 등록된 옵저버에게 알림을 보냅니다.
     """
     def __init__(self) -> None:
@@ -72,7 +72,7 @@ class AppStateManager:
     def add_observer(self, observer: Observer) -> None:
         """
         상태 변경을 관찰할 옵저버 추가
-        
+
         Args:
             observer: 상태 변경을 관찰할 Observer 인스턴스
         """
@@ -82,7 +82,7 @@ class AppStateManager:
     def remove_observer(self, observer: Observer) -> None:
         """
         등록된 옵저버 제거
-        
+
         Args:
             observer: 제거할 Observer 인스턴스
         """
@@ -92,7 +92,7 @@ class AppStateManager:
     def _notify_observers(self, event_type: str, **kwargs: Any) -> None:
         """
         등록된 모든 옵저버에게 알림
-        
+
         Args:
             event_type: 이벤트 타입
             **kwargs: 이벤트 관련 추가 정보
@@ -107,7 +107,7 @@ class AppStateManager:
     def set_status(self, status: AppStatus) -> None:
         """
         애플리케이션 상태 설정 및 옵저버에 알림
-        
+
         Args:
             status: 새 애플리케이션 상태
         """
@@ -122,7 +122,7 @@ class AppStateManager:
     def set_running(self, running: bool) -> None:
         """
         애플리케이션 실행 상태 설정
-        
+
         Args:
             running: 새 실행 상태
         """
@@ -137,7 +137,7 @@ class AppStateManager:
     def set_cycle(self, cycle: int) -> None:
         """
         사이클 수 직접 설정
-        
+
         Args:
             cycle: 새 사이클 수
         """
@@ -148,7 +148,7 @@ class AppStateManager:
     def increment_cycle(self) -> int:
         """
         사이클 수 증가 및 옵저버에 알림
-        
+
         Returns:
             증가된 사이클 수
         """

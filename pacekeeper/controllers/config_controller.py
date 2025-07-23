@@ -12,7 +12,7 @@ lang_res = load_language_resource()
 class ConfigController:
     """
     앱의 설정 및 상태를 통합 관리하는 컨트롤러
-    
+
     설정 관리와 앱 상태 관리를 조합하여 애플리케이션 전체 구성을 제어합니다.
     """
     _instance = None
@@ -20,11 +20,11 @@ class ConfigController:
     def __new__(cls, settings_manager: SettingsManager | None = None, app_state_manager: AppStateManager | None = None):
         """
         싱글톤 패턴 구현 또는 의존성 주입을 통한 인스턴스 생성
-        
+
         Args:
             settings_manager: 설정 관리자 인스턴스 (None이면 새로 생성)
             app_state_manager: 앱 상태 관리자 인스턴스 (None이면 새로 생성)
-        
+
         Returns:
             ConfigController 인스턴스
         """
@@ -41,7 +41,7 @@ class ConfigController:
     def __init__(self, settings_manager: SettingsManager | None = None, app_state_manager: AppStateManager | None = None):
         """
         ConfigController 초기화
-        
+
         Args:
             settings_manager: 설정 관리자 인스턴스 (None이면 새로 생성)
             app_state_manager: 앱 상태 관리자 인스턴스 (None이면 새로 생성)
@@ -60,11 +60,11 @@ class ConfigController:
     def get_setting(self, key: str, default: Any = None) -> Any:
         """
         설정 값 반환
-        
+
         Args:
             key: 설정 키
             default: 설정이 존재하지 않을 경우 반환할 기본값
-        
+
         Returns:
             설정 값 또는 기본값
         """
@@ -73,7 +73,7 @@ class ConfigController:
     def set_setting(self, key: str, value: Any) -> None:
         """
         설정 값 설정
-        
+
         Args:
             key: 설정 키
             value: 설정 값
@@ -83,7 +83,7 @@ class ConfigController:
     def save_settings(self) -> bool:
         """
         현재 설정을 파일에 저장
-        
+
         Returns:
             저장 성공 여부
         """
@@ -92,10 +92,10 @@ class ConfigController:
     def update_settings(self, new_settings: dict[str, Any]) -> dict[str, str]:
         """
         여러 설정 값 업데이트 및 저장
-        
+
         Args:
             new_settings: 업데이트할 설정 딕셔너리
-        
+
         Returns:
             유효성 검사 오류 메시지 딕셔너리 (키: 설정 키, 값: 오류 메시지)
         """
@@ -104,7 +104,7 @@ class ConfigController:
     def get_language(self) -> str:
         """
         현재 설정된 언어 코드 반환
-        
+
         Returns:
             언어 코드 (기본값: "ko")
         """
@@ -113,7 +113,7 @@ class ConfigController:
     def set_language(self, lang: str) -> None:
         """
         언어 코드 설정
-        
+
         Args:
             lang: 언어 코드 ("ko" 또는 "en")
         """
@@ -123,7 +123,7 @@ class ConfigController:
     def get_status(self) -> AppStatus:
         """
         현재 애플리케이션 상태 반환
-        
+
         Returns:
             현재 AppStatus
         """
@@ -132,7 +132,7 @@ class ConfigController:
     def set_status(self, status: AppStatus) -> None:
         """
         애플리케이션 상태 설정
-        
+
         Args:
             status: 새 애플리케이션 상태
         """
@@ -159,7 +159,7 @@ class ConfigController:
     def increment_cycle(self) -> int:
         """
         사이클 수 증가
-        
+
         Returns:
             증가된 사이클 수
         """
@@ -168,7 +168,7 @@ class ConfigController:
     def get_cycle(self) -> int:
         """
         현재 사이클 수 반환
-        
+
         Returns:
             현재 사이클 수
         """

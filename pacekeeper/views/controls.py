@@ -18,7 +18,6 @@ from PyQt5.QtWidgets import (
 
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.config_controller import ConfigController
-from pacekeeper.services.category_service import CategoryService
 
 lang_res = load_language_resource(ConfigController().get_language())
 
@@ -77,7 +76,7 @@ class RecentLogsControl(QWidget):
     def update_logs(self, logs=None, limit=50):
         """
         테이블 위젯의 항목들을 최신 로그로 업데이트합니다.
-        
+
         파라미터:
             logs: MainController 등에서 전달받은 로그 데이터 (리스트).
             limit: 보여줄 로그 수의 제한 (기본값 10)
@@ -264,10 +263,10 @@ class QFlowLayout(QLayout):
 
 class TagButtonsPanel(QWidget):
     """태그 버튼들을 관리하는 패널"""
-    def __init__(self, parent, on_tag_selected=None):
+    def __init__(self, parent, on_tag_selected=None, category_service=None):
         super().__init__(parent)
         self.on_tag_selected = on_tag_selected
-        self.service = CategoryService()
+        self.category_service = category_service  # 의존성 주입을 통해 전달받음
         self.layout = QFlowLayout(self, margin=5, spacing=5)
         self.setLayout(self.layout)
 
@@ -299,9 +298,13 @@ class TagButtonsPanel(QWidget):
 
         # 카테고리 정보 가져오기
         try:
-            categories = self.service.get_categories()
-            color_set = {category.id: category for category in categories}
-            ic(f"{len(categories)}개의 카테고리 정보를 가져왔습니다.")
+            if self.category_service:
+                categories = self.category_service.get_categories()
+                color_set = {category.id: category for category in categories}
+                ic(f"{len(categories)}개의 카테고리 정보를 가져왔습니다.")
+            else:
+                ic("카테고리 서비스가 없습니다.")
+                color_set = {}
         except Exception as e:
             ic(f"카테고리 정보 가져오기 실패: {e}")
             color_set = {}

@@ -16,7 +16,6 @@ from PyQt5.QtWidgets import (
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import APP_TITLE, SET_MAIN_DLG_HEIGHT, SET_MAIN_DLG_WIDTH
 from pacekeeper.controllers.config_controller import ConfigController
-from pacekeeper.services.tag_service import TagService
 from pacekeeper.views.break_dialog import BreakDialog
 from pacekeeper.views.category_dialog import CategoryDialog
 from pacekeeper.views.controls import RecentLogsControl, TagButtonsPanel, TextInputPanel, TimerLabel
@@ -27,7 +26,7 @@ lang_res = load_language_resource(ConfigController().get_language())
 
 class MainWindow(QMainWindow):
     """
-    MainWindow: UI View 컴포넌트  
+    MainWindow: UI View 컴포넌트
     책임: UI 구성, 레이아웃 초기화, 이벤트 바인딩 및 MainController와의 상호작용
     """
     def __init__(self, main_controller: Any | None = None, config_ctrl: Any | None = None) -> None:
@@ -40,7 +39,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(APP_TITLE)
         self.resize(width, height)
         self.config_ctrl = config_ctrl
-        self.tag_service = TagService()
         self.main_controller = main_controller
 
         # 중앙 위젯 설정
@@ -57,7 +55,7 @@ class MainWindow(QMainWindow):
 
     def hide_main_controls(self) -> None:
         """
-        학습 타이머 실행 시, recent_logs(리스트 컨트롤), tag_panel(태그 버튼), 
+        학습 타이머 실행 시, recent_logs(리스트 컨트롤), tag_panel(태그 버튼),
         log_input_panel(텍스트 입력 컨트롤)을 숨기고 창 크기를 작게 만듭니다.
         """
         try:
@@ -125,7 +123,7 @@ class MainWindow(QMainWindow):
         ic("RecentLogsControl 초기화 완료, on_logs_updated 콜백 설정됨")
         self.main_layout.addWidget(self.recent_logs, 1)
 
-        # 태그 버튼 패널
+        # 태그 버튼 패널 (category_service는 나중에 main_controller를 통해 설정)
         self.tag_panel = TagButtonsPanel(self.central_widget, on_tag_selected=self.add_tag_to_input)
         self.main_layout.addWidget(self.tag_panel)
         # RecentLogsControl의 update_logs 호출 시 update_tag_buttons()가 자동 호출됩니다.
@@ -207,13 +205,13 @@ class MainWindow(QMainWindow):
         ic("update_tag_buttons 메서드 호출됨")
 
         try:
-            # 태그 서비스가 초기화되었는지 확인
-            if not hasattr(self, "tag_service") or self.tag_service is None:
-                ic("태그 서비스가 초기화되지 않았습니다. 새로 생성합니다.")
-                self.tag_service = TagService()
+            # MainController를 통해 태그 서비스에 접근
+            if not self.main_controller:
+                ic("MainController가 없어서 태그를 가져올 수 없습니다.")
+                return
 
             # 태그 가져오기 시도
-            tags = self.tag_service.get_tags()
+            tags = self.main_controller.tag_service.get_tags()
 
             # 태그가 None이면 빈 리스트로 처리
             if tags is None:
@@ -391,8 +389,8 @@ class MainWindow(QMainWindow):
 
     def update_timer_label(self, time_str: str):
         """타이머 라벨 업데이트 (Controller에서 호출)
-        
-           메인 타이머 라벨(self.timer_label)과, 휴식 다이얼로그가 열려 있다면 그 안의 
+
+           메인 타이머 라벨(self.timer_label)과, 휴식 다이얼로그가 열려 있다면 그 안의
            타이머 라벨(self.break_label) 모두 업데이트합니다.
         """
         try:
@@ -495,6 +493,14 @@ class MainWindow(QMainWindow):
             ic(f"애플리케이션 종료 처리 중 오류 발생: {e}")
             # 오류가 발생해도 종료는 진행
             event.accept()
+
+    def set_main_controller(self, main_controller) -> None:
+        """MainController 설정 (의존성 주입 후 호출)"""
+        self.main_controller = main_controller
+        
+        # TagButtonsPanel에 category_service 설정
+        if hasattr(self, 'tag_panel') and self.tag_panel:
+            self.tag_panel.category_service = main_controller.category_service
 
     # 텍스트 입력 변경 이벤트 핸들러
     def on_log_input_text_change(self, text=None):

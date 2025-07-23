@@ -24,7 +24,6 @@ class SoundManager:
         """사운드 재생"""
         try:
             # PyInstaller 환경에서 리소스 경로 처리
-            original_path = sound_file
             if not os.path.exists(sound_file):
                 sound_file = resource_path(sound_file)
 
@@ -52,8 +51,3 @@ class SoundManager:
                 error_msg = lang_res.error_messages.get('ALARM_SOUND', '알람 재생 에러: {}').format(e)
                 QMessageBox.critical(None, "Error", error_msg)
 
-    def stop_sound(self):
-        """사운드 정지"""
-        if self.current_sound is not None:
-            self.current_sound.stop()
-            logger.info("Sound stopped")

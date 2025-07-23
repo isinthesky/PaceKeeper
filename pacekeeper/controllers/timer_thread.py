@@ -16,7 +16,7 @@ class TimerThread(threading.Thread):
     - update_callback: 남은 시간을 업데이트하는 콜백 함수 (문자열 인자)
     - on_finish: 타이머 종료 시 호출되는 콜백 함수
     - pauseable: 일시정지 기능 사용 여부
-    
+
     참고: 이 클래스는 PyQt5 변환 과정에서 QTimer로 대체되었습니다.
     """
     def __init__(
@@ -59,7 +59,6 @@ class TimerThread(threading.Thread):
 
         # 타이머가 정상 종료된 경우, on_finish 콜백 실행을 메인 스레드로 전환
         if self._running and self.on_finish:
-            callback = self.on_finish
             self.on_finish = None  # 중복 호출 방지
             # PyQt5에서는 QTimer.singleShot 또는 signal/slot을 사용합니다.
             # wx.CallAfter(callback)

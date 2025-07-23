@@ -1,10 +1,12 @@
 
-from pacekeeper.repository.category_repository import CategoryRepository
+
+from pacekeeper.interfaces.repositories.i_category_repository import ICategoryRepository
+from pacekeeper.interfaces.services.i_category_service import ICategoryService
 from pacekeeper.repository.entities import Category
 from pacekeeper.utils.desktop_logger import DesktopLogger
 
 
-class CategoryService:
+class CategoryService(ICategoryService):
     """
     CategoryService: 카테고리 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
 
@@ -15,12 +17,12 @@ class CategoryService:
       - 카테고리 soft delete (state 업데이트)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, category_repository: ICategoryRepository) -> None:
         self.logger: DesktopLogger = DesktopLogger("PaceKeeper")
-        self.repo: CategoryRepository = CategoryRepository()
+        self.repo: ICategoryRepository = category_repository
         self.logger.log_system_event("CategoryService 초기화됨.")
 
-    def add_category(self, name: str, description: str = "", color: str = "#FFFFFF") -> Category:
+    def create_category(self, name: str, description: str = "", color: str = "#FFFFFF") -> Category:
         """
         새로운 카테고리를 추가하거나 이미 존재하는 경우 기존 카테고리를 반환합니다.
 
@@ -36,14 +38,14 @@ class CategoryService:
             f"카테고리 추가 요청: 이름 = {name}, 설명 = {description}, 색상 = {color}"
         )
         try:
-            category = self.repo.add_category(name, description, color)
+            category = self.repo.create_category(name, description, color)
             self.logger.log_system_event(f"카테고리 추가 성공: {category.name}")
             return category
         except Exception as e:
             self.logger.log_error("카테고리 추가 실패", exc_info=True)
             raise e
 
-    def get_category(self, category_id: int) -> Category:
+    def get_category_by_id(self, category_id: int) -> Category | None:
         """
         지정된 ID의 카테고리를 조회합니다.
         """
@@ -71,6 +73,15 @@ class CategoryService:
         except Exception:
             self.logger.log_error("카테고리 조회 실패", exc_info=True)
             return []
+
+    def get_all_categories(self) -> list[Category]:
+        """
+        모든 활성 카테고리들을 조회합니다. (get_categories 별칭)
+
+        반환값:
+            List[Category]: 활성 카테고리 목록
+        """
+        return self.get_categories()
 
     def update_category(
         self,

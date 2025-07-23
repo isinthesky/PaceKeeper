@@ -11,10 +11,10 @@ from pacekeeper.services.app_state_manager import AppStatus
 class TimerService(QObject):
     """
     타이머 서비스 클래스
-    
+
     애플리케이션의 타이머 기능(시작, 일시정지, 재개, 종료)을 제공합니다.
     PyQt5의 QTimer를 사용하여 GUI 스레드에서 안전하게 타이머를 실행합니다.
-    
+
     Attributes:
         timer_finished: 타이머 완료 시 발생하는 시그널
     """
@@ -31,7 +31,7 @@ class TimerService(QObject):
     ) -> None:
         """
         TimerService 초기화
-        
+
         Args:
             config_ctrl: 설정 컨트롤러 인스턴스
             update_callback: 남은 시간을 UI에 업데이트하는 콜백 함수
@@ -57,9 +57,9 @@ class TimerService(QObject):
     def start(self, total_seconds: int) -> None:
         """
         타이머 시작
-        
+
         기존에 실행 중인 타이머가 있으면 먼저 중지하고 새 타이머를 시작합니다.
-        
+
         Args:
             total_seconds: 타이머 실행 시간 (초)
         """
@@ -83,7 +83,7 @@ class TimerService(QObject):
     def stop(self) -> None:
         """
         타이머 중지 및 앱 상태 초기화
-        
+
         실행 중인 타이머를 중지하고 모든 상태를 초기화합니다.
         """
         if self._is_running:
@@ -105,7 +105,7 @@ class TimerService(QObject):
     def pause(self) -> None:
         """
         타이머 일시정지
-        
+
         타이머가 실행 중이고 일시정지 가능한 경우에만 일시정지합니다.
         """
         if self._is_running and self.pauseable and not self.paused:
@@ -116,7 +116,7 @@ class TimerService(QObject):
     def resume(self) -> None:
         """
         타이머 재개
-        
+
         타이머가 일시정지 상태이고 일시정지 가능한 경우에만 재개합니다.
         """
         if self._is_running and self.pauseable and self.paused:
@@ -131,7 +131,7 @@ class TimerService(QObject):
     def is_paused(self) -> bool:
         """
         타이머 일시정지 상태 여부 확인
-        
+
         Returns:
             타이머가 일시정지 상태이면 True, 아니면 False
         """
@@ -140,7 +140,7 @@ class TimerService(QObject):
     def is_running(self) -> bool:
         """
         타이머 실행 중 여부 확인
-        
+
         Returns:
             타이머가 실행 중이면 True, 아니면 False
         """
@@ -149,7 +149,7 @@ class TimerService(QObject):
     def get_remaining_time(self) -> tuple[int, int]:
         """
         현재 남은 시간을 분:초 형식으로 반환
-        
+
         Returns:
             (분, 초) 튜플
         """
@@ -160,7 +160,7 @@ class TimerService(QObject):
     def _timer_tick(self) -> None:
         """
         타이머 틱 처리 - 1초마다 호출됨
-        
+
         남은 시간을 감소시키고 UI를 업데이트합니다.
         타이머가 종료되면 완료 시그널을 발생시킵니다.
         """
@@ -175,7 +175,7 @@ class TimerService(QObject):
     def _update_display(self) -> None:
         """
         남은 시간을 UI에 표시
-        
+
         현재 남은 시간을 MM:SS 형식으로 변환하여 update_callback 함수를 통해 UI에 전달합니다.
         """
         minutes, seconds = self.get_remaining_time()
@@ -187,7 +187,7 @@ class TimerService(QObject):
     def _on_timer_finished(self) -> None:
         """
         타이머 종료 시 호출되는 내부 처리
-        
+
         타이머 종료 시 외부에서 전달받은 on_finish 콜백 함수를 호출합니다.
         """
         if self.on_finish:

@@ -13,7 +13,7 @@ lang_res = load_language_resource(ConfigController().get_language())
 class BreakDialog(QDialog):
     """
     휴식 시간을 카운트다운하는 모달 다이얼로그 및 UI 패널 통합 클래스
-    
+
     주요 기능:
       - 안내 문구와 남은 시간 표시(타이머 라벨) 제공
       - 타이머 중지 및 다이얼로그 종료 이벤트 처리
@@ -104,7 +104,7 @@ class BreakDialog(QDialog):
 
     def on_break_finish(self):
         """
-        타이머 종료 및 휴식 중 강제 종료 시 호출되는 메서드  
+        타이머 종료 및 휴식 중 강제 종료 시 호출되는 메서드
         on_break_end 콜백을 호출합니다.
         """
         if not self._destroyed and self.on_break_end:

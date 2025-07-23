@@ -17,7 +17,7 @@ class SettingsObserver:
     def on_settings_changed(self, key: str, old_value: Any, new_value: Any) -> None:
         """
         설정 변경 알림을 받는 메서드
-        
+
         Args:
             key: 변경된 설정 키
             old_value: 이전 설정 값
@@ -29,14 +29,14 @@ class SettingsObserver:
 class SettingsManager:
     """
     애플리케이션 설정 관리 클래스
-    
+
     설정 파일 로드, 저장 및 설정 값 접근 기능을 제공합니다.
     설정 변경 시 등록된 옵저버에게 알림을 보냅니다.
     """
     def __init__(self, config_file: str = CONFIG_FILE) -> None:
         """
         SettingsManager 초기화
-        
+
         Args:
             config_file: 설정 파일 이름 (기본값: CONFIG_FILE 상수 사용)
         """
@@ -64,7 +64,7 @@ class SettingsManager:
     def add_observer(self, observer: SettingsObserver) -> None:
         """
         설정 변경을 관찰할 옵저버 추가
-        
+
         Args:
             observer: 설정 변경을 관찰할 SettingsObserver 인스턴스
         """
@@ -74,7 +74,7 @@ class SettingsManager:
     def remove_observer(self, observer: SettingsObserver) -> None:
         """
         등록된 옵저버 제거
-        
+
         Args:
             observer: 제거할 SettingsObserver 인스턴스
         """
@@ -84,7 +84,7 @@ class SettingsManager:
     def _notify_observers(self, key: str, old_value: Any, new_value: Any) -> None:
         """
         등록된 모든 옵저버에게 설정 변경 알림
-        
+
         Args:
             key: 변경된 설정 키
             old_value: 이전 설정 값
@@ -96,9 +96,9 @@ class SettingsManager:
     def load_settings(self) -> dict[str, Any]:
         """
         설정 파일에서 설정 로드
-        
+
         설정 파일이 존재하지 않거나 로드 실패 시 기본 설정을 사용합니다.
-        
+
         Returns:
             로드된 설정 딕셔너리
         """
@@ -117,7 +117,7 @@ class SettingsManager:
     def save_settings(self) -> bool:
         """
         현재 설정을 파일에 저장
-        
+
         Returns:
             저장 성공 여부
         """
@@ -132,11 +132,11 @@ class SettingsManager:
     def get_setting(self, key: str, default: Any = None) -> Any:
         """
         설정 값 반환
-        
+
         Args:
             key: 설정 키
             default: 설정이 존재하지 않을 경우 반환할 기본값
-        
+
         Returns:
             설정 값 또는 기본값
         """
@@ -145,7 +145,7 @@ class SettingsManager:
     def set_setting(self, key: str, value: Any) -> None:
         """
         설정 값 설정 및 옵저버에 알림
-        
+
         Args:
             key: 설정 키
             value: 설정 값
@@ -157,11 +157,11 @@ class SettingsManager:
     def update_settings(self, new_settings: dict[str, Any], validate: bool = True) -> dict[str, str]:
         """
         여러 설정 값 업데이트 및 저장
-        
+
         Args:
             new_settings: 업데이트할 설정 딕셔너리
             validate: 유효성 검사 수행 여부
-        
+
         Returns:
             유효성 검사 오류 메시지 딕셔너리 (키: 설정 키, 값: 오류 메시지)
             유효성 검사를 통과하면 빈 딕셔너리 반환
@@ -185,10 +185,10 @@ class SettingsManager:
     def _validate_settings(self, settings: dict[str, Any]) -> dict[str, str]:
         """
         설정 유효성 검사
-        
+
         Args:
             settings: 검사할 설정 딕셔너리
-        
+
         Returns:
             유효성 검사 오류 메시지 딕셔너리 (키: 설정 키, 값: 오류 메시지)
             유효성 검사를 통과하면 빈 딕셔너리 반환
@@ -245,7 +245,7 @@ class SettingsManager:
     def get_language(self) -> str:
         """
         현재 설정된 언어 코드 반환
-        
+
         Returns:
             언어 코드 (기본값: "ko")
         """
@@ -254,7 +254,7 @@ class SettingsManager:
     def set_language(self, lang: str) -> None:
         """
         언어 코드 설정
-        
+
         Args:
             lang: 언어 코드 ("ko" 또는 "en")
         """

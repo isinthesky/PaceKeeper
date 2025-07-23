@@ -40,6 +40,7 @@ try:
     logger.info("PyQt5 임포트 성공")
 
     logger.info("앱 모듈 임포트 시도...")
+    from pacekeeper.container import DIContainer, ServiceRegistry
     from pacekeeper.controllers.config_controller import ConfigController
     from pacekeeper.controllers.main_controller import MainController
     from pacekeeper.utils.logger import setup_logger
@@ -74,21 +75,52 @@ def main() -> NoReturn:
         else:
             logger.warning(f"아이콘 파일을 찾을 수 없음: {app_icon_path}")
 
+        # DI 컨테이너 설정
+        logger.info("DI 컨테이너 초기화...")
+        container = DIContainer()
+        ServiceRegistry.register_all_services(container)
+
         # 설정 컨트롤러 생성
         logger.info("ConfigController 생성...")
-        config_ctrl = ConfigController()
+        config_ctrl = container.resolve(ConfigController)
 
-        # 메인 컨트롤러 생성
-        logger.info("MainController 생성...")
-        main_ctrl = None  # 임시로 None으로 설정
-
-        # 메인 윈도우 생성
+        # 메인 윈도우 생성 (임시로 None 컨트롤러)
         logger.info("MainWindow 생성...")
-        main_window = MainWindow(main_ctrl, config_ctrl)
+        main_window = MainWindow(None, config_ctrl)
 
-        # 메인 컨트롤러 생성 및 연결
-        main_ctrl = MainController(main_window, config_ctrl)
-        main_window.main_controller = main_ctrl
+        # 메인 컨트롤러 생성 (DI 컨테이너를 통해)
+        logger.info("MainController 생성...")
+        # MainController는 MainWindow를 생성자 매개변수로 받으므로 수동으로 생성
+        from pacekeeper.controllers.sound_manager import SoundManager
+        from pacekeeper.controllers.timer_controller import TimerService
+        from pacekeeper.interfaces.services.i_category_service import ICategoryService
+        from pacekeeper.interfaces.services.i_log_service import ILogService
+        from pacekeeper.interfaces.services.i_tag_service import ITagService
+
+        category_service = container.resolve(ICategoryService)
+        log_service = container.resolve(ILogService)
+        tag_service = container.resolve(ITagService)
+        sound_manager = SoundManager(config_ctrl)  # SoundManager는 수동 생성
+
+        # TimerService는 콜백 함수가 필요하므로 수동 생성
+        timer_service = TimerService(
+            config_ctrl,
+            update_callback=main_window.update_timer_label,
+            on_finish=None  # 나중에 MainController에서 설정
+        )
+
+        main_ctrl = MainController(
+            main_window,
+            config_ctrl,
+            category_service,
+            tag_service,
+            log_service,
+            sound_manager,
+            timer_service
+        )
+        
+        # MainWindow에 MainController 설정 (의존성 주입 완료)
+        main_window.set_main_controller(main_ctrl)
 
         # 메인 윈도우 표시
         logger.info("메인 윈도우 표시...")

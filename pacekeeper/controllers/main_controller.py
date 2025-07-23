@@ -10,10 +10,10 @@ from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.config_controller import AppStatus, ConfigController
 from pacekeeper.controllers.sound_manager import SoundManager
 from pacekeeper.controllers.timer_controller import TimerService
+from pacekeeper.interfaces.services.i_category_service import ICategoryService
+from pacekeeper.interfaces.services.i_log_service import ILogService
+from pacekeeper.interfaces.services.i_tag_service import ITagService
 from pacekeeper.repository.entities import Log
-from pacekeeper.services.category_service import CategoryService
-from pacekeeper.services.log_service import LogService
-from pacekeeper.services.tag_service import TagService
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -28,22 +28,25 @@ class MainController:
     책임: 타이머, 사운드, 사이클 관리 및 로그 DB 제어, 그리고 최근 로그 업데이트
     """
 
-    def __init__(self, main_window: "MainWindow", config_ctrl: ConfigController) -> None:
+    def __init__(
+        self,
+        main_window: "MainWindow",
+        config_ctrl: ConfigController,
+        category_service: ICategoryService,
+        tag_service: ITagService,
+        log_service: ILogService,
+        sound_manager: SoundManager,
+        timer_service: TimerService
+    ) -> None:
         self.main_window = main_window
         self.config_ctrl = config_ctrl
 
-        self.category_service: CategoryService = CategoryService()
-        self.tag_service: TagService = TagService()
-        self.log_service: LogService = LogService()
-        self.sound_manager: SoundManager = SoundManager(config_ctrl)
-        self.timer_service: TimerService = TimerService(
-            config_ctrl,
-            update_callback=self.main_window.update_timer_label,
-            on_finish=None,  # 시작 시 동적으로 할당
-        )
+        self.category_service: ICategoryService = category_service
+        self.tag_service: ITagService = tag_service
+        self.log_service: ILogService = log_service
+        self.sound_manager: SoundManager = sound_manager
+        self.timer_service: TimerService = timer_service
         self.paused: bool = False
-        self.current_tag: str | None = None
-        self.current_description: str = ""
 
         # 앱 시작 시, 최근 로그를 UI에 업데이트합니다.
         self.refresh_recent_logs()
@@ -177,26 +180,3 @@ class MainController:
         """
         return self.log_service.retrieve_all_logs()
 
-    def set_current_tag(self, tag):
-        """현재 태그 설정"""
-        self.current_tag = tag
-
-    def set_current_description(self, description):
-        """현재 설명 설정"""
-        self.current_description = description
-
-    def start_timer(self):
-        """타이머 시작"""
-        self.start_study_session()
-
-    def pause_timer(self):
-        """타이머 일시정지"""
-        self.toggle_pause()
-
-    def resume_timer(self):
-        """타이머 재개"""
-        self.toggle_pause()
-
-    def stop_timer(self):
-        """타이머 중지"""
-        self.stop_study_timer()

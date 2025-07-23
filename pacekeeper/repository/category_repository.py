@@ -1,29 +1,23 @@
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session as SessionType
-from sqlalchemy.orm import sessionmaker
 
-from pacekeeper.repository.db_config import DATABASE_URI
-from pacekeeper.repository.entities import Base, Category
+from pacekeeper.database import DatabaseSessionManager
+from pacekeeper.interfaces.repositories.i_category_repository import ICategoryRepository
+from pacekeeper.repository.entities import Category
 from pacekeeper.utils.desktop_logger import DesktopLogger
 
-engine = create_engine(DATABASE_URI, echo=False, connect_args={"check_same_thread": False})
-Session = sessionmaker(bind=engine)
 
-class CategoryRepository:
-    def __init__(self):
+class CategoryRepository(ICategoryRepository):
+    def __init__(self, session_manager: DatabaseSessionManager):
+        self.session_manager = session_manager
         self.desktop_logger = DesktopLogger("PaceKeeper")
-        self.desktop_logger.log_system_event("SQLAlchemyCategoryRepository 초기화됨.")
+        self.desktop_logger.log_system_event("CategoryRepository 초기화됨.")
         self.init_db()
 
-    def init_db(self):
-        try:
-            Base.metadata.create_all(engine)
-            self.desktop_logger.log_system_event("카테고리 DB 초기화 완료")
-        except Exception:
-            self.desktop_logger.log_error("카테고리 DB 초기화 실패", exc_info=True)
+    def init_db(self) -> None:
+        # DatabaseSessionManager에서 이미 초기화됨
+        self.desktop_logger.log_system_event("CategoryRepository DB 초기화 완료")
 
-    def add_category(self, name: str, description: str = "", color: str = "#FFFFFF") -> Category:
+    def create_category(self, name: str, description: str = "", color: str = "#FFFFFF") -> Category:
         """
         새로운 카테고리를 추가하거나 이미 존재하는 카테고리를 반환합니다.
         """

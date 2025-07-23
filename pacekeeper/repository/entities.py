@@ -10,7 +10,7 @@ Base = declarative_base()
 class Category(Base):
     """
     카테고리 엔티티 클래스
-    
+
     태그를 그룹화하는 카테고리 정보를 저장합니다.
     """
     __tablename__ = 'categories'
@@ -24,7 +24,7 @@ class Category(Base):
     def to_dict(self) -> dict[str, Any]:
         """
         카테고리 객체를 딕셔너리로 변환
-        
+
         Returns:
             카테고리 정보를 담은 딕셔너리
         """
@@ -39,7 +39,7 @@ class Category(Base):
     def __repr__(self) -> str:
         """
         카테고리 객체의 문자열 표현
-        
+
         Returns:
             카테고리 정보를 담은 문자열
         """
@@ -49,7 +49,7 @@ class Category(Base):
 class Tag(Base):
     """
     태그 엔티티 클래스
-    
+
     작업을 분류하는 태그 정보를 저장합니다.
     각 태그는 카테고리에 속할 수 있습니다.
     """
@@ -64,7 +64,7 @@ class Tag(Base):
     def to_dict(self) -> dict[str, Any]:
         """
         태그 객체를 딕셔너리로 변환
-        
+
         Returns:
             태그 정보를 담은 딕셔너리
         """
@@ -79,7 +79,7 @@ class Tag(Base):
     def __repr__(self) -> str:
         """
         태그 객체의 문자열 표현
-        
+
         Returns:
             태그 정보를 담은 문자열
         """
@@ -89,7 +89,7 @@ class Tag(Base):
 class Log(Base):
     """
     로그 엔티티 클래스
-    
+
     사용자의 작업 로그 정보를 저장합니다.
     각 로그는 메시지, 태그 목록, 시작/종료 시간 등을 포함합니다.
     """
@@ -105,7 +105,7 @@ class Log(Base):
     def to_dict(self) -> dict[str, Any]:
         """
         로그 객체를 딕셔너리로 변환
-        
+
         Returns:
             로그 정보를 담은 딕셔너리
         """
@@ -121,7 +121,7 @@ class Log(Base):
     def __repr__(self) -> str:
         """
         로그 객체의 문자열 표현
-        
+
         Returns:
             로그 정보를 담은 문자열
         """

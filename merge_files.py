@@ -1,5 +1,6 @@
 import os
 
+
 def collect_python_files(directory: str) -> list:
     """
     Recursively collects all Python file paths from the specified directory.
@@ -17,7 +18,7 @@ def add_file_header(file_path: str) -> str:
     Reads the content of a file, adds a comment at the top with the file path and name
     if it does not already contain a header.
     """
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(file_path, encoding="utf-8") as file:
         content = file.readlines()
 
     # Check if the first line is already a comment with the file path

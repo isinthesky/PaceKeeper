@@ -147,7 +147,7 @@ class SettingsDialog(QDialog):
 
         # 언어 선택 콤보박스
         self.lang_combo = QComboBox(lang_group)
-        for i, lang in enumerate(AVAILABLE_LANGS):
+        for i, _lang in enumerate(AVAILABLE_LANGS):
             self.lang_combo.addItem(AVAILABLE_LANG_LABELS[i])
 
         lang_form.addRow(self.lang_res.setting_labels['LANGUAGE'], self.lang_combo)

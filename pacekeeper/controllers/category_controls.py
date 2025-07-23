@@ -1,3 +1,4 @@
+
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
@@ -14,22 +15,22 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from pacekeeper.consts.labels import load_language_resource
-from pacekeeper.controllers.config_controller import ConfigController
-from pacekeeper.services.category_service import CategoryService
+from pacekeeper.interfaces.services.i_category_service import ICategoryService
 
-lang_res = load_language_resource(ConfigController().get_language())
 
 class CategoryControlsPanel(QWidget):
     """
     CategoryControlsPanel: 카테고리 목록을 보여주고
     새로운 카테고리 생성, 선택된 카테고리 수정 및 삭제 기능을 제공하는 패널.
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, category_service: ICategoryService | None = None):
         super().__init__(parent)
-        self.service = CategoryService()
-        self.InitUI()
-        self.update_category_list()
+        # 의존성 주입을 위해 기본값으로 None을 받고, 실제 주입은 외부에서 처리
+        self.service = category_service
+        if self.service:
+            self.InitUI()
+            self.update_category_list()
+
 
     def InitUI(self):
         main_layout = QVBoxLayout()
@@ -103,7 +104,7 @@ class CategoryControlsPanel(QWidget):
             QMessageBox.critical(self, "오류", "이름을 입력하세요.")
             return
         try:
-            self.service.add_category(name, description, color)
+            self.service.create_category(name, description, color)
             QMessageBox.information(self, "정보", f"카테고리 생성 완료 {name}")
             self.clear_form()
             self.update_category_list()
@@ -191,20 +192,25 @@ class TagButtonsPanel(QWidget):
     """태그 버튼들을 관리하는 패널"""
     tag_selected = pyqtSignal(dict)
 
-    def __init__(self, parent=None, on_tag_selected=None):
+    def __init__(self, parent=None, on_tag_selected=None, category_service: ICategoryService | None = None):
         super().__init__(parent)
         self.on_tag_selected = on_tag_selected
         self.layout = QHBoxLayout()
         self.layout.setAlignment(Qt.AlignLeft)
         self.layout.setSpacing(5)
         self.setLayout(self.layout)
-        self.service = CategoryService()
+        # CategoryService는 의존성 주입을 통해 전달받습니다
+        self.service = category_service
         self.selected_tag = None
+
 
     def update_tags(self, tags:list[dict]):
         """
         태그 버튼 업데이트 메서드.
         """
+        if not self.service:
+            return
+
         # 기존 버튼 제거
         while self.layout.count():
             item = self.layout.takeAt(0)
@@ -212,7 +218,7 @@ class TagButtonsPanel(QWidget):
             if widget:
                 widget.deleteLater()
 
-        categories = self.service.get_categories()
+        categories = self.service.get_all_categories()
         color_set = {category.id: category for category in categories}
 
         for tag in tags:
