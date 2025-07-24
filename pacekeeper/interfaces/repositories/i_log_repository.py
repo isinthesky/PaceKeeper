@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from pacekeeper.repository.entities import Category, Log
+from pacekeeper.repository.entities import Log
 
 
 class ILogRepository(ABC):
@@ -17,31 +17,9 @@ class ILogRepository(ABC):
         """데이터베이스 및 테이블 초기화"""
         pass
 
-    @abstractmethod
-    def get_category_by_name(self, category_name: str) -> Category | None:
-        """
-        카테고리 이름으로 카테고리 조회
+    # get_category_by_name 메서드 제거됨 - LogRepository에서 카테고리 로직 분리
 
-        Args:
-            category_name: 조회할 카테고리 이름
-
-        Returns:
-            찾은 카테고리 또는 None
-        """
-        pass
-
-    @abstractmethod
-    def save_category(self, category: Category) -> Category:
-        """
-        카테고리 저장/갱신
-
-        Args:
-            category: 저장할 카테고리 객체
-
-        Returns:
-            저장된 카테고리 객체
-        """
-        pass
+    # save_category 메서드 제거됨 - LogRepository에서 카테고리 로직 분리
 
     @abstractmethod
     def save_log(self, log: Log) -> Log:

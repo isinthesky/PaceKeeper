@@ -351,14 +351,14 @@ class TagButtonsPanel(QWidget):
                 except Exception as e:
                     ic(f"버튼 클릭 이벤트 연결 중 오류 발생: {e}")
 
-                # 카테고리 색상 설정 (필요시 커스텀 색상 적용)
+                # 카테고리 색상 설정 (ThemeManager를 통해 적용)
                 try:
                     category = color_set.get(tag_dict["category_id"])
                     if category and hasattr(category, 'color') and category.color:
-                        # 커스텀 색상이 있는 경우에만 인라인 스타일 적용
-                        btn.setStyleSheet(f"QPushButton[tag=true] {{ background-color: {category.color}; }}")
+                        # ThemeManager를 사용하여 카테고리 색상 적용
+                        theme_manager.apply_category_color(btn, category.color, "tag")
                     else:
-                        ic(f"카테골0리 ID {tag_dict['category_id']}에 해당하는 카테고리를 찾을 수 없거나 색상 정보가 없습니다.")
+                        ic(f"카테고리 ID {tag_dict['category_id']}에 해당하는 카테고리를 찾을 수 없거나 색상 정보가 없습니다.")
                 except Exception as e:
                     ic(f"카테고리 색상 설정 중 오류 발생: {e}")
 

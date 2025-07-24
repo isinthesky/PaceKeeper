@@ -57,6 +57,12 @@ class CategoryService(ICategoryService):
             self.logger.log_error("카테고리 조회 실패", exc_info=True)
             return None
 
+    def get_category(self, category_id: int) -> Category | None:
+        """
+        ID로 카테고리를 조회합니다. (get_category_by_id의 단축형)
+        """
+        return self.get_category_by_id(category_id)
+
     def get_categories(self) -> list[Category]:
         """
         모든 활성 카테고리들을 조회합니다.

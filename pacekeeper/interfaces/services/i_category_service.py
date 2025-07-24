@@ -73,3 +73,26 @@ class ICategoryService(ABC):
             찾은 카테고리 또는 None
         """
         pass
+
+    @abstractmethod
+    def get_category(self, category_id: int) -> Category | None:
+        """
+        ID로 카테고리를 조회합니다. (get_category_by_id의 단축형)
+
+        Args:
+            category_id: 조회할 카테고리 ID
+
+        Returns:
+            찾은 카테고리 또는 None
+        """
+        pass
+
+    @abstractmethod
+    def get_categories(self) -> list[Category]:
+        """
+        모든 활성 카테고리를 조회합니다. (get_all_categories의 단축형)
+
+        Returns:
+            활성 카테고리 목록
+        """
+        pass

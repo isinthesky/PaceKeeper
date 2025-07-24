@@ -33,18 +33,22 @@ def resource_path(relative_path):
 
     return full_path
 
-def get_asset_path(filename):
-    """assets 디렉토리의 파일 경로를 반환합니다."""
-    return resource_path(os.path.join('assets', filename))
+# get_asset_path 함수 제거됨 - 현재 사용되지 않음
+# def get_asset_path(filename):
+#     """assets 디렉토리의 파일 경로를 반환합니다."""
+#     return resource_path(os.path.join('assets', filename))
 
-def get_icon_path(filename):
-    """아이콘 파일 경로를 반환합니다."""
-    return resource_path(os.path.join('assets', 'icons', filename))
+# get_icon_path 함수 제거됨 - 현재 사용되지 않음
+# def get_icon_path(filename):
+#     """아이콘 파일 경로를 반환합니다."""
+#     return resource_path(os.path.join('assets', 'icons', filename))
 
-def get_sound_path(filename):
-    """사운드 파일 경로를 반환합니다."""
-    return resource_path(os.path.join('assets', 'sounds', filename))
+# get_sound_path 함수 제거됨 - 현재 사용되지 않음
+# def get_sound_path(filename):
+#     """사운드 파일 경로를 반환합니다."""
+#     return resource_path(os.path.join('assets', 'sounds', filename))
 
-def get_config_path():
-    """config.json 파일 경로를 반환합니다."""
-    return resource_path('config.json')
+# get_config_path 함수 제거됨 - 현재 사용되지 않음
+# def get_config_path():
+#     """config.json 파일 경로를 반환합니다."""
+#     return resource_path('config.json')

@@ -74,3 +74,26 @@ class ITagService(ABC):
             tag_id: 삭제할 태그 ID
         """
         pass
+
+    @abstractmethod
+    def get_tag(self, tag_id: int) -> Tag | None:
+        """
+        지정된 ID의 태그를 조회합니다.
+
+        Args:
+            tag_id: 조회할 태그 ID
+
+        Returns:
+            태그 객체 또는 None (조회 실패 시)
+        """
+        pass
+
+    @abstractmethod
+    def get_tags(self) -> list[dict]:
+        """
+        모든 태그를 딕셔너리 형태로 반환합니다.
+
+        Returns:
+            태그 딕셔너리 목록 (UI에서 사용)
+        """
+        pass

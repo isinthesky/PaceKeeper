@@ -15,7 +15,9 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from pacekeeper.consts.colors import get_category_default_color
 from pacekeeper.interfaces.services.i_category_service import ICategoryService
+from pacekeeper.utils.theme_manager import theme_manager
 
 
 class CategoryControlsPanel(QWidget):
@@ -48,9 +50,10 @@ class CategoryControlsPanel(QWidget):
         color_label = QLabel("색상:", self)
         self.color_button = QPushButton(self)
         self.color_button.setFixedSize(30, 30)
-        self.color_button.setStyleSheet("background-color: #FFFFFF;")
+        default_color = get_category_default_color()
+        theme_manager.apply_color(self.color_button, default_color)
         self.color_button.clicked.connect(self.on_color_pick)
-        self.current_color = "#FFFFFF"
+        self.current_color = default_color
 
         form_layout.addWidget(name_label, 0, 0)
         form_layout.addWidget(self.name_text, 0, 1)
@@ -84,7 +87,7 @@ class CategoryControlsPanel(QWidget):
         color = QColorDialog.getColor(QColor(self.current_color), self, "색상 선택")
         if color.isValid():
             self.current_color = color.name()
-            self.color_button.setStyleSheet(f"background-color: {self.current_color};")
+            theme_manager.apply_color(self.color_button, self.current_color)
 
     def update_category_list(self):
         """카테고리 목록을 서비스로부터 조회하여 ListWidget에 업데이트합니다."""
@@ -172,20 +175,20 @@ class CategoryControlsPanel(QWidget):
         if color_text and color_text.startswith("#") and len(color_text) == 7:
             try:
                 self.current_color = color_text
-                self.color_button.setStyleSheet(f"background-color: {self.current_color};")
+                theme_manager.apply_color(self.color_button, self.current_color)
             except Exception:
-                self.current_color = "#FFFFFF"
-                self.color_button.setStyleSheet("background-color: #FFFFFF;")
+                self.current_color = get_category_default_color()
+                theme_manager.apply_color(self.color_button, self.current_color)
         else:
-            self.current_color = "#FFFFFF"
-            self.color_button.setStyleSheet("background-color: #FFFFFF;")
+            self.current_color = get_category_default_color()
+            theme_manager.apply_color(self.color_button, self.current_color)
 
     def clear_form(self):
         """입력 폼 초기화 및 리스트 선택 해제."""
         self.name_text.setText("")
         self.description_text.setText("")
-        self.current_color = "#FFFFFF"
-        self.color_button.setStyleSheet("background-color: #FFFFFF;")
+        self.current_color = get_category_default_color()
+        theme_manager.apply_color(self.color_button, self.current_color)
         self.list_widget.clearSelection()
 
 class TagButtonsPanel(QWidget):
@@ -234,7 +237,7 @@ class TagButtonsPanel(QWidget):
 
                 category = color_set.get(tag["category_id"])
                 if category:
-                    btn.setStyleSheet(f"background-color: {category.color};")
+                    theme_manager.apply_color(btn, category.color)
 
                 self.layout.addWidget(btn)
 

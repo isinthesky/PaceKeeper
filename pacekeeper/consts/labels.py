@@ -39,7 +39,7 @@ def load_language_resource(language: str = "ko") -> LanguageResource:
         with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
-        raise RuntimeError(f"언어 리소스 로드 실패: {e}")
+        raise RuntimeError(f"언어 리소스 로드 실패: {e}") from e
 
     return LanguageResource(
         base_labels=data.get("BASE_LABELS", {}),

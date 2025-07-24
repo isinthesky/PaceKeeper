@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import APP_TITLE, SET_MAIN_DLG_HEIGHT, SET_MAIN_DLG_WIDTH
 from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.services.app_state_manager import AppStatus
 from pacekeeper.utils.theme_manager import theme_manager
 from pacekeeper.views.break_dialog import BreakDialog
 from pacekeeper.views.category_dialog import CategoryDialog
@@ -272,13 +273,31 @@ class MainWindow(QMainWindow):
 
     def on_show_track(self) -> None:
         """로그 다이얼로그 오픈"""
-        dlg = LogDialog(self, self.config_ctrl)
-        dlg.exec_()
+        # MainController의 서비스들을 LogDialog에 전달
+        if self.main_controller:
+            dlg = LogDialog(
+                self,
+                self.config_ctrl,
+                self.main_controller.log_service,
+                self.main_controller.tag_service
+            )
+            dlg.exec_()
+        else:
+            ic("MainController가 없어서 로그 다이얼로그를 열 수 없습니다.")
 
     def on_show_category(self) -> None:
         """카테고리 다이얼로그 오픈"""
-        dlg = CategoryDialog(self, self.config_ctrl)
-        dlg.exec_()
+        # MainController의 서비스들을 CategoryDialog에 전달
+        if self.main_controller:
+            dlg = CategoryDialog(
+                self,
+                self.config_ctrl,
+                self.main_controller.category_service,
+                self.main_controller.tag_service
+            )
+            dlg.exec_()
+        else:
+            ic("MainController가 없어서 카테고리 다이얼로그를 열 수 없습니다.")
 
     def on_exit(self) -> None:
         """앱 종료 처리"""
@@ -290,6 +309,15 @@ class MainWindow(QMainWindow):
         study timer 시작 시 주요 컨트롤(최근 로그, 태그 버튼, 텍스트 입력)을 숨기고 창 크기를 축소합니다.
         """
         try:
+            # 현재 버튼이 "X분 후 휴식" 상태인지 확인
+            button_text = self.start_button.text()
+            if "분 후 휴식" in button_text:
+                # 작업 마무리 타이머 중지 및 즉시 휴식으로 전환
+                ic("작업 마무리 타이머 중지 요청")
+                self.main_controller.timer_service.stop()
+                self.toggle_buttons(AppStatus.WAIT)
+                return
+
             if not self.main_controller.timer_service.is_running():
                 # 타이머가 실행 중이 아니면 학습 세션 시작
                 ic("타이머 시작 요청")
@@ -510,7 +538,7 @@ class MainWindow(QMainWindow):
     def set_main_controller(self, main_controller) -> None:
         """MainController 설정 (의존성 주입 후 호출)"""
         self.main_controller = main_controller
-        
+
         # TagButtonsPanel에 category_service 설정
         if hasattr(self, 'tag_panel') and self.tag_panel:
             self.tag_panel.category_service = main_controller.category_service
@@ -519,6 +547,9 @@ class MainWindow(QMainWindow):
     def on_log_input_text_change(self, text=None):
         """
         텍스트 입력 필드의 내용이 변경될 때 호출되는 이벤트 핸들러
+        
+        Args:
+            text: 변경된 텍스트 (optional)
         """
         try:
             # 입력 텍스트 로깅 (너무 많은 로그 방지)
@@ -529,6 +560,11 @@ class MainWindow(QMainWindow):
             self.update_start_button_state()
         except Exception as e:
             ic(f"텍스트 입력 변경 처리 중 오류 발생: {e}")
+            # 오류 발생 시 안전한 기본 상태로 복원
+            try:
+                self.start_button.setEnabled(False)
+            except Exception as inner_e:
+                ic(f"기본 상태 복원 중 추가 오류: {inner_e}")
 
     def update_start_button_state(self):
         """
@@ -558,6 +594,57 @@ class MainWindow(QMainWindow):
             ic(f"시작 버튼 상태 업데이트 중 오류 발생: {e}")
             # 오류 발생 시 기본적으로 버튼 비활성화
             self.start_button.setEnabled(False)
+
+    def toggle_buttons(self, status: AppStatus) -> None:
+        """
+        앱 상태에 따라 버튼들의 상태를 업데이트합니다.
+        
+        Args:
+            status: 새로운 앱 상태
+        """
+        try:
+            ic(f"버튼 상태 업데이트: {status}")
+
+            if status == AppStatus.WAIT:
+                # 대기 상태: 시작 버튼 활성화, 일시정지 버튼 비활성화
+                self.start_button.setText(lang_res.button_labels.get('START', "START"))
+                self.start_button.setEnabled(True)  # 해시태그 확인은 update_start_button_state에서
+                self.pause_button.setEnabled(False)
+                self.pause_button.setText(lang_res.button_labels.get('PAUSE', "PAUSE"))
+                self.timer_label.setText("00:00")
+
+                # 미니 모드에서 일반 모드로 복원
+                self.restore_main_controls()
+                theme_manager.set_widget_property(self, "miniMode", False)
+
+            elif status == AppStatus.STUDY:
+                # 학습 상태: 중지 버튼으로 변경, 일시정지 버튼 활성화
+                self.start_button.setText(lang_res.button_labels.get('STOP', "STOP"))
+                self.start_button.setEnabled(True)
+                self.pause_button.setEnabled(True)
+                self.pause_button.setText(lang_res.button_labels.get('PAUSE', "PAUSE"))
+
+                # 미니 모드 활성화
+                self.hide_main_controls()
+                theme_manager.set_widget_property(self, "miniMode", True)
+
+            elif status == AppStatus.PAUSED:
+                # 일시정지 상태: 재개 버튼으로 변경
+                self.pause_button.setText(lang_res.button_labels.get('RESUME', "RESUME"))
+
+            elif status in [AppStatus.SHORT_BREAK, AppStatus.LONG_BREAK]:
+                # 휴식 상태: 버튼들 비활성화
+                self.start_button.setEnabled(False)
+                self.pause_button.setEnabled(False)
+
+            # 해시태그 체크 기반 시작 버튼 상태 업데이트
+            if status == AppStatus.WAIT:
+                self.update_start_button_state()
+
+            ic(f"버튼 상태 업데이트 완료: {status}")
+
+        except Exception as e:
+            ic(f"버튼 상태 업데이트 중 오류 발생: {e}")
 
     def apply_theme(self) -> None:
         """현대적인 테마 적용"""

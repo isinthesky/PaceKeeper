@@ -2,9 +2,14 @@
 
 import datetime
 import logging
+from typing import TYPE_CHECKING
 
+from icecream import ic
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QMessageBox
+
+if TYPE_CHECKING:
+    from pacekeeper.views.main_window import MainWindow
 
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.config_controller import AppStatus, ConfigController
@@ -69,7 +74,7 @@ class MainController:
         self.timer_service.stop()
 
         # 학습 종료 시 로그 저장 (사용자 입력값)
-        user_input = self.main_window.text_input_panel.get_value().strip()
+        user_input = self.main_window.log_input_panel.get_value().strip()
         if user_input:
             try:
                 # 저장된 study_start_time을 create_study_log에 전달
@@ -107,19 +112,17 @@ class MainController:
         # 타이머 시작 (휴식 타이머)
         self.timer_service.start(total_seconds)
 
-        # 현재 상태에 따라 휴식 타입 결정
-        break_type = (
-            AppStatus.LONG_BREAK
-            if self.config_ctrl.get_status() == AppStatus.LONG_BREAK
-            else AppStatus.SHORT_BREAK
-        )
-
         # PyQt에서는 직접 show_break_dialog 호출 (Qt의 이벤트 루프가 자동으로 처리)
-        self.main_window.show_break_dialog(break_type, break_min, self.on_break_session_finished)
+        self.main_window.show_break_dialog(break_min)
 
     def on_break_session_finished(self):
-        """휴식 세션 종료 후 실행될 로직"""
+        """
+        휴식 세션 종료 후 실행될 로직
+        일반적인 휴식 종료와 작업 마무리 후 휴식 시작을 구분해서 처리
+        """
         try:
+            ic("휴식 세션 종료 처리 시작")
+
             # 타이머가 실행 중인 경우에만 정지
             if self.timer_service.is_running():
                 self.timer_service.stop()
@@ -130,8 +133,22 @@ class MainController:
             # 메인 윈도우가 존재하는 경우에만 버튼 상태 업데이트
             if hasattr(self, "main_window") and self.main_window:
                 self.main_window.toggle_buttons(AppStatus.WAIT)
+
+                # 타이머 업데이트 콜백을 메인 윈도우로 복원
+                self.timer_service.update_callback = self.main_window.update_timer_label
+
+            ic("휴식 세션 종료 처리 완료")
+
         except Exception as e:
             logger.error(f"Error in on_break_session_finished: {e}")
+            ic(f"휴식 세션 종료 처리 중 오류: {e}")
+
+            # 오류 발생 시 강제로 UI를 안전한 상태로 복원
+            try:
+                if hasattr(self, "main_window") and self.main_window:
+                    self.main_window.toggle_buttons(AppStatus.WAIT)
+            except Exception as inner_e:
+                ic(f"오류 복구 중 추가 오류 발생: {inner_e}")
 
     def toggle_pause(self):
         """일시정지/재개 토글 메서드"""

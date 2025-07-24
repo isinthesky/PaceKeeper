@@ -118,7 +118,7 @@ def main() -> NoReturn:
             sound_manager,
             timer_service
         )
-        
+
         # MainWindow에 MainController 설정 (의존성 주입 완료)
         main_window.set_main_controller(main_ctrl)
 

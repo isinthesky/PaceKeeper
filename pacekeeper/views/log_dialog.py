@@ -21,22 +21,22 @@ from PyQt5.QtWidgets import (
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.config_controller import ConfigController
 from pacekeeper.repository.entities import Log
-from pacekeeper.services.log_service import LogService
-from pacekeeper.services.tag_service import TagService
 from pacekeeper.views.controls import TagButtonsPanel
 
 lang_res = load_language_resource(ConfigController().get_language())
 
 class LogDialog(QDialog):
-    def __init__(self, parent, config_controller):
+    def __init__(self, parent, config_controller, log_service=None, tag_service=None):
         super().__init__(parent)
         self.setWindowTitle(lang_res.base_labels['LOGS'])
         self.resize(800, 800)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
         self.config = config_controller
-        self.log_service = LogService()
-        self.tag_service = TagService()
+
+        # 서비스들이 전달되지 않으면 None으로 설정 (에러 방지)
+        self.log_service = log_service
+        self.tag_service = tag_service
 
         # 종료일 기본값: 오늘
         end_dt = date.today()
@@ -155,6 +155,8 @@ class LogDialog(QDialog):
         """
         DB에서 전체 로그를 가져와서 TableWidget에 표시
         """
+        if not self.log_service:
+            return
         rows: list[Log] = self.log_service.retrieve_all_logs()
         self.load_rows(rows)
 
@@ -195,7 +197,7 @@ class LogDialog(QDialog):
                         tag_ids = []
 
                     # 유효한 태그 ID 리스트인 경우 태그 서비스를 통해 이름 가져오기
-                    if isinstance(tag_ids, list) and tag_ids:
+                    if isinstance(tag_ids, list) and tag_ids and self.tag_service:
                         tag_names = self.tag_service.get_tag_text(tag_ids)
                         # 유효한 태그 이름이 있는 경우 쉼표로 구분하여 연결
                         if tag_names:
@@ -236,6 +238,11 @@ class LogDialog(QDialog):
         start_date = self.selected_start_date
         end_date = self.selected_end_date
         tag_keyword = self.tag_tc.text().strip().lower()  # 소문자로 변환
+
+        # 서비스가 없으면 빈 결과 반환
+        if not self.log_service:
+            self.load_rows([])
+            return
 
         # 날짜 범위 조건 처리
         rows_date = self.log_service.retrieve_logs_by_period(start_date, end_date) if start_date and end_date else self.log_service.retrieve_all_logs()
@@ -285,9 +292,12 @@ class LogDialog(QDialog):
             except ValueError:
                 continue
 
-        self.log_service.remove_logs_by_ids(ids_to_delete)
-        QMessageBox.information(self, "정보", "선택한 로그가 삭제되었습니다.")
-        self.load_all_logs()
+        if self.log_service:
+            self.log_service.remove_logs_by_ids(ids_to_delete)
+            QMessageBox.information(self, "정보", "선택한 로그가 삭제되었습니다.")
+            self.load_all_logs()
+        else:
+            QMessageBox.warning(self, "오류", "로그 서비스가 초기화되지 않았습니다.")
 
     def center_on_screen(self):
         """화면 중앙에 다이얼로그를 배치합니다."""
@@ -302,6 +312,9 @@ class LogDialog(QDialog):
         """
         try:
             # 태그 서비스에서 모든 태그 가져오기
+            if not self.tag_service:
+                ic("태그 서비스가 초기화되지 않았습니다.")
+                return
             tags = self.tag_service.get_tags()
             ic("태그 목록 조회 성공", len(tags))
 

@@ -6,21 +6,19 @@ from PyQt5.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayo
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.controllers.category_controls import CategoryControlsPanel, TagButtonsPanel
 from pacekeeper.controllers.config_controller import ConfigController
-from pacekeeper.services.category_service import CategoryService
-from pacekeeper.services.tag_service import TagService
 
 lang_res = load_language_resource(ConfigController().get_language())
 
 class CategoryDialog(QDialog):
-    def __init__(self, parent, config_controller):
+    def __init__(self, parent, config_controller, category_service=None, tag_service=None):
         super().__init__(parent)
         self.setWindowTitle(lang_res.base_labels['CATEGORY'])
         self.setFixedSize(660, 500)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
         self.config = config_controller
-        self.tag_service = TagService()
-        self.category_service = CategoryService()
+        self.tag_service = tag_service
+        self.category_service = category_service
         self.selected_tag = None
         self.InitUI()
         self.center_on_screen()
@@ -39,12 +37,12 @@ class CategoryDialog(QDialog):
         # 좌우 영역용 Horizontal Layout 생성
         content_layout = QHBoxLayout()
 
-        # CategoryControlsPanel: 왼쪽에 배치
-        controls_panel = CategoryControlsPanel(self)
+        # CategoryControlsPanel: 왼쪽에 배치 (서비스 전달)
+        controls_panel = CategoryControlsPanel(self, self.category_service)
         content_layout.addWidget(controls_panel, 1)
 
-        # TagButtonsPanel: 오른쪽에 배치
-        self.tag_panel = TagButtonsPanel(self)
+        # TagButtonsPanel: 오른쪽에 배치 (서비스 전달)
+        self.tag_panel = TagButtonsPanel(self, self.add_tag_to_input, self.category_service)
         self.tag_panel.tag_selected.connect(self.add_tag_to_input)
         content_layout.addWidget(self.tag_panel, 1)
 
@@ -62,9 +60,17 @@ class CategoryDialog(QDialog):
         self.setLayout(main_layout)
 
         # 태그 목록 업데이트
-        tags = self.tag_service.get_tags()
-        ic("tags", tags)
-        self.tag_panel.update_tags(tags)
+        if self.tag_service:
+            try:
+                tags = self.tag_service.get_tags()
+                ic("tags", tags)
+                self.tag_panel.update_tags(tags)
+            except Exception as e:
+                ic(f"태그 로드 중 오류 발생: {e}")
+                self.tag_panel.update_tags([])
+        else:
+            ic("태그 서비스가 초기화되지 않았습니다.")
+            self.tag_panel.update_tags([])
 
     def add_tag_to_input(self, tag):
         ic("add_tag_to_input", tag)
@@ -89,6 +95,12 @@ class CategoryDialog(QDialog):
             ic("숫자 키 입력", select_number)
             ic("selected_tag", self.selected_tag)
 
+            # 서비스 체크
+            if not self.category_service or not self.tag_service:
+                ic("서비스가 초기화되지 않았습니다.")
+                super().keyPressEvent(event)
+                return
+
             category = self.category_service.get_category(select_number)
             ic("category", category)
 
@@ -102,7 +114,7 @@ class CategoryDialog(QDialog):
 
             tag.category_id = category.id
 
-            updated_tag = self.tag_service.update_tag(tag)
+            updated_tag = self.tag_service.update_tag(tag.id, tag.name, tag.description)
             ic("updated_tag", updated_tag)
 
             # 태그 업데이트 후, 최신 태그 목록을 불러와 tag 버튼 패널을 갱신합니다.

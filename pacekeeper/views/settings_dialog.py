@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from pacekeeper.consts.colors import get_break_default_color
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import (
     AVAILABLE_LANG_LABELS,
@@ -33,6 +34,7 @@ from pacekeeper.consts.settings import (
     SET_TTS_ENABLE,
 )
 from pacekeeper.controllers.config_controller import ConfigController
+from pacekeeper.utils.theme_manager import theme_manager
 
 
 class SettingsDialog(QDialog):
@@ -192,9 +194,9 @@ class SettingsDialog(QDialog):
         self.volume_label.setText(f"{volume}%")
 
         # 시각 설정
-        break_color = self.config_ctrl.get_setting(SET_BREAK_COLOR, "#FDFFB6")
+        break_color = self.config_ctrl.get_setting(SET_BREAK_COLOR, get_break_default_color())
         self.break_color = QColor(break_color)
-        self.break_color_btn.setStyleSheet(f"background-color: {break_color};")
+        theme_manager.apply_color(self.break_color_btn, break_color)
 
         # 언어 설정
         lang_index = AVAILABLE_LANGS.index(self.config_ctrl.get_setting(SET_LANGUAGE, "en"))
@@ -221,7 +223,7 @@ class SettingsDialog(QDialog):
         color = QColorDialog.getColor(self.break_color, self)
         if color.isValid():
             self.break_color = color
-            self.break_color_btn.setStyleSheet(f"background-color: {color.name()};")
+            theme_manager.apply_color(self.break_color_btn, color.name())
 
     def on_save(self):
         """설정 저장 버튼 클릭 시 호출"""
