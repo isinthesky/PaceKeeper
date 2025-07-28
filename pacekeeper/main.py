@@ -67,13 +67,53 @@ def main() -> NoReturn:
         app = QApplication(sys.argv)
 
         # 애플리케이션 아이콘 설정
-        app_icon_path = os.path.join(os.path.dirname(__file__), "resources", "icon.png")
+        from pacekeeper.utils.resource_path import resource_path
+
+        app_icon_path = resource_path("assets/icons/PaceKeeper.png")
         logger.info(f"아이콘 경로: {app_icon_path}")
+
         if os.path.exists(app_icon_path):
             app.setWindowIcon(QIcon(app_icon_path))
             logger.info("아이콘 설정 완료")
         else:
             logger.warning(f"아이콘 파일을 찾을 수 없음: {app_icon_path}")
+            # 대체 아이콘 시도
+            fallback_paths = [
+                resource_path("assets/icons/PaceKeeper.ico"),
+                resource_path("assets/icons/PaceKeeper.icns")
+            ]
+
+            for fallback_path in fallback_paths:
+                if os.path.exists(fallback_path):
+                    app.setWindowIcon(QIcon(fallback_path))
+                    logger.info(f"대체 아이콘 설정 완료: {fallback_path}")
+                    break
+
+        # 데이터 마이그레이션 체크 및 수행
+        logger.info("데이터 마이그레이션 체크...")
+        from pacekeeper.utils.app_paths import ensure_data_directory
+        from pacekeeper.utils.migration import DataMigration
+
+        # 데이터 디렉토리 확인 및 생성
+        if not ensure_data_directory():
+            logger.error("데이터 디렉토리 생성 실패")
+
+        # 마이그레이션 필요 여부 확인
+        migration = DataMigration()
+        if migration.check_migration_needed():
+            logger.info("데이터 마이그레이션이 필요합니다.")
+            migration_results = migration.perform_migration()
+
+            if migration_results['overall']:
+                logger.info("데이터 마이그레이션이 완료되었습니다.")
+                if migration_results['database']:
+                    logger.info("데이터베이스 마이그레이션 성공")
+                if migration_results['config']:
+                    logger.info("설정 파일 마이그레이션 성공")
+            else:
+                logger.warning("데이터 마이그레이션에 실패했습니다. 기본 설정으로 시작합니다.")
+        else:
+            logger.info("마이그레이션이 필요하지 않습니다.")
 
         # DI 컨테이너 설정
         logger.info("DI 컨테이너 초기화...")

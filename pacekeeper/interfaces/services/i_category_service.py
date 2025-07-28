@@ -12,15 +12,6 @@ class ICategoryService(ABC):
     카테고리 관련 비즈니스 로직을 위한 추상 인터페이스를 정의합니다.
     """
 
-    @abstractmethod
-    def get_all_categories(self) -> list[Category]:
-        """
-        모든 활성 카테고리를 조회합니다.
-
-        Returns:
-            활성 카테고리 목록
-        """
-        pass
 
     @abstractmethod
     def create_category(self, name: str, description: str = "", color: str = "#FFFFFF") -> Category:
@@ -90,7 +81,7 @@ class ICategoryService(ABC):
     @abstractmethod
     def get_categories(self) -> list[Category]:
         """
-        모든 활성 카테고리를 조회합니다. (get_all_categories의 단축형)
+        모든 활성 카테고리를 조회합니다.
 
         Returns:
             활성 카테고리 목록

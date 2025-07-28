@@ -24,7 +24,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 lang_res: dict[str, str] = load_language_resource(ConfigController().get_language())
 
-MINUTE_TO_SECOND: int = 5  # 테스트용으로 분당 5초로 설정. 실제로는 60초로 변경 필요
+MINUTE_TO_SECOND: int = 60  # 테스트용으로 분당 5초로 설정. 실제로는 60초로 변경 필요
 
 
 class MainController:

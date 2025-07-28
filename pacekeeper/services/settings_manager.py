@@ -2,11 +2,11 @@
 
 import json
 import os
-import sys
 from typing import Any
 
 from pacekeeper.consts.labels import load_language_resource
 from pacekeeper.consts.settings import CONFIG_FILE, DEFAULT_SETTINGS, SET_LANGUAGE
+from pacekeeper.utils.app_paths import get_config_path
 
 # 언어 리소스 로드
 lang_res = load_language_resource()
@@ -38,19 +38,11 @@ class SettingsManager:
         SettingsManager 초기화
 
         Args:
-            config_file: 설정 파일 이름 (기본값: CONFIG_FILE 상수 사용)
+            config_file: 설정 파일 이름 (기본값: CONFIG_FILE 상수 사용) - 현재는 사용되지 않음
         """
-        # PyInstaller로 빌드된 경우
-        if getattr(sys, 'frozen', False):
-            # 사용자 홈 디렉토리 사용 (설정은 사용자별로 저장)
-            self.config_dir: str = os.path.join(os.path.expanduser('~'), '.pacekeeper')
-            os.makedirs(self.config_dir, exist_ok=True)
-            self.config_file: str = os.path.join(self.config_dir, config_file)
-        else:
-            # 개발 환경에서는 기존 방식 사용
-            self.config_dir: str = os.path.join(os.path.expanduser('~'), '.pacekeeper')
-            os.makedirs(self.config_dir, exist_ok=True)
-            self.config_file: str = os.path.join(self.config_dir, config_file)
+        # 통합 경로 시스템 사용
+        self.config_file: str = get_config_path()
+        self.config_dir: str = os.path.dirname(self.config_file)
 
         self.default_settings: dict[str, Any] = dict(DEFAULT_SETTINGS)
         self.settings: dict[str, Any] = dict(self.default_settings)
@@ -260,15 +252,3 @@ class SettingsManager:
         """
         self.set_setting(SET_LANGUAGE, lang)
 
-    def reset_to_defaults(self) -> None:
-        """설정을 기본값으로 초기화"""
-        old_settings = dict(self.settings)
-        self.settings = dict(self.default_settings)
-
-        # 변경된 모든 설정에 대해 옵저버에 알림
-        for key, new_value in self.settings.items():
-            old_value = old_settings.get(key)
-            if old_value != new_value:
-                self._notify_observers(key, old_value, new_value)
-
-        self.save_settings()

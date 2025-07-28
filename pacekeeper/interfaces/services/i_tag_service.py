@@ -25,15 +25,6 @@ class ITagService(ABC):
         """
         pass
 
-    @abstractmethod
-    def get_all_tags(self) -> list[Tag]:
-        """
-        모든 활성 태그를 조회합니다.
-
-        Returns:
-            활성 태그 목록
-        """
-        pass
 
     @abstractmethod
     def create_tag(self, name: str, description: str = "") -> Tag:

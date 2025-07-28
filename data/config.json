@@ -1,0 +1,18 @@
+{
+    "study_time": 20,
+    "short_break": 4,
+    "long_break": 15,
+    "cycles": 4,
+    "padding_size": 70,
+    "sound_volume": 80,
+    "break_color": "#fdffb6",
+    "language": "ko",
+    "main_dlg_width": 800,
+    "main_dlg_height": 400,
+    "short_break_time": 5,
+    "long_break_time": 15,
+    "pomodoro_cycles": 4,
+    "sound_enable": true,
+    "tts_enable": false,
+    "alarm_volume": 50
+}

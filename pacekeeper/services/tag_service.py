@@ -89,14 +89,6 @@ class TagService(ITagService):
             self.logger.log_error(f"태그 목록 조회 실패: {e}", exc_info=True)
             return []
 
-    def get_all_tags(self) -> list[Tag]:
-        """
-        모든 활성 태그를 조회합니다.
-
-        Returns:
-            활성 태그 목록
-        """
-        return self.repository.get_tags()
 
     def create_tag(self, name: str, description: str = "") -> Tag:
         """

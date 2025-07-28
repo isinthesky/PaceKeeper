@@ -442,7 +442,6 @@ class MainWindow(QMainWindow):
 
             # 메인 타이머 라벨 업데이트
             self.timer_label.setText(time_str)
-            ic(f"메인 타이머 라벨 업데이트: {time_str}")
 
             # 휴식 다이얼로그 타이머 라벨 업데이트
             if hasattr(self, "break_dialog") and self.break_dialog is not None:
